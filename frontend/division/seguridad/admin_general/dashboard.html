@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguridad - Geoportal Municipal</title>
+
+    <!-- Libraries (preload via crossorigin for SRI-readiness) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind Config for Base Layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: { primary: '#6366f1', secondary: '#ec4899', accent: '#8b5cf6' }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        crossorigin="anonymous">
+
+    <!-- Custom CSS for WebJS / Security Dashboard -->
+    <link rel="stylesheet" href="cssweb/styles.css?v=3">
+
+    <style>
+        .nav-link.active {
+            background-color: #2563eb !important;
+            color: white !important;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3) !important;
+        }
+
+        .nav-link.active i,
+        .nav-link.active span {
+            color: white !important;
+        }
+
+        .view-container {
+            position: relative;
+            min-height: calc(100vh - 120px);
+            background: #f8fafc;
+            padding-bottom: 5rem;
+        }
+
+        .btn-nav-arrow:hover {
+            background-color: #f1f5f9 !important;
+            color: #3b82f6 !important;
+            transform: scale(1.1);
+        }
+
+        .btn-nav-arrow:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 overflow-hidden font-['Outfit'] h-screen flex flex-col">
+
+    <!-- Global Header injected here -->
+    <div id="headerRender"></div>
+
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Local Sidebar replacing original secplan asideRender -->
+        <aside id="sidebarContainer"
+            class="w-72 bg-white border-r border-gray-200 hidden lg:flex flex-col overflow-y-auto font-['Outfit'] h-full shadow-lg relative z-10">
+        </aside>
+
+        <!-- Main Content -->
+        <main id="mainContent" class="flex-1 flex flex-col overflow-y-auto bg-slate-50 relative">
+            <!-- Header Security Controls (Export, Arrows, etc.) -->
+            <header
+                class="header bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10 shadow-sm flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button class="btn btn--accent hidden" id="btnExportPdf">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Exportar PDF</span>
+                    </button>
+                    <button
+                        class="btn border border-gray-300 rounded px-3 py-1 text-sm bg-white hover:bg-gray-50 flex items-center gap-2"
+                        id="btnExportSingle" onclick="PDFModule.exportSinglePage()">
+                        <i class="fa-solid fa-file-export text-gray-500"></i>
+                        <span class="font-medium text-gray-700">Generar Hoja</span>
+                    </button>
+                    <button
+                        class="btn btn--primary hidden bg-blue-600 text-white rounded px-3 py-1 text-sm flex items-center gap-2 hover:bg-blue-700"
+                        id="btnExportCover" onclick="window.PDFModuleV2 && window.PDFModuleV2.exportReport()">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Informe PDF</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <!-- Indicador de Comuna -->
+                    <div id="btnComuna" title="Comuna analizada en este reporte"
+                        class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-lg">
+                        <i class="fa-solid fa-location-dot text-blue-500 text-xs"></i>
+                        <div class="flex flex-col leading-tight">
+                            <span class="text-[0.6rem] font-bold text-slate-400 tracking-wider uppercase">Comuna</span>
+                            <span id="btnComunaText" class="text-sm font-bold text-slate-800">Cargando...</span>
+                        </div>
+                    </div>
+
+                    <!-- Botones Nav -->
+                    <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
+                        <button id="btnNavPrev"
+                            class="hidden items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 hover:shadow-sm transition-all text-left">
+                            <i class="fa-solid fa-chevron-left text-blue-500 text-sm"></i>
+                            <div class="leading-tight">
+                                <div class="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider">ANTERIOR
+                                </div>
+                                <div id="navPrevText"
+                                    class="text-sm text-slate-800 font-semibold max-w-[120px] truncate">--</div>
+                            </div>
+                        </button>
+
+                        <button id="btnNavNext"
+                            class="hidden items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 hover:shadow-sm transition-all text-right">
+                            <div class="leading-tight">
+                                <div class="text-[0.65rem] text-slate-400 font-bold uppercase tracking-wider">SIGUIENTE
+                                </div>
+                                <div id="navNextText"
+                                    class="text-sm text-slate-800 font-semibold max-w-[120px] truncate">--</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-blue-500 text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <section id="viewContainer" class="view-container max-w-7xl mx-auto w-full px-6 pb-16">
+                <div class="loading"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Script de layout global -->
+    <script src="../../../script/layout.js"></script>
+
+    <!-- Libraries (crossorigin for SRI-readiness) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2" defer crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3" defer crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer
+        crossorigin="anonymous"></script>
+
+    <!-- Global Configuration (NO defer — must execute synchronously and in order) -->
+    <script src="js/config/columns.js?v=2"></script>
+
+    <!-- SEC-009: Conditional Logger (must load first) -->
+    <script src="js/utils/logger.js?v=1"></script>
+
+    <!-- RID Core Architecture -->
+    <script src="js/rid-core.js?v=1"></script>
+    <script src="js/utils/ui-helper.js?v=1"></script>
+    <script src="js/utils/view-controller.js?v=1"></script>
+
+    <!-- Data Layer -->
+    <script src="js/data.js?v=4"></script>
+    <script src="js/data_cead.js?v=4"></script>
+    <script src="js/data_manager.js?v=5"></script>
+
+    <!-- App Scripts -->
+    <script src="js/utils/waiter.js?v=1"></script>
+    <script src="js/utils/chart-helper.js?v=4"></script>
+    <script src="js/utils/chart-enhancer.js?v=3"></script>
+    <script src="js/utils/calidadPrompt.js?v=1"></script>
+    <script src="js/ia2.js?v=2"></script>
+    <script src="js/app.js?v=3"></script>
+    <script src="js/pdf.js?v=3"></script>
+    <script src="js/pdf_vistas2.js?v=1"></script>
+
+    <script>
+        // Títulos de las 5 vistas activas
+        const VIEW_TITLES = {
+            'vista1': 'Resumen Ejecutivo',
+            'vista5': 'Análisis de Pareto',
+            'vista13': 'Gravedad por Delito',
+            'vista10': 'Vs. Comunas Similares',
+            'vista22': 'Priorización Estratégica'
+        };
+
+        // Override configuration for Seguridad module
+        if (window.App) {
+            // Solo las 5 vistas requeridas (Orden actualizado según sidebar2.html)
+            const vistasSeguridad = ['vista1', 'vista5', 'vista13', 'vista10', 'vista22'];
+
+            App.config.viewsPath = 'vistas2';
+            App.config.defaultView = 'vista1';
+            App.config.views = vistasSeguridad;
+
+            // Monkey Patch: Ensure PDF button is always visible
+            const originalLoadView = App.loadView.bind(App);
+
+            function updateNavigationUI(currentViewName) {
+                const views = App.config.views;
+                const currentIndex = views.indexOf(currentViewName);
+
+                const prevBtn = document.getElementById('btnNavPrev');
+                const nextBtn = document.getElementById('btnNavNext');
+                const prevText = document.getElementById('navPrevText');
+                const nextText = document.getElementById('navNextText');
+
+                if (prevBtn && nextBtn && currentIndex !== -1) {
+                    // Previous Button
+                    if (currentIndex > 0) {
+                        const prevView = views[currentIndex - 1];
+                        if (prevText) prevText.textContent = VIEW_TITLES[prevView] || prevView;
+                        prevBtn.disabled = false;
+                        prevBtn.onclick = () => App.loadView(prevView);
+                        prevBtn.style.display = 'flex';
+                    } else {
+                        prevBtn.style.display = 'none';
+                    }
+
+                    // Next Button
+                    if (currentIndex < views.length - 1) {
+                        const nextView = views[currentIndex + 1];
+                        if (nextText) nextText.textContent = VIEW_TITLES[nextView] || nextView;
+                        nextBtn.disabled = false;
+                        nextBtn.onclick = () => App.loadView(nextView);
+                        nextBtn.style.display = 'flex';
+                    } else {
+                        nextBtn.style.display = 'none';
+                    }
+                }
+            }
+
+            App.loadView = async function (viewName) {
+                await originalLoadView(viewName);
+                // SEC-FIX: Null-check antes de manipular coverBtn
+                if (this.elements && this.elements.coverBtn) {
+                    this.elements.coverBtn.style.display = 'inline-flex';
+                    this.elements.coverBtn.onclick = function () {
+                        if (window.PDFModuleV2) window.PDFModuleV2.exportReport();
+                    };
+                }
+
+                // Update Nav Arrows
+                updateNavigationUI(viewName);
+
+                // Update Sidebar Active Link
+                const sidebarLinks = document.querySelectorAll('.nav-link');
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.dataset.view === viewName) {
+                        link.classList.add('active');
+                        link.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+            };
+
+            // Override sidebar to use v2
+            App.loadSidebar = async function () {
+                try {
+                    const response = await fetch('sidebar2.html');
+                    if (!response.ok) throw new Error(`sidebar2.html not found (${response.status})`);
+                    const html = await response.text();
+                    if (this.elements && this.elements.sidebar) {
+                        this.elements.sidebar.innerHTML = html;
+                    }
+                    this.initNavigation();
+
+                    if (window.STATE_DATA && window.STATE_DATA.isLoaded) {
+                        const comLabel = document.getElementById('sidebarComuna');
+                        if (comLabel) comLabel.textContent = window.STATE_DATA.comunaName;
+                    }
+                } catch (error) {
+                    console.error('Error loading sidebar2:', error);
+                }
+            };
+
+            // Helper para actualizar UI global
+            function updateGlobalUI(comunaName) {
+                const btnText = document.getElementById('btnComunaText');
+                if (btnText) btnText.textContent = comunaName;
+
+                const sbText = document.getElementById('sidebarComuna');
+                if (sbText) sbText.textContent = comunaName;
+            }
+
+            // Listener Global para actualizar headers cuando lleguen los datos
+            window.addEventListener('dataManagerLoaded', (e) => {
+                if (e.detail && e.detail.meta) updateGlobalUI(e.detail.meta.comuna);
+            });
+
+            // Comprobar si YA están cargados
+            if (window.DataManager && window.DataManager.state && window.DataManager.state.isLoaded) {
+                updateGlobalUI(window.DataManager.state.meta.comuna);
+            }
+
+            // Block standard asideRender from layout.js
+            const originalAside = document.getElementById("asideRender");
+            if (originalAside) originalAside.style.display = 'none';
+
+            console.log("🛡️ App Overridden: Mode Seguridad (5 Vistas Estratégicas) Active");
+
+            // Inicializar DESPUÉS de aplicar todos los overrides.
+            // Prevenimos el DOMContentLoaded auto-init de app.js con la bandera _initCalled.
+            App._initCalled = true;
+            App.init();
+        }
+    </script>
+
+    <script src="../../../script/help.js"></script>
+    <script>
+        // ERR-FIX: Llamada directa en lugar de setTimeout(500) frágil.
+        // Si el script está cargado síncronamente, la función ya existe.
+        if (typeof createHelpButton === 'function') {
+            createHelpButton('seguridad_dashboard');
+        }
+    </script>
+</body>
+
+</html>

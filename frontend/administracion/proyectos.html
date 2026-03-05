@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Proyectos - Portal Municipal</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="../division/secplan/admin_general/styles/admin-styles.css">
+
+    <script src="../script/router.js"></script>
+    <script src="../script/api.js"></script>
+    <script src="../script/utils.js"></script>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+    <div id="headerRender"></div>
+    <script src="../script/layout.js"></script>
+
+    <main class="container mx-auto p-4 md:p-8 max-w-7xl">
+        
+        <div class="page-header flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Gestión de Proyectos</h1>
+                <p class="text-slate-500 mt-1">Control centralizado de la cartera de inversión municipal</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="index.html"
+                    class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-all font-medium shadow-sm">
+                    <i class="fas fa-arrow-left text-xs"></i> Volver
+                </a>
+                <button onclick="openModal()"
+                    class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-bold shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-plus text-xs"></i> Nuevo Proyecto
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="md:col-span-3 card-modern !p-4 flex items-center gap-4">
+                <div class="relative flex-1">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInput"
+                        placeholder="Filtrar por nombre, código, área o financiamiento..."
+                        class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-blue-500/10 outline-none transition-all text-slate-600 text-sm">
+                </div>
+                <div id="proyectoCount"
+                    class="text-xs font-bold text-slate-400 uppercase tracking-widest px-4 border-l border-slate-100 hidden md:block whitespace-nowrap">
+                    0 Proyectos
+                </div>
+            </div>
+            <div class="card-modern !p-4 flex items-center justify-between bg-blue-600 text-white">
+                <div>
+                    <div class="text-[10px] font-bold uppercase opacity-80">Inversión Total</div>
+                    <div id="totalMonto" class="text-lg font-bold">$-</div>
+                </div>
+                <i class="fas fa-dollar-sign text-2xl opacity-20"></i>
+            </div>
+        </div>
+
+        <div class="card-modern !p-0 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50/50 border-b border-slate-100">
+                        <tr>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-widest">ID / Código</th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Proyecto</th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Estado / Etapa
+                            </th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Avance</th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Inversión</th>
+                            <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">
+                                Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proyectosBody" class="divide-y divide-slate-50">
+                        
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="loading" class="p-20 text-center">
+                <div
+                    class="inline-block w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin">
+                </div>
+                <p class="mt-4 text-slate-500 font-medium">Cargando portafolio de proyectos...</p>
+            </div>
+
+            <div id="emptyState" class="p-20 text-center hidden">
+                <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-folder-open text-3xl text-slate-300"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">Sin resultados</h3>
+                <p class="text-slate-500">No se encontraron proyectos para los filtros aplicados.</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="proyectoModal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <div>
+                        <h2 id="modalTitle" class="text-xl font-bold text-slate-800">Detalles del Proyecto</h2>
+                        <p class="text-xs text-slate-500 font-medium">Complete la información técnica y administrativa
+                        </p>
+                    </div>
+                </div>
+                <button onclick="closeModal()"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-8 overflow-y-auto custom-scrollbar">
+                <form id="proyectoForm" class="space-y-8">
+                    <input type="hidden" id="editingId">
+
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                            Información General Corregida
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="md:col-span-2 form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Nombre Completo del
+                                    Proyecto *</label>
+                                <input type="text" name="nombre" id="nombre"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                    required>
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Código
+                                    Interno</label>
+                                <input type="text" name="codigo" id="codigo"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">N° de
+                                    Registro</label>
+                                <input type="number" name="n_registro" id="n_registro"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-4 border-t border-slate-50">
+                        <h3 class="text-xs font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                            Clasificación y Estado
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Estado de
+                                    Proyecto</label>
+                                <select name="estado_proyecto" id="estado_proyecto"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"></select>
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Etapa Actual</label>
+                                <select name="etapa_proyecto" id="etapa_proyecto"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"></select>
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Estado
+                                    Postulación</label>
+                                <select name="estado_postulacion" id="estado_postulacion"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"></select>
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Área
+                                    Responsable</label>
+                                <select name="area" id="area"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"></select>
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Avance (%)</label>
+                                <input type="number" name="avance_total_porcentaje" id="avance_total_porcentaje"
+                                    step="0.01" min="0" max="100"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="flex items-end pb-3">
+                                <div
+                                    class="w-full flex items-center gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" name="es_prioridad" id="es_prioridad"
+                                            class="sr-only peer">
+                                        <div
+                                            class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500">
+                                        </div>
+                                    </label>
+                                    <span class="text-[10px] font-bold text-slate-600 uppercase">¿Es Prioridad?</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-4 border-t border-slate-50">
+                        <h3
+                            class="text-xs font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                            Finanzas y Financiamiento
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Fuente de
+                                    Financiamiento</label>
+                                <select name="financiamiento" id="financiamiento"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"></select>
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Monto de Inversión
+                                    ($)</label>
+                                <input type="number" name="monto" id="monto"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="flex items-end pb-3">
+                                <div
+                                    class="w-full flex items-center gap-3 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" name="financiamiento_municipal"
+                                            id="financiamiento_municipal" class="sr-only peer">
+                                        <div
+                                            class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500">
+                                        </div>
+                                    </label>
+                                    <span class="text-[10px] font-bold text-slate-600 uppercase">Financ.
+                                        Municipal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-4 border-t border-slate-50">
+                        <h3 class="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                            Ubicación, Plazos y Profesionales
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Año
+                                    Elaboración</label>
+                                <input type="number" name="anno_elaboracion" id="anno_elaboracion"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Año Ejecución</label>
+                                <input type="number" name="anno_ejecucion" id="anno_ejecucion"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Fecha
+                                    Postulación</label>
+                                <input type="date" name="fecha_postulacion" id="fecha_postulacion"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-xs">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Fecha
+                                    Actualización</label>
+                                <input type="date" name="fecha_actualizacion" id="fecha_actualizacion"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-xs">
+                            </div>
+
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Sector</label>
+                                <select name="sector" id="sector"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"></select>
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Unidad
+                                    Vecinal</label>
+                                <input type="text" name="unidad_vecinal" id="unidad_vecinal"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Latitud</label>
+                                <input type="number" name="latitud" id="latitud" step="any"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Longitud</label>
+                                <input type="number" name="longitud" id="longitud" step="any"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+
+                            <div class="md:col-span-2 form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Lineamiento
+                                    Estratégico</label>
+                                <select name="lineamiento_estrategico" id="lineamiento_estrategico"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"></select>
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Profesional 1</label>
+                                <input type="text" name="profesional_1" id="profesional_1"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Profesional 2</label>
+                                <input type="text" name="profesional_2" id="profesional_2"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-4 border-t border-slate-50">
+                        <h3 class="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                            Hitos Técnicos y Aprobaciones
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Documentos</label>
+                                <input type="text" name="documentos" id="documentos"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                                    placeholder="Estado de docs...">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Planimetrías</label>
+                                <input type="text" name="planimetrias" id="planimetrias"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Topografía</label>
+                                <input type="text" name="topografia" id="topografia"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Ingeniería</label>
+                                <input type="text" name="ingenieria" id="ingenieria"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Aprobación
+                                    DOM</label>
+                                <input type="text" name="aprobacion_dom" id="aprobacion_dom"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Aprobación
+                                    SERVIU</label>
+                                <input type="text" name="aprobacion_serviu" id="aprobacion_serviu"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                            <div class="md:col-span-2 form-group flex flex-col gap-1.5">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase px-1">Perfil Técnico
+                                    Económico</label>
+                                <input type="text" name="perfil_tecnico_economico" id="perfil_tecnico_economico"
+                                    class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-4 border-t border-slate-50">
+                        <h3 class="text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                            Observaciones Generales
+                        </h3>
+                        <div class="form-group flex flex-col gap-1.5">
+                            <textarea name="observaciones" id="observaciones"
+                                class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all h-24 resize-none"
+                                placeholder="Notas adicionales sobre el proyecto..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
+                <button onclick="closeModal()"
+                    class="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-all font-bold text-sm">
+                    Cancelar
+                </button>
+                <button type="submit" form="proyectoForm" id="submitBtn"
+                    class="px-8 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all font-bold text-sm">
+                    <i class="fas fa-save mr-2"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let proyectos = [];
+        const form = document.getElementById('proyectoForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const modal = document.getElementById('proyectoModal');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+        });
+
+        async function init() {
+            await Promise.all([
+                loadProyectos(),
+                fillSelects()
+            ]);
+
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = proyectos.filter(p =>
+                    (p.nombre && p.nombre.toLowerCase().includes(term)) ||
+                    (p.codigo && p.codigo.toLowerCase().includes(term)) ||
+                    (p.area && p.area.toLowerCase().includes(term)) ||
+                    (p.financiamiento && p.financiamiento.toLowerCase().includes(term))
+                );
+                renderProyectos(filtered);
+            });
+
+            form.addEventListener('submit', handleSave);
+        }
+
+        async function fillSelects() {
+            try {
+                const [areas, estados, etapas, postulaciones, financiamientos, sectores, lineamientos] = await Promise.all([
+                    api.get('/areas'),
+                    api.get('/estados_proyecto'),
+                    api.get('/etapas_proyecto'),
+                    api.get('/estados_postulacion'),
+                    api.get('/financiamientos'),
+                    api.get('/sectores'),
+                    api.get('/lineamientos_estrategicos')
+                ]);
+
+                utils.fillSelect('area', areas, 'nombre', 'nombre', 'Seleccione área');
+                utils.fillSelect('estado_proyecto', estados.filter(e => e.activo), 'nombre', 'nombre', 'Seleccione estado');
+                utils.fillSelect('etapa_proyecto', etapas.filter(e => e.activo), 'nombre', 'nombre', 'Seleccione etapa');
+                utils.fillSelect('estado_postulacion', postulaciones.filter(e => e.activo), 'nombre', 'nombre', 'Seleccione estado post.');
+                utils.fillSelect('financiamiento', financiamientos.filter(f => f.activo), 'nombre', 'nombre', 'Seleccione financiamiento');
+                utils.fillSelect('sector', sectores.filter(s => s.activo), 'nombre', 'nombre', 'Seleccione sector');
+                utils.fillSelect('lineamiento_estrategico', lineamientos.filter(l => l.activo), 'nombre', 'nombre', 'Seleccione lineamiento');
+            } catch (error) {
+                console.error('Error filling selects:', error);
+            }
+        }
+
+        async function loadProyectos() {
+            const loading = document.getElementById('loading');
+            const emptyState = document.getElementById('emptyState');
+            const tbody = document.getElementById('proyectosBody');
+            const countEl = document.getElementById('proyectoCount');
+            const montoEl = document.getElementById('totalMonto');
+
+            tbody.innerHTML = '';
+            loading.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            try {
+                proyectos = await api.get('/proyectos');
+                renderProyectos(proyectos);
+
+                countEl.textContent = `${proyectos.length} Proyectos`;
+                countEl.parentElement.classList.remove('hidden');
+
+                const total = proyectos.reduce((acc, p) => acc + (parseFloat(p.monto) || 0), 0);
+                montoEl.textContent = utils.formatCurrency(total);
+            } catch (error) {
+                showToast('Error cargando los proyectos', 'error');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        function renderProyectos(data) {
+            const tbody = document.getElementById('proyectosBody');
+            const emptyState = document.getElementById('emptyState');
+
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            data.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/50 transition-colors group';
+
+                const progressWidth = (p.avance_total_porcentaje > 1 ? p.avance_total_porcentaje : p.avance_total_porcentaje * 100) || 0;
+
+                tr.innerHTML = `
+                    <td class="p-4">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase">#${p.id}</div>
+                        <div class="text-xs font-mono font-bold text-blue-600">${p.codigo || 'SIN CÓDIGO'}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="font-bold text-slate-700 leading-tight">${p.nombre}</div>
+                        <div class="text-[10px] text-slate-400 mt-1 uppercase font-medium line-clamp-1">${p.area || 'Sin área'}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-slate-600">${p.estado_proyecto || '-'}</span>
+                            <span class="text-[9px] text-slate-400 uppercase font-medium">${p.etapa_proyecto || '-'}</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-500 rounded-full" style="width: ${progressWidth}%"></div>
+                            </div>
+                            <span class="text-xs font-bold text-slate-600">${progressWidth.toFixed(1)}%</span>
+                        </div>
+                    </td>
+                    <td class="p-4 font-bold text-slate-700 text-sm">
+                        ${utils.formatCurrency(p.monto)}
+                    </td>
+                    <td class="p-4 text-right">
+                        <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick='editItem(${JSON.stringify(p)})' class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
+                                <i class="fas fa-edit text-xs"></i>
+                            </button>
+                            <button onclick="deleteItem(${p.id})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all">
+                                <i class="fas fa-trash-alt text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openModal(data = null) {
+            form.reset();
+            document.getElementById('editingId').value = '';
+            document.getElementById('modalTitle').textContent = 'Nuevo Proyecto';
+
+            if (data) {
+                document.getElementById('editingId').value = data.id;
+                document.getElementById('modalTitle').textContent = 'Editar Proyecto';
+
+                Object.keys(data).forEach(key => {
+                    const input = form.elements[key];
+                    if (input) {
+                        if (input.type === 'checkbox') {
+                            input.checked = (data[key] === 'SI' || data[key] === true);
+                        } else if (input.type === 'date' && data[key]) {
+                            input.value = data[key].split('T')[0];
+                        } else {
+                            input.value = data[key] || '';
+                        }
+                    }
+                });
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        }
+
+        function editItem(data) {
+            openModal(data);
+        }
+
+        async function handleSave(e) {
+            e.preventDefault();
+            const id = document.getElementById('editingId').value;
+            const originalHTML = submitBtn.innerHTML;
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                const formData = utils.serializeForm(e.target);
+
+                const body = { ...formData };
+                body.es_prioridad = document.getElementById('es_prioridad').checked ? 'SI' : 'NO';
+                body.financiamiento_municipal = document.getElementById('financiamiento_municipal').checked ? 'SI' : 'NO';
+                if (body.monto) body.monto = parseFloat(body.monto);
+                if (body.avance_total_porcentaje) body.avance_total_porcentaje = parseFloat(body.avance_total_porcentaje);
+                if (body.n_registro) body.n_registro = parseInt(body.n_registro);
+                if (body.anno_elaboracion) body.anno_elaboracion = parseInt(body.anno_elaboracion);
+                if (body.anno_ejecucion) body.anno_ejecucion = parseInt(body.anno_ejecucion);
+                if (body.latitud) body.latitud = parseFloat(body.latitud);
+                if (body.longitud) body.longitud = parseFloat(body.longitud);
+
+                if (id) {
+                    await api.put(`/proyectos/${id}`, body);
+                    showToast('Proyecto actualizado');
+                } else {
+                    await api.post('/proyectos', body);
+                    showToast('Proyecto creado exitosamente');
+                }
+
+                closeModal();
+                await loadProyectos();
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHTML;
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('¿Está seguro de que desea eliminar este proyecto? Esta acción no se puede deshacer.')) return;
+
+            try {
+                await api.delete(`/proyectos/${id}`);
+                showToast('Proyecto eliminado');
+                await loadProyectos();
+            } catch (error) {
+                showToast('Error al intentar eliminar', 'error');
+            }
+        }
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    </script>
+</body>
+
+</html>

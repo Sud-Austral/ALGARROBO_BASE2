@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestión Municipal</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../estilos/styles.css">
+</head>
+
+<body>
+    <div id="app-frame">
+
+        <!-- Header -->
+        <div class="app-header" id="main-header">
+            <button class="back-btn" id="btn-back" onclick="app.goBack()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 id="header-title">Gestión Municipal</h1>
+            <button class="logout-btn" id="btn-logout" onclick="app.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+
+            <!-- VISTA: Admin (Gestión) - ACTIVE por defecto -->
+            <div id="view-admin" class="view active">
+                <div class="admin-header">
+                    <h3 style="margin:0"><i class="fas fa-building"></i> Panel de Control</h3>
+                </div>
+
+                <div class="filter-section" style="margin-bottom: 15px;">
+                    <!-- Fila 1: Estado -->
+                    <div class="filter-bar" style="flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                        <span style="font-size:0.75rem; color:#64748b; width:100%; margin-bottom:4px;">Estado:</span>
+                        <button class="filter-btn active" onclick="admin.filter('todos', this)">Todos</button>
+                        <button class="filter-btn" onclick="admin.filter('pendientes', this)">Pendientes</button>
+                        <button class="filter-btn" onclick="admin.filter('en_proceso', this)">En Proceso</button>
+                        <button class="filter-btn" onclick="admin.filter('resueltos', this)">Resueltos</button>
+                        <button class="filter-btn" onclick="admin.filter('descartados', this)">Descartados</button>
+                    </div>
+                    <!-- Fila 2: Categoría -->
+                    <div class="filter-bar" style="flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                        <span style="font-size:0.75rem; color:#64748b; width:100%; margin-bottom:4px;">Categoría:</span>
+                        <button class="filter-btn" onclick="admin.filter('cat_bache', this)">🕳️ Bache</button>
+                        <button class="filter-btn" onclick="admin.filter('cat_luz', this)">💡 Luz</button>
+                        <button class="filter-btn" onclick="admin.filter('cat_aceras', this)">🚶 Aceras</button>
+                        <button class="filter-btn" onclick="admin.filter('cat_otro', this)">📋 Otro</button>
+                    </div>
+                    <!-- Fila 3: Tiempo y Otros -->
+                    <div class="filter-bar" style="flex-wrap: wrap; gap: 6px;">
+                        <span style="font-size:0.75rem; color:#64748b; width:100%; margin-bottom:4px;">Otros:</span>
+                        <button class="filter-btn" onclick="admin.filter('hoy', this)">📅 Hoy</button>
+                        <button class="filter-btn" onclick="admin.filter('semana', this)">📆 Esta Semana</button>
+                        <button class="filter-btn" onclick="admin.filter('no_revisados', this)">👁️ Sin Revisar</button>
+                        <button class="filter-btn" onclick="admin.filter('graves', this)">⚠️ Graves</button>
+                    </div>
+                </div>
+
+                <div id="admin-reports-list" style="padding-bottom: 100px;">
+                    <p style="text-align:center; color:#64748b; margin-top:40px;">Cargando reportes...</p>
+                </div>
+            </div>
+
+            <!-- VISTA: Selección Categoría (Nuevo Reporte) -->
+            <div id="view-home" class="view">
+                <!-- Usamos ID 'view-home' para compatibilidad con app.js si redirige a home -->
+                <div class="home-header">
+                    <h2>Generar Reporte</h2>
+                    <p class="subtitle">Como funcionario</p>
+                </div>
+                <div class="category-grid">
+                    <div class="category-card" onclick="reports.openForm(1)"><i
+                            class="fas fa-road"></i><span>Bache</span></div>
+                    <div class="category-card" onclick="reports.openForm(2)"><i
+                            class="fas fa-lightbulb"></i><span>Luz</span></div>
+                    <div class="category-card" onclick="reports.openForm(3)"><i
+                            class="fas fa-walking"></i><span>Aceras</span></div>
+                    <div class="category-card" onclick="reports.openForm(4)"><i
+                            class="fas fa-ellipsis-h"></i><span>Otro</span></div>
+                </div>
+            </div>
+
+            <!-- VISTA: Formulario de Reporte -->
+            <div id="view-report-form" class="view">
+                <form id="report-form" onsubmit="reports.submit(event)">
+                    <input type="hidden" id="report-category-id">
+                    <div class="form-group">
+                        <label>Ubicación en el Mapa</label>
+                        <div id="map-picker"></div>
+                        <button type="button" class="btn-gps" onclick="reports.useGPS()"><i
+                                class="fas fa-crosshairs"></i> Usar mi ubicación</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Dirección de Referencia</label>
+                        <input type="text" name="direccion_referencia" required placeholder="Ubicación exacta">
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea name="descripcion" rows="4" placeholder="Detalles técnicos..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Gravedad del Problema</label>
+                        <select name="gravedad_id" id="gravedad-select" class="form-control">
+                            <option value="1">Bajo - No urgente</option>
+                            <option value="2" selected>Moderado - Atención normal</option>
+                            <option value="3">Grave - Requiere atención pronta</option>
+                            <option value="4">Muy Grave - Urgente</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Evidencia (Fotos)</label>
+                        <input type="file" id="photo-input" accept="image/*" multiple
+                            onchange="reports.previewPhotos(event)">
+                        <div id="photo-previews" class="photo-grid"></div>
+                    </div>
+                    <button type="submit" class="btn-submit">Registrar Incidente</button>
+                </form>
+            </div>
+
+            <!-- VISTA: Mapa Global -->
+            <div id="view-map" class="view">
+                <div id="full-map" style="height: calc(100vh - 180px);"></div>
+                <div class="map-legend"
+                    style="position: relative; z-index: 500; background: white; padding: 10px; margin-bottom: 70px;">
+                    <div class="legend-item"><span class="legend-dot bache"></span> Bache</div>
+                    <div class="legend-item"><span class="legend-dot luz"></span> Luz</div>
+                    <div class="legend-item"><span class="legend-dot aceras"></span> Aceras</div>
+                    <div class="legend-item"><span class="legend-dot otro"></span> Otro</div>
+                </div>
+            </div>
+
+            <!-- VISTA: Detalle de Reporte -->
+            <div id="view-report-detail" class="view">
+                <div id="report-detail-content"></div>
+            </div>
+
+            <!-- VISTA: Editar Reporte (Solo Funcionarios) -->
+            <div id="view-edit-report" class="view">
+                <form id="edit-report-form" onsubmit="admin.saveEdit(event)" style="padding-bottom: 100px;">
+                    <input type="hidden" id="edit-report-id">
+                    <div class="form-group">
+                        <label>Dirección de Referencia</label>
+                        <input type="text" name="direccion_referencia" id="edit-direccion" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea name="descripcion" id="edit-descripcion" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select name="categoria_id" id="edit-categoria" class="form-control">
+                            <option value="1">Bache</option>
+                            <option value="2">Luz</option>
+                            <option value="3">Aceras</option>
+                            <option value="4">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select name="estado_id" id="edit-estado" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Gravedad</label>
+                        <select name="gravedad_id" id="edit-gravedad" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="edit-revisado" name="revisado">
+                            <span>Marcado como Revisado</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn-submit">Guardar Cambios</button>
+                </form>
+            </div>
+
+            <!-- VISTA: Perfil -->
+            <div id="view-profile" class="view">
+                <div class="profile-header">
+                    <div class="profile-avatar"><i class="fas fa-user-shield"></i></div>
+                    <h2 id="profile-name">Funcionario</h2>
+                    <p id="profile-email">...@munialgarrobo.cl</p>
+                </div>
+                <div class="profile-actions">
+                    <button class="btn-secondary" onclick="app.logout()">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Navigation with High Z-Index -->
+        <nav class="bottom-nav show" id="bottom-nav" style="z-index: 2000;">
+            <div class="nav-item active" id="nav-admin" onclick="app.showView('admin')" style="display:flex !important">
+                <i class="fas fa-tools"></i>
+                <span>Gestión</span>
+            </div>
+            <div class="nav-item" onclick="app.showView('home')">
+                <i class="fas fa-plus-circle"></i>
+                <span>Crear</span>
+            </div>
+            <div class="nav-item" onclick="app.showView('map')">
+                <i class="fas fa-map-marked-alt"></i>
+                <span>Mapa</span>
+            </div>
+            <div class="nav-item" onclick="app.showView('profile')">
+                <i class="fas fa-user-shield"></i>
+                <span>Perfil</span>
+            </div>
+        </nav>
+
+        <!-- Toast Notification -->
+        <div id="toast"></div>
+
+        <!-- Loading Spinner -->
+        <div id="loading-overlay">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+
+    <!-- Image Modal (Lightbox) -->
+    <div id="image-modal" class="image-modal">
+        <button class="image-modal-close" onclick="ui.closeImageModal()">&times;</button>
+        <img class="image-modal-content" id="modal-image" src="">
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>window.APP_MODE = 'funcionario';</script>
+    <script src="../scripts/api.js?v=4"></script>
+    <script src="../scripts/app.js?v=4"></script>
+</body>
+
+</html>

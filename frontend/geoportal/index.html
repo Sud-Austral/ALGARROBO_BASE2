@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geoportal Institucional - Portal Municipal</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="../division/secplan/admin_general/styles/admin-styles.css">
+
+    <script src="../script/router.js"></script>
+    <script src="../script/api.js"></script>
+    <script src="../script/utils.js"></script>
+
+    <style>
+        .geoportal-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: calc(100vh - 65px);
+        }
+
+        .map-card-custom {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .map-card-custom:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .geoportal-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .geoportal-sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+
+    <div id="headerRender"></div>
+    <script src="../script/layout.js"></script>
+
+    <div class="geoportal-layout">
+
+        <aside class="geoportal-sidebar bg-white border-r border-slate-200 p-6 space-y-8">
+            <div>
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Exploración</h3>
+                <nav class="space-y-1">
+                    <a href="#"
+                        class="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-bold text-sm transition-all">
+                        <i class="fas fa-layer-group text-xs"></i>
+                        Panel de Mapas
+                    </a>
+                    <a href="../division/secplan/admin_general/dashboard.html"
+                        class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 rounded-xl font-medium text-sm transition-all">
+                        <i class="fas fa-chart-pie text-xs"></i>
+                        Dashboard SECPLAN
+                    </a>
+                </nav>
+            </div>
+
+            <div
+                class="p-4 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl text-white shadow-xl shadow-blue-500/20">
+                <i class="fas fa-info-circle mb-3 opacity-50"></i>
+                <h4 class="font-bold text-sm mb-1">Privacidad y Capas</h4>
+                <p class="text-[10px] leading-relaxed opacity-80">Las capas mostradas dependen de su nivel de acceso
+                    institucional.</p>
+            </div>
+        </aside>
+
+        <main class="p-4 md:p-8 overflow-y-auto max-h-[calc(100vh-65px)] custom-scrollbar">
+
+            <div class="page-header flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Biblioteca de Mapas</h1>
+                    <p class="text-slate-500 mt-1">Acceso a visores cartográficos y capas de información geográfica</p>
+                </div>
+                <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Mapas Disponibles</span>
+                        <span id="mapCount" class="text-lg font-bold text-blue-600">-</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <i class="fas fa-map"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div id="listaMapas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            </div>
+
+            <div id="loading" class="py-20 text-center">
+                <div
+                    class="inline-block w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin">
+                </div>
+                <p class="mt-4 text-slate-400 font-medium">Sincronizando capas cartográficas...</p>
+            </div>
+
+            <div id="emptyState" class="py-20 text-center hidden">
+                <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-map-marked-alt text-4xl text-slate-300"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">No se encontraron mapas</h3>
+                <p class="text-slate-500 max-w-sm mx-auto">Su perfil de usuario no cuenta con capas asignadas en este
+                    momento. Contacte al administrador de SIG.</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+        });
+
+        async function init() {
+            await cargarMapas();
+        }
+
+        async function cargarMapas() {
+            const listaEl = document.getElementById("listaMapas");
+            const loading = document.getElementById("loading");
+            const emptyState = document.getElementById("emptyState");
+            const mapCountEl = document.getElementById("mapCount");
+
+            listaEl.innerHTML = "";
+            loading.classList.remove("hidden");
+            emptyState.classList.add("hidden");
+
+            try {
+
+                const user = typeof userData !== 'undefined' ? userData : JSON.parse(localStorage.getItem('user_data') || '{}');
+                const roleId = user.nivel_acceso || 1;
+
+                const data = await api.get(`/mapas/por-rol/${roleId}`);
+
+                const mapasList = Array.isArray(data.mapas) ? data.mapas : [];
+                const total = data.total || mapasList.length;
+
+                mapCountEl.textContent = total;
+
+                if (total === 0) {
+                    emptyState.classList.remove("hidden");
+                    return;
+                }
+
+                mapasList.forEach((mapa, index) => {
+                    const card = crearTarjetaMapa(mapa, index);
+                    listaEl.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error("Error cargando mapas:", error);
+
+                showToast("Error al cargar la biblioteca de mapas", "error");
+                emptyState.classList.remove("hidden");
+            } finally {
+                loading.classList.add("hidden");
+            }
+        }
+
+        function crearTarjetaMapa(mapa, index) {
+            const article = document.createElement("article");
+            article.className = "card-modern !p-0 overflow-hidden map-card-custom group";
+
+            const seed = mapa.id || index;
+            const imgSrc = `https://picsum.photos/seed/map${seed}/600/300`;
+
+            article.innerHTML = `
+                <div class="relative h-48 overflow-hidden">
+                    <img src="${imgSrc}" alt="${mapa.nombre}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent flex items-end p-6">
+                        <span class="px-2 py-1 bg-blue-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider mb-2">Visor Activo</span>
+                    </div>
+                </div>
+                <div class="p-6 bg-white">
+                    <h3 class="text-xl font-bold text-slate-800 mb-2 truncate group-hover:text-blue-600 transition-colors">${mapa.nombre}</h3>
+                    <p class="text-sm text-slate-500 line-clamp-2 mb-6 leading-relaxed">
+                        Explora la información geográfica detallada correspondiente a la capa de ${mapa.nombre.toLowerCase()}.
+                    </p>
+                    <a href="${mapa.descripcion}" target="_blank" class="flex items-center justify-center gap-2 w-full py-3 bg-slate-50 text-slate-700 rounded-xl font-bold text-sm hover:bg-blue-600 hover:text-white hover:shadow-lg transition-all">
+                        <i class="fas fa-external-link-alt text-xs"></i>
+                        Explorar Mapa
+                    </a>
+                </div>
+            `;
+            return article;
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script src="../../../script/router.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración General Licitaciones - DataOps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --surface: #ffffff;
+            --background: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .dataops-view {
+            font-family: system-ui, -apple-system, sans-serif;
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 2rem;
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            background-color: var(--background);
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .kpi-card h3 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .kpi-card .value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .data-grid-container {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            overflow: auto;
+            max-height: 70vh;
+            position: relative;
+        }
+
+        .dg-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            text-align: left;
+        }
+
+        .dg-table th,
+        .dg-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        .dg-table th {
+            background: var(--surface);
+            font-weight: 600;
+            color: var(--text-muted);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 1px 0 var(--border);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.75rem;
+        }
+
+        .dg-table tbody tr:hover td {
+            background-color: var(--background);
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge.open {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.closed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <div id="headerRender"></div>
+    <div class="flex">
+        <div id="asideRender"></div>
+        <main class="flex-1 w-full relative">
+            <div class="dataops-view">
+
+                <div>
+                    <h1 style="font-size: 1.5rem; font-weight: 700;">Panel Estratégico General Licitaciones</h1>
+                    <p style="color: var(--text-muted); font-size: 0.875rem;">Consolidado Administrativo Global</p>
+                </div>
+
+                <section class="kpi-grid">
+                    <div class="kpi-card">
+                        <h3>Instancias Activas</h3>
+                        <div class="value" id="statTotal">--</div>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Fase Publicación</h3>
+                        <div class="value" style="color: #ca8a04;" id="statPublicacion">--</div>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Licitaciones Adjudicadas</h3>
+                        <div class="value" style="color: #166534;" id="statAdjudicadas">--</div>
+                    </div>
+                </section>
+
+                <section class="data-grid-container">
+                    <table class="dg-table">
+                        <thead>
+                            <tr>
+                                <th>Cod. Base Mercado</th>
+                                <th>Nomenclatura Proyecto Interno</th>
+                                <th>Estado de Ejecución</th>
+                                <th style="text-align: right;">Presupuesto Analizado</th>
+                                <th style="text-align: right;">Operación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="licitacionesTable">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                    Validando Conexión Backend...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="../../../script/layout.js"></script>
+    <script src="../../../script/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const data = await api.get('/licitaciones');
+                const t = document.getElementById('licitacionesTable');
+
+                if (!data.length) {
+                    t.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 2rem;">Matriz vacía.</td></tr>`;
+                    return;
+                }
+
+                document.getElementById('statTotal').textContent = data.length;
+                document.getElementById('statPublicacion').textContent = data.filter(l => l.estado_licitacion === 'Publicada').length || 0;
+                document.getElementById('statAdjudicadas').textContent = data.filter(l => l.estado_licitacion === 'Adjudicada').length || 0;
+
+                t.innerHTML = data.map(l => {
+                    const prog = (l.pasos_completados / 32) * 100;
+                    const isOpen = (l.estado_licitacion || 'Abierta') === 'Abierta';
+                    const bgBadge = isOpen ? 'open' : 'closed';
+                    const txtBadge = isOpen ? 'Operacional' : 'Finalizada';
+                    const moneda = new Intl.NumberFormat('es-CL').format(l.monto_estimado || 0);
+
+                    return `<tr>
+                        <td style="font-family: monospace; font-weight: 600;">${l.id_mercado_publico || 'N/A'}</td>
+                        <td><div style="font-weight:700;">${l.nombre_licitacion}</div><div style="font-size:0.75rem; color:var(--text-muted);">${l.proyecto_nombre}</div></td>
+                        <td>
+                            <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:600; color:var(--primary);">
+                                <span><span class="badge ${bgBadge}">${txtBadge}</span></span> <span>${prog.toFixed(0)}%</span>
+                            </div>
+                            <div class="progress-track"><div class="progress-fill" style="width: ${prog}%"></div></div>
+                        </td>
+                        <td style="text-align: right; font-weight: 600; color: var(--text-main);">$${moneda}</td>
+                        <td style="text-align: right;">
+                            <a href="../admin_proyectos/seguimiento.html?id=${l.id}" style="color:var(--primary); font-weight:700; font-size:0.75rem; text-decoration:none;">AUDITAR <i class="fas fa-arrow-right"></i></a>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { console.error('Error inyectando datos', e); }
+        });
+    </script>
+
+    <script src="../../../script/help.js"></script>
+    <script>if(typeof createHelpButton === 'function') createHelpButton('lic_admin_general');</script>
+</body>
+
+</html>

@@ -1,0 +1,1057 @@
+/**
+ * Sistema de Ayuda - Modal de ayuda contextual para cada vista
+ */
+
+const helpContent = {
+    dashboard: {
+        title: 'Dashboard de Proyectos',
+        icon: 'fa-chart-line',
+        description: 'Panel principal de visualización y análisis de la cartera de proyectos municipales.',
+        features: [
+            'Visualiza KPIs principales: proyectos activos, inversión total, avance promedio y más',
+            'Explora gráficos interactivos organizados por categorías: estado, área, financiamiento, etc.',
+            'Consulta los últimos 10 proyectos modificados con sus detalles',
+            'Los datos se actualizan automáticamente al cargar la página'
+        ],
+        tips: [
+            'Pasa el cursor sobre los gráficos para ver detalles específicos',
+            'Los valores monetarios están expresados en millones (M) o miles (K)',
+            'El avance promedio considera todos los proyectos activos'
+        ]
+    },
+    proyecto: {
+        title: 'Gestión de Proyectos',
+        icon: 'fa-folder-open',
+        description: 'Módulo central para la administración integral del portafolio de proyectos municipales. Permite crear, editar, visualizar y analizar la cartera completa de iniciativas de inversión, facilitando la toma de decisiones estratégicas y el seguimiento detallado de cada proyecto.',
+        features: [
+            '📝 Crear nuevos proyectos con formulario completo: nombre, código, descripción, objetivo, monto total, fuente de financiamiento, área responsable y más',
+            '✏️ Editar proyectos existentes con actualización de todos los campos: estado actual, avances, montos ejecutados, fechas clave',
+            '🔍 Sistema de filtros avanzados: combina criterios por estado (diseño, licitación, ejecución, terminado), área municipal, profesional responsable, año de inicio, financiamiento',
+            '🔎 Búsqueda inteligente en tiempo real por nombre, código, sector, descripción o cualquier campo visible en la tabla',
+            '👥 Asignación de equipo de trabajo: hasta 5 profesionales responsables por proyecto con roles específicos (jefe de proyecto, coordinador, supervisor, etc.)',
+            '📍 Geolocalización precisa: ingreso de coordenadas geográficas (latitud/longitud) para visualización en mapa',
+            '📊 Registro de avance físico y financiero: actualización de porcentajes de ejecución y montos gastados vs. presupuestados',
+            '📅 Gestión de fechas: inicio programado, inicio real, término programado, término real, próximos hitos',
+            '💰 Control presupuestario: monto total, monto ejecutado, saldo disponible, proyecciones de gasto',
+            '🏷️ Categorización múltiple: área, sector territorial, tipo de inversión, prioridad estratégica, beneficiarios',
+            '📄 Exportación de datos: descarga la tabla filtrada en Excel (XLSX) o PDF con formato profesional',
+            '🔄 Sincronización automática: los cambios se reflejan inmediatamente en dashboard, mapas, calendario e informes',
+            '📋 Visualización de historial: registro de todas las modificaciones realizadas a cada proyecto con fecha y usuario',
+            '🎯 Marcado de proyectos prioritarios: destaca iniciativas estratégicas para seguimiento especial',
+            '📸 Adjuntar fotografías: vincula imágenes de avance físico, situación inicial y final del proyecto'
+        ],
+        tips: [
+            '💡 Combina múltiples filtros para encontrar proyectos específicos (ejemplo: "Área: Vialidad + Estado: Ejecución + Año: 2025")',
+            '💡 El campo de avance acepta valores decimales entre 0 y 1 (ejemplo: 0.75 = 75%). También puedes ingresar porcentajes directamente',
+            '💡 Usa el botón "Limpiar Filtros" para volver a ver todos los proyectos de la cartera',
+            '💡 Las coordenadas geográficas deben estar en formato decimal (ejemplo: Latitud: -33.456789, Longitud: -70.123456)',
+            '💡 El código de proyecto es único y sirve como identificador en todos los módulos del sistema',
+            '💡 Actualiza regularmente el estado y avance de cada proyecto para mantener la información al día',
+            '💡 Los profesionales asignados recibirán notificaciones sobre cambios importantes en sus proyectos',
+            '💡 Exporta la lista filtrada antes de reuniones o presentaciones para tener reportes actualizados',
+            '💡 Los montos deben ingresarse en pesos chilenos (CLP) sin puntos ni comas, el sistema los formateará automáticamente',
+            '💡 Haz doble clic en una fila para abrir rápidamente el modo de edición del proyecto'
+        ]
+    },
+    informe: {
+        title: 'Centro de Informes y Reportería',
+        icon: 'fa-file-chart-line',
+        description: 'Plataforma integral de generación de reportes profesionales para análisis de la cartera de proyectos. Produce documentos ejecutivos con datos actualizados, gráficos estadísticos, tablas dinámicas y resúmenes inteligentes generados por IA, facilitando la presentación de información a autoridades y stakeholders.',
+        features: [
+            '📊 10+ tipos de informes predefinidos: cartera completa, análisis por estado, distribución por área, análisis financiero, proyectos prioritarios, avance general, ejecución presupuestaria, cronograma de actividades, proyectos por profesional, situación territorial',
+            '🎨 Múltiples formatos de salida: PDF profesional con diseño institucional, Excel editable con tablas dinámicas, visualización HTML interactiva',
+            '🔧 Configuración de parámetros: selecciona área específica, filtro por profesional responsable, rango de años, estados a incluir, tipo de financiamiento',
+            '🤖 Resumen ejecutivo con IA: cada informe PDF incluye un resumen analítico generado automáticamente que destaca los puntos clave, tendencias y recomendaciones',
+            '📈 Gráficos automáticos integrados: tortas de distribución, barras de comparación, líneas de tendencia, mapas de calor, diagramas de Gantt',
+            '📋 Tablas detalladas con indicadores: monto total, avance físico y financiero, plazos, responsables, estados críticos',
+            '👁️ Vista previa interactiva: revisa el contenido del informe antes de generar el archivo final, con navegación por secciones',
+            '📅 Información de generación: cada reporte incluye fecha, hora, usuario generador y parámetros de filtrado aplicados',
+            '🔄 Actualización en tiempo real: los datos mostrados reflejan el estado actual de la cartera al momento de generar el informe',
+            '📧 Opciones de distribución: envío directo por correo, descarga local, almacenamiento en la nube',
+            '🎯 Informes personalizados: crea plantillas propias combinando diferentes secciones y métricas',
+            '📊 Dashboard de informes: historial de reportes generados con opción de regenerar con datos actualizados',
+            '🔍 Análisis comparativo: genera informes que comparan períodos, áreas o estados diferentes',
+            '💾 Guardado de configuraciones: guarda tus filtros favoritos para generar informes recurrentes rápidamente',
+            '🌐 Marca institucional: todos los informes incluyen logos, colores y formato oficial del municipio'
+        ],
+        tips: [
+            '💡 Genera el "Informe de Cartera Completa" mensualmente para seguimiento de gestión y archivo histórico',
+            '💡 El resumen de IA analiza automáticamente los datos y puede identificar proyectos en riesgo o tendencias importantes',
+            '💡 Usa filtros específicos para crear informes focalizados (ejemplo: "Solo proyectos de Vialidad en Ejecución")',
+            '💡 Los informes Excel permiten análisis posterior con tablas dinámicas y fórmulas personalizadas',
+            '💡 La vista previa te ahorra tiempo: revisa primero antes de generar el documento final',
+            '💡 Combina el informe financiero con análisis de avance físico para detectar desfases presupuestarios',
+            '💡 Programa la generación automática de informes recurrentes para envío a autoridades cada fin de mes',
+            '💡 Incluye siempre el período de análisis en el nombre del archivo (ejemplo: "Informe_Cartera_Enero_2025.pdf")',
+            '💡 Los gráficos son editables en la versión Excel si necesitas personalizar presentaciones',
+            '💡 Archiva los informes generados para crear un historial de evolución de la cartera',
+            '💡 El informe por profesional es útil para evaluaciones de desempeño y distribución de carga laboral'
+        ]
+    },
+    calendario: {
+        title: 'Calendario de Eventos y Planificación',
+        icon: 'fa-calendar-alt',
+        description: 'Sistema de gestión temporal que centraliza todos los eventos, hitos, fechas clave y actividades relacionadas con los proyectos municipales. Permite visualizar la agenda completa, planificar recursos, anticipar hitos críticos y coordinar múltiples iniciativas simultáneas con visión integrada.',
+        features: [
+            '📅 Múltiples vistas de calendario: mensual (vista general), semanal (planificación detallada), diaria (agenda específica), lista cronológica',
+            '🎯 Sincronización automática de hitos: todos los hitos registrados en proyectos aparecen automáticamente con código de colores según importancia',
+            '➕ Creación manual de eventos: registra reuniones, visitas a terreno, presentaciones, licitaciones, entregas, inspecciones, inauguraciones',
+            '🏷️ Categorización de eventos: hito de proyecto, reunión técnica, reunión con comunidad, licitación, inspección, entrega parcial, término de obra, inauguración, reunión de coordinación',
+            '🎨 Código de colores personalizable: diferencia visualmente tipos de eventos (verde: hitos completados, naranja: próximos, rojo: atrasados, azul: reuniones)',
+            '🔔 Sistema de recordatorios: configura alertas por correo o notificación en sistema 1 día, 3 días o 1 semana antes',
+            '📝 Detalles completos por evento: título, descripción, proyecto asociado, responsable, ubicación, duración, asistentes, documentos adjuntos',
+            '🔍 Filtros dinámicos: muestra solo eventos de un área específica, un profesional, un tipo de evento, o un proyecto particular',
+            '🔗 Vinculación con proyectos: cada evento puede estar asociado a uno o varios proyectos para trazabilidad completa',
+            '📊 Vista de carga de trabajo: identifica períodos con alta concentración de eventos para mejor planificación de recursos',
+            '↔️ Navegación rápida: botones para avanzar/retroceder meses, ir a hoy, saltar a fecha específica',
+            '📥 Exportación a formatos estándar: descarga el calendario en formato iCal o Google Calendar para sincronizar con agenda personal',
+            '🔄 Actualización en tiempo real: los cambios en fechas de proyectos actualizan automáticamente el calendario',
+            '👥 Vista por responsable: filtra eventos asignados a un profesional específico para ver su agenda',
+            '📍 Geolocalización de eventos: asocia eventos con ubicaciones específicas para planificar traslados'
+        ],
+        tips: [
+            '💡 Revisa la vista mensual cada lunes para planificar la semana de actividades',
+            '💡 Los hitos importantes (licitaciones, entregas) se sincronizan automáticamente desde la gestión de proyectos',
+            '💡 Usa colores consistentes: por ejemplo, siempre rojo para eventos críticos, verde para hitos completados',
+            '💡 Registra reuniones con comunidad para documentar participación ciudadana y compromisos adquiridos',
+            '💡 Configura recordatorios para eventos críticos como inicios de licitación o vencimientos de plazos',
+            '💡 La vista semanal es ideal para coordinar equipos de inspección y visitas a terreno',
+            '💡 Filtra por área para ver la agenda específica de cada unidad municipal',
+            '💡 Exporta el calendario antes de vacaciones para coordinar coberturas y delegaciones',
+            '💡 Vincula siempre los eventos a proyectos específicos para mantener trazabilidad completa',
+            '💡 Usa la vista diaria para preparar la agenda del día con anticipación',
+            '💡 Registra eventos recurrentes (reuniones semanales de coordinación) para no olvidarlos'
+        ]
+    },
+    mapa: {
+        title: 'Mapa Territorial de Proyectos',
+        icon: 'fa-map-marked-alt',
+        description: 'Plataforma de visualización geoespacial que muestra la distribución territorial de todos los proyectos municipales. Permite análisis geográfico de la inversión, identificación de zonas con mayor/menor cobertura, planificación territorial y comunicación visual del impacto de las iniciativas en el territorio comunal.',
+        features: [
+            '🗺️ Mapa interactivo de alta calidad: visualización sobre cartografía base OpenStreetMap con controles de zoom, pan y capas',
+            '📍 Marcadores diferenciados: cada proyecto aparece con un pin personalizado según su estado (verde: ejecución, azul: diseño, gris: terminado)',
+            '💬 Popups informativos: haz clic en cualquier marcador para ver ficha resumen con nombre, monto, estado, avance, profesional responsable',
+            '🎯 Filtros geográficos: muestra solo proyectos de sectores específicos, áreas municipales, o rangos de inversión',
+            '📏 Herramientas de medición: mide distancias entre proyectos, calcula áreas de influencia, traza rutas',
+            '🌍 Capas de información territorial: límite urbano, sectores censales, equipamiento público, áreas protegidas, zonificación PRC',
+            '🔍 Búsqueda geográfica: localiza proyectos por dirección, sector o cercanía a un punto de referencia',
+            '📊 Análisis de clusters: identifica zonas con concentración de proyectos para análisis de inversión territorial',
+            '📐 Visualización de polígonos: muestra áreas de intervención de proyectos que abarcan zonas amplias (pavimentaciones, parques, etc.)',
+            '🎨 Código de colores por monto: gradiente visual que muestra proyectos de mayor inversión en colores más intensos',
+            '📷 Street View integrado: accede a vistas de calle para contextualizar la ubicación de cada proyecto',
+            '📱 Responsive design: funciona perfectamente en escritorio, tablet y móvil para inspecciones en terreno',
+            '🔄 Sincronización automática: actualización en tiempo real de ubicaciones cuando se modifican coordenadas en gestión de proyectos',
+            '📥 Exportación de mapas: descarga capturas de pantalla del mapa actual con leyenda y escala incluidas',
+            '🌐 Compartir ubicaciones: genera enlaces directos a proyectos específicos en el mapa para compartir con stakeholders'
+        ],
+        tips: [
+            '💡 Solo aparecen proyectos que tienen coordenadas geográficas registradas en el módulo de gestión',
+            '💡 Haz zoom para ver proyectos cercanos que pueden estar superpuestos en vistas alejadas',
+            '💡 Usa las capas territoriales para analizar la relación de proyectos con zonificación y planificación urbana',
+            '💡 Los colores de los pines ayudan a identificar rápidamente el estado de proyectos en cada sector',
+            '💡 Genera mapas impresos para presentaciones a concejo o reuniones con la comunidad',
+            '💡 El análisis de clusters ayuda a identificar sectores con sobre o sub inversión',
+            '💡 Combina el filtro de área con el mapa para ver la distribución territorial de cada unidad municipal',
+            '💡 Usa el scroll del mouse para hacer zoom, o los botones + - para control preciso',
+            '💡 Haz clic derecho en el mapa para obtener coordenadas de cualquier punto',
+            '💡 Activa varias capas simultáneamente para análisis territorial complejo',
+            '💡 Exporta el mapa anual para documentar la cobertura territorial de la inversión municipal'
+        ]
+    },
+    hitos: {
+        title: 'Gestión de Hitos y Fechas Clave',
+        icon: 'fa-flag',
+        description: 'Sistema especializado para registrar, monitorear y controlar los hitos críticos de cada proyecto. Permite establecer fechas planificadas vs. reales, documentar el cumplimiento de etapas, generar alertas de retrasos y mantener un historial completo de avances, facilitando el control de gestión y la rendición de cuentas.',
+        features: [
+            '🎯 Creación de hitos estructurados: asocia cada hito a un proyecto específico con categoría predefinida (inicio, licitación, adjudicación, inicio obras, entrega parcial, término, recepción)',
+            '📅 Registro de fechas múltiples: fecha planificada original, fecha reprogramada (si aplica), fecha real de cumplimiento, alertas de anticipación',
+            '📝 Documentación detallada: descripción del hito, observaciones, documentos respaldo, fotografías de evidencia, responsable del registro',
+            '🏷️ Categorización avanzada: tipo de hito (administrativo, técnico, financiero), criticidad (alta, media, baja), estado (pendiente, en proceso, completado, retrasado)',
+            '📊 Historial completo por proyecto: visualiza cronológicamente todos los hitos de un proyecto con indicadores de cumplimiento',
+            '🔔 Sistema de alertas automáticas: notificaciones por correo cuando se acerca la fecha de un hito crítico (7 días, 3 días, 1 día antes)',
+            '📈 Indicadores de desempeño: porcentaje de hitos cumplidos en plazo, promedio de días de retraso, tasa de cumplimiento por área',
+            '🔍 Filtros multidimensionales: busca por proyecto, categoría de hito, rango de fechas, estado, profesional responsable',
+            '🔗 Sincronización con calendario: todos los hitos aparecen automáticamente en el calendario general del sistema',
+            '💬 Comentarios y seguimiento: registra observaciones sobre el cumplimiento o incumplimiento de cada hito',
+            '📄 Exportación de cronogramas: descarga el historial de hitos en Excel o PDF para reportes de avance',
+            '🎨 Visualización tipo timeline: línea de tiempo gráfica que muestra la secuencia planned vs. real de hitos',
+            '🔄 Actualización masiva: marca múltiples hitos como completados simultáneamente con fecha y evidencia',
+            '📊 Dashboard de hitos: panel con próximos hitos críticos, hitos retrasados, hitos del mes',
+            '🗂️ Plantillas de hitos: crea sets predefinidos de hitos típicos para cada tipo de proyecto (obras, estudios, adquisiciones)'
+        ],
+        tips: [
+            '💡 Registra tanto la fecha planificada como la real para calcular automáticamente desvíos de programación',
+            '💡 Categoriza correctamente cada hito para que las alertas lleguen a los responsables pertinentes',
+            '💡 Usa observaciones detalladas para documentar razones de retrasos o cambios de programación',
+            '💡 Los hitos críticos (inicio de licitación, entrega de obra) deben tener máxima prioridad de seguimiento',
+            '💡 Adjunta documentos de respaldo (actas, certificados) al registrar el cumplimiento de hitos importantes',
+            '💡 Revisa semanalmente el panel de próximos hitos para anticipar acciones y coordinar recursos',
+            '💡 Configura alertas para hitos financieros (vencimientos de pagos, rendiciones) que son particularmente críticos',
+            '💡 El historial de hitos es fundamental para auditorías y evaluaciones de gestión',
+            '💡 Usa las plantillas para agilizar la creación de hitos en proyectos similares',
+            '💡 Exporta el cronograma de hitos para incluir en informes de avance mensuales',
+            '💡 Marca los hitos completados con evidencia fotográfica para documentación visual del avance'
+        ]
+    },
+    observacion: {
+        title: 'Sistema de Observaciones y Minutas',
+        icon: 'fa-comment-alt',
+        description: 'Plataforma colaborativa para documentar notas, comentarios, observaciones técnicas, acuerdos, compromisos y decisiones relacionadas con cada proyecto. Funciona como una bitácora digital que mantiene el registro histórico de todas las comunicaciones relevantes, facilitando la trazabilidad, transparencia y gestión del conocimiento institucional.',
+        features: [
+            '📝 Creación de observaciones estructuradas: vincula cada registro a un proyecto específico con fecha, autor, tipo y contenido',
+            '🏷️ Tipos de observación predefinidos: observación técnica, acuerdo de reunión, compromiso, alerta, cambio de alcance, decisión de diseño, consulta ciudadana, hallazgo de inspección',
+            '👤 Atribución automática: cada observación registra automáticamente quién la creó, fecha, hora y contexto',
+            '📊 Historial cronológico completo: visualiza todas las observaciones de un proyecto ordenadas por fecha, con búsqueda y filtrado',
+            '🔍 Búsqueda avanzada: encuentra observaciones por palabra clave en contenido, proyecto, autor, tipo o rango de fechas',
+            '💬 Hilos de conversación: las observaciones pueden tener respuestas y comentarios, creando threads informativos',
+            '📎 Adjuntos multimedia: anexa documentos PDF, imágenes, planos, correos electrónicos como respaldo de cada observación',
+            '🔔 Menciones y notificaciones: menciona a usuarios específicos (@usuario) para que reciban alertas de observaciones importantes',
+            '🎯 Marcado de prioridad: clasifica observaciones como urgente, importante o informativa para seguimiento diferenciado',
+            '📋 Estado de observación: pendiente, en revisión, resuelta, descartada - permite hacer seguimiento de cierre',
+            '📊 Panel de observaciones pendientes: dashboard que muestra observaciones sin resolver por proyecto o responsable',
+            '🔄 Sincronización con workflow: las observaciones críticas pueden generar tareas automáticas en el sistema',
+            '📄 Exportación de minutas: genera documentos Word o PDF con todas las observaciones de un proyecto o período',
+            '🔐 Niveles de privacidad: observaciones públicas (todo el equipo) y privadas (solo involucrados)',
+            '📅 Integración con calendario: observaciones con fecha de seguimiento aparecen como recordatorios en calendario'
+        ],
+        tips: [
+            '💡 Usa observaciones inmediatamente después de reuniones importantes para no olvidar acuerdos y compromisos',
+            '💡 Las observaciones técnicas de inspecciones son evidencia clave para control de calidad y resolución de conflictos',
+            '💡 Menciona a profesionales responsables para que reciban notificación y puedan responder o tomar acción',
+            '💡 Adjunta siempre evidencia (fotos, planos marcados) cuando registres observaciones técnicas en terreno',
+            '💡 Marca como "urgente" solo observaciones que requieren acción inmediata para no saturar de alertas',
+            '💡 Revisa regularmente el panel de observaciones pendientes para dar seguimiento a compromisos',
+            '💡 Las observaciones forman un registro histórico valioso para futuras licitaciones y proyectos similares',
+            '💡 Usa tipos específicos de observación para facilitar búsquedas posteriores (ej: filtrar solo "acuerdos de reunión")',
+            '💡 Exporta las observaciones de un proyecto terminado como lección aprendida para futuros proyectos',
+            '💡 Las observaciones ciudadanas deben responderse y marcarse como resueltas para rendición de cuentas',
+            '💡 Crea un hilo de observaciones relacionadas en vez de múltiples registros separados para mejor trazabilidad'
+        ]
+    },
+    documento: {
+        title: 'Repositorio de Documentos de Proyectos',
+        icon: 'fa-file-alt',
+        description: 'Sistema centralizado de gestión documental que organiza, almacena y proporciona acceso seguro a todos los archivos relacionados con los proyectos municipales. Incluye estudios técnicos, planos, contratos, informes, fotografías, permisos y cualquier documento relevante, con control de versiones, búsqueda avanzada y visor integrado.',
+        features: [
+            '📤 Carga de documentos multiformato: soporta PDF, Word, Excel, imágenes (JPG, PNG), AutoCAD (DWG, DXF), archivos comprimidos (ZIP, RAR)',
+            '🏷️ Categorización detallada: clasifica documentos por tipo (estudio técnico, plano, contrato, presupuesto, informe de avance, fotografía, permiso, licitación, acta, correspondencia)',
+            '🔗 Vinculación a proyectos: asocia cada documento a uno o varios proyectos específicos para organización y búsqueda',
+            '📝 Metadata completa: registra nombre descriptivo, descripción, tipo, fecha de creación, versión, autor, palabras clave',
+            '👁️ Visor integrado: visualiza PDFs, imágenes y documentos directamente en el navegador sin necesidad de descargar',
+            '💾 Descarga individual o masiva: descarga un documento, varios seleccionados, o todos los de un proyecto en archivo ZIP',
+            '🔍 Búsqueda multifacética: busca por nombre, tipo, proyecto, fecha, autor, contenido (OCR en PDFs), palabras clave',
+            '📊 Filtros combinados: área, tipo de documento, rango de fechas, tamaño de archivo, proyecto',
+            '🔄 Control de versiones: sube nuevas versiones manteniendo el historial completo con comparación de cambios',
+            '📋 Historial de accesos: registro de quién abrió o descargó cada documento con fecha y hora',
+            '🔐 Permisos granulares: define quién puede ver, descargar, editar o eliminar cada documento',
+            '📎 Múltiples documentos simultáneos: carga varias archivos a la vez con drag & drop',
+            '🏷️ Etiquetado colaborativo: agrega tags personalizados para organización adicional',
+            '📸 Galería de fotos: vista especial para documentos tipo imagen, con slideshow y comparación antes/después',
+            '🔔 Notificaciones de nuevos documentos: alertas automáticas al equipo cuando se suben documentos críticos',
+            '📊 Estadísticas de repositorio: tamaño total, documentos por tipo, documentos más descargados, actividad reciente'
+        ],
+        tips: [
+            '💡 Usa nombres descriptivos y específicos: "Plano_Arquitectura_Plaza_v3.pdf" en vez de "plano3.pdf"',
+            '💡 Los documentos grandes (>10MB) pueden tardar en cargarse, considera comprimirlos si es posible',
+            '💡 Categoriza correctamente para facilitar búsquedas futuras y cumplir con archivo municipal',
+            '💡 Sube versiones actualizadas en vez de duplicar documentos para mantener orden y ahorrar espacio',
+            '💡 Las fotografías de avance físico son evidencia valiosa, súbelas regularmente con fechas claras',
+            '💡 Usa el visor integrado antes de descargar para verificar que es el documento correcto',
+            '💡 Los planos técnicos deben incluir en la descripción la especialidad (arquitectura, estructuras, instalaciones)',
+            '💡 Descarga todos los documentos de un proyecto en ZIP antes de licitaciones o entregas importantes',
+            '💡 Elimina regularmente documentos obsoletos o duplicados para liberar espacio de almacenamiento',
+            '💡 Agrega palabras clave relevantes en la descripción para mejorar las búsquedas',
+            '💡 Los contratos y documentos legales deben tener máxima prioridad de respaldo y control de acceso',
+            '💡 Establece una nomenclatura estándar de archivos para todo el equipo (ejemplo: TIPO_PROYECTO_DESCRIPCION_VERSION)'
+        ]
+    },
+    geomapas: {
+        title: 'Gestión de Capas Geográficas (GeoJSON)',
+        icon: 'fa-draw-polygon',
+        description: 'Herramienta especializada para la administración de información geoespacial avanzada de los proyectos. Permite crear, importar, visualizar y analizar geometrías vectoriales (polígonos, líneas, puntos) en formato GeoJSON, representando áreas de intervención, trazados de obras lineales, límites de proyectos y zonas de influencia con precisión cartográfica.',
+        features: [
+            '🗺️ Creación de geometrías GeoJSON: define polígonos de áreas de intervención, líneas de trazados (calles, redes), puntos de interés múltiples',
+            '📤 Importación de archivos: carga GeoJSON creados en herramientas externas (QGIS, ArcGIS, Google Earth Pro)',
+            '🔗 Asociación a proyectos: vincula cada geomapa a uno o varios proyectos para análisis territorial integrado',
+            '📝 Metadata geográfica: nombre de la capa, descripción, sistema de coordenadas, propiedades alfanuméricas',
+            '🎨 Estilos personalizables: define colores de relleno, borde, transparencia, grosor de línea para visualización',
+            '👁️ Visor cartográfico integrado: visualiza las geometrías sobre mapa base con zoom, pan y mediciones',
+            '📐 Herramientas de análisis espacial: cálculo de áreas, perímetros, longitudes, centroides',
+            '🔍 Consultas espaciales: identifica proyectos dentro de un polígono, cercanía a vías, superposiciones',
+            '📊 Tabla de atributos: cada feature en el GeoJSON puede tener propiedades alfanuméricas (nombre, tipo, etc.)',
+            '💾 Exportación estándar: descarga las geometrías en formato GeoJSON estándar para uso en otros sistemas SIG',
+            '🔄 Sincronización con mapa principal: las geometrías aparecen automáticamente en el módulo de mapa de proyectos',
+            '📏 Validación geométrica: el sistema verifica que las geometrías sean válidas según estándar OGC',
+            '🌐 Soporte multi-proyección: importa GeoJSON en diferentes sistemas de coordenadas con reproyección automática',
+            '📋 Historial de capas: mantiene versiones anteriores de geometrías para control de cambios',
+            '🎯 Casos de uso: áreas de parques, trazados de pavimentación, límites de intervención, zonas de beneficiarios, cobertura de servicios'
+        ],
+        tips: [
+            '💡 Los geomapas permiten representar proyectos que no son puntuales sino áreas completas (parques, pavimentaciones)',
+            '💡 Puedes crear GeoJSON en QGIS (software libre) y subirlos directamente al sistema',
+            '💡 Verifica siempre que el sistema de coordenadas sea WGS84 (EPSG:4326) para compatibilidad',
+            '💡 Las propiedades del GeoJSON (nombre de calle, tipo de superficie) se muestran al hacer clic en el mapa',
+            '💡 Usa colores diferenciados para distinguir tipos de intervención (verde: áreas verdes, gris: pavimentos)',
+            '💡 Los polígonos de intervención son útiles para calcular beneficiarios según densidad poblacional',
+            '💡 Exporta los geomapas para compartir con otros departamentos o instituciones externas',
+            '💡 Las geometrías lineales (redes de agua, vías) deben tener propiedades de longitud para cubicación',
+            '💡 Mantén las geometrías simples: polígonos muy complejos cargan lento en el visor',
+            '💡 Documenta en la descripción la fuente de la geometría (levantamiento GPS, digitalización de plano, etc.)',
+            '💡 Usa geomapas para planificación: superpone áreas de proyectos futuros con servicios existentes'
+        ]
+    },
+    user: {
+        title: 'Gestión de Usuarios',
+        icon: 'fa-users-cog',
+        description: 'Administra los usuarios del sistema y sus permisos.',
+        features: [
+            'Ver listado de usuarios registrados',
+            'Crear nuevos usuarios con diferentes roles',
+            'Editar información de usuarios existentes',
+            'Activar o desactivar cuentas de usuario'
+        ],
+        tips: [
+            'Los roles determinan los permisos de cada usuario',
+            'Mantén actualizados los datos de contacto',
+            'Solo administradores pueden gestionar usuarios'
+        ]
+    },
+    analisis: {
+        title: 'Análisis de Datos',
+        icon: 'fa-analytics',
+        description: 'Herramientas avanzadas de análisis de la cartera de proyectos.',
+        features: [
+            'Análisis estadístico de proyectos',
+            'Comparativas entre períodos',
+            'Indicadores de gestión',
+            'Tendencias y proyecciones'
+        ],
+        tips: [
+            'Usa filtros para análisis más específicos',
+            'Los gráficos son interactivos',
+            'Exporta los resultados del análisis'
+        ]
+    },
+    chat: {
+        title: 'Asistente IA',
+        icon: 'fa-robot',
+        description: 'Consulta información sobre proyectos usando inteligencia artificial.',
+        features: [
+            'Haz preguntas en lenguaje natural sobre los proyectos',
+            'Obtén resúmenes y análisis automáticos',
+            'Consulta datos específicos de manera conversacional',
+            'Historial de conversaciones'
+        ],
+        tips: [
+            'Sé específico en tus preguntas para mejores respuestas',
+            'Puedes preguntar sobre montos, estados, profesionales, etc.',
+            'El asistente tiene acceso a todos los datos de proyectos'
+        ]
+    },
+    vecinos: {
+        title: 'App Vecinos - Reportes Ciudadanos',
+        icon: 'fa-users',
+        description: 'Plataforma de visualización y gestión de reportes ciudadanos. Permite monitorear, revisar y actualizar el estado de las denuncias realizadas por los vecinos de la comuna a través de la aplicación móvil.',
+        features: [
+            '🗺️ Mapa interactivo con todos los reportes ciudadanos geolocalizados',
+            '📊 Tarjetas de estadísticas: total de reportes, pendientes, verificados, en proceso y resueltos',
+            '🔍 Filtros avanzados: por categoría (bache, luminaria, basura, etc.), estado, gravedad y rango de fechas',
+            '📋 Listado de reportes con vista previa de información clave',
+            '✏️ Edición de reportes: cambiar estado, gravedad, categoría, marcar como revisado',
+            '👁️ Panel de detalles completo con información del ciudadano que reportó',
+            '🎨 Marcadores de colores según estado del reporte para identificación rápida',
+            '📍 Geolocalización precisa de cada reporte con coordenadas',
+            '📅 Registro de fechas de creación y última actualización',
+            '🔔 Seguimiento del flujo de trabajo: Reportado → Verificado → Programado → Reparado'
+        ],
+        tips: [
+            '💡 Los reportes resueltos incluyen los estados "Reparado" y "Cerrado"',
+            '💡 Marca como "Revisado" cuando hayas verificado en terreno',
+            '💡 La descripción del ciudadano puede contener información importante para la gestión'
+        ]
+    },
+    // LICITACIONES
+    lic_dashboard: {
+        title: 'Gestión de Licitaciones',
+        icon: 'fa-file-invoice-dollar',
+        description: 'Módulo central para el seguimiento de procesos de licitación en Mercado Público, organizado en un flujo de 32 pasos críticos.',
+        features: [
+            'Visualiza el estado global de todos los procesos activos',
+            'Inicia nuevas licitaciones asociadas a proyectos existentes',
+            'Monitorea el progreso porcentual basado en hitos completados',
+            'Accede rápidamente a la ficha de seguimiento de cada proceso',
+            'Filtra por estado (Abierta/Cerrada) y ID de Mercado Público'
+        ],
+        tips: [
+            'El sistema valida que no existan dos licitaciones abiertas para el mismo proyecto',
+            'Usa el ID de Mercado Público para sincronizar con la plataforma oficial',
+            'Haz clic en "Ver Ficha" para actualizar los pasos del workflow'
+        ]
+    },
+    lic_admin_general: {
+        title: 'Consolidado Administrativo',
+        icon: 'fa-shield-halved',
+        description: 'Panel de control global para la administración de todos los procesos de licitación del municipio.',
+        features: [
+            'Vista unificada de la carga de trabajo en licitaciones',
+            'Monitoreo de hitos críticos y presupuestos asignados',
+            'Control de estados de workflow para todas las divisiones',
+            'Reportes consolidados de procesos adjudicados y en publicación'
+        ],
+        tips: [
+            'Ideal para jefaturas que requieren supervisar múltiples procesos simultáneos',
+            'Observa la barra de progreso para identificar cuellos de botella en el flujo'
+        ]
+    },
+    lic_calendario: {
+        title: 'Cronograma y Plazos Críticos',
+        icon: 'fa-calendar-alt',
+        description: 'Visualización temporal de hitos clave como aperturas, cierres y períodos de preguntas.',
+        features: [
+            'Calendario interactivo con código de colores por tipo de hito',
+            'Vista de línea de tiempo (Gantt) para ver la secuencia de cada licitación',
+            'Filtros por proyecto y estado para una planificación focalizada',
+            'Detalle de eventos con acceso directo a la ficha de seguimiento'
+        ],
+        tips: [
+            'Los hitos en rojo indican cierres de procesos, asegúrate de cumplir los plazos',
+            'Usa la vista de Línea de Tiempo para ver el desfase entre lo planificado y lo real'
+        ]
+    },
+    lic_documentos: {
+        title: 'Biblioteca de Bases y Documentación',
+        icon: 'fa-folder-open',
+        description: 'Repositorio centralizado para la gestión de documentos tipo (Bases Administrativas, Técnicas, Anexos).',
+        features: [
+            'Sube y organiza archivos PDF/Word por categoría',
+            'Asocia documentos a licitaciones específicas',
+            'Control de versiones para actualizaciones de bases',
+            'Visor rápido de documentos integrado'
+        ],
+        tips: [
+            'Mantén las "Bases Tipo" actualizadas para agilizar nuevos procesos',
+            'Asegúrate de que los documentos finales coincidan con lo publicado en Mercado Público'
+        ]
+    },
+    lic_pasos: {
+        title: 'Configuración del Workflow',
+        icon: 'fa-list-check',
+        description: 'Mantenedor de los 32 pasos estándar que componen el flujo de licitación.',
+        features: [
+            'Define el orden correlativo de cada etapa del proceso',
+            'Configura nombres y descripciones de cada paso',
+            'Establece la lógica de dependencia entre pasos',
+            'Permite personalizar el flujo base para casos especiales'
+        ],
+        tips: [
+            'No alteres el orden de los pasos si hay procesos activos fluyendo',
+            'Los pasos marcados como críticos generan alertas automáticas'
+        ]
+    },
+    lic_seguimiento: {
+        title: 'Ficha de Seguimiento Detallado',
+        icon: 'fa-route',
+        description: 'Herramienta operativa para marcar el cumplimiento de cada uno de los 32 pasos del proceso.',
+        features: [
+            'Marca pasos como completados con fecha y responsable',
+            'Sube evidencia para cada hito del workflow',
+            'Visualiza la historia completa del proceso en una línea de tiempo',
+            'Gestiona el ID de Mercado Público y montos adjudicados'
+        ],
+        tips: [
+            'Completa los pasos en orden para mantener la coherencia del dashboard',
+            'No olvides ingresar el ID de Mercado Público apenas se genere el proceso'
+        ]
+    },
+    // SEGURIDAD VISTAS
+    vista0: {
+        title: 'Reporte de Inteligencia Delictual',
+        icon: 'fa-shield-halved',
+        description: 'Vista maestra diseñada para la inyección dinámica de múltiples gráficos de inteligencia avanzada. Permite visualizar varios indicadores de seguridad en un solo panel optimizado para reportes ejecutivos.',
+        features: [
+            'Visualización en cuadrícula de gráficos de inteligencia',
+            'Soporte para múltiples tipos de gráficos (Barras, Líneas, Radar, etc.)',
+            'Diseño optimizado para exportación a PDF y reportes impresos',
+            'Actualización automática basada en la configuración de datos del estado'
+        ],
+        tips: [
+            'Use esta vista para tener una panorámica de varios indicadores a la vez',
+            'Note que en modo impresión, los gráficos se organizan para evitar saltos de página incómodos'
+        ]
+    },
+    vista1: {
+        title: 'Resumen Semanal',
+        icon: 'fa-calendar-week',
+        description: 'Panel de control principal con los indicadores clave de la semana actual.',
+        features: [
+            'Resumen ejecutivo semanal',
+            'KPIs principales de criminalidad',
+            'Identificación de riesgos'
+        ],
+        tips: [
+            'Compare el total con la semana anterior para ver la tendencia',
+            'Los indicadores en rojo requieren atención prioritaria'
+        ]
+    },
+    vista2: {
+        title: 'Evolución Reciente',
+        icon: 'fa-arrow-trend-up',
+        description: '¿La tendencia es al alza o a la baja? Evolución delictual de las últimas 24 semanas.',
+        features: ['Gráfico de tendencia temporal', 'Detección de puntos de inflexión', 'Análisis de racha semanal'],
+        tips: ['Observe la pendiente de la línea de tendencia', 'Determine si el ciclo actual es ascendente']
+    },
+    vista3: {
+        title: 'Comparativo Temporal Múltiple',
+        icon: 'fa-code-compare',
+        description: '¿Cómo nos comparamos con el pasado? Triple comparación: semana anterior, año anterior y promedio histórico.',
+        features: ['Comparativa interanual y mensual', 'Deltas de variación absoluta', 'Análisis de crecimiento'],
+        tips: ['Un delta negativo en rojo indica aumento de casos', 'Use el promedio histórico para contextualizar la semana']
+    },
+    vista4: {
+        title: 'Estacionalidad Mensual Histórica',
+        icon: 'fa-calendar-days',
+        description: '¿Existe un patrón estacional? Histórico CEAD de los últimos 20 años por meses.',
+        features: ['Análisis de patrón mensual histórico', 'Identificación de picos estacionales', 'Probabilidad de ocurrencia'],
+        tips: ['Útil para anticipar alzas habituales en meses festivos', 'Planifique recursos preventivos según el patrón']
+    },
+    vista5: {
+        title: 'Distribución por Delito (Pareto)',
+        icon: 'fa-radiation',
+        description: '¿Qué delitos concentran la mayor parte del problema? Identificación del 80/20 delictual.',
+        features: ['Ranking de tipologías por volumen', 'Acumulación porcentual', 'Priorización delictual'],
+        tips: ['El 20% de los delitos suele explicar el 80% de los casos', 'Focalice los operativos en el top de la lista']
+    },
+    vista6: {
+        title: 'Evolución por Tipología',
+        icon: 'fa-chart-column',
+        description: '¿Cómo evolucionan los delitos clave? Seguimiento específico de las tipologías con mayor impacto.',
+        features: ['Histogramas por tipología', 'Comparativa cruzada de tipos', 'Evolución sectorizada'],
+        tips: ['Identifique si un alza es general o de un solo delito', 'Compare tipologías con modus operandi similares']
+    },
+    vista7: {
+        title: 'Evolución Estructural del Mix Delictual',
+        icon: 'fa-timeline',
+        description: '¿Ha cambiado la naturaleza del crimen? Proporción de delitos violentos vs propiedad.',
+        features: ['Composición histórica del mix', 'Cambios estructurales en 20 años', 'Análisis de la huella delictual'],
+        tips: ['Un incremento en delitos violentos indica mayor criticidad', 'Compare la estructura actual con la década pasada']
+    },
+    vista8: {
+        title: 'Correlaciones Delictuales',
+        icon: 'fa-diagram-project',
+        description: '¿Qué delitos se mueven juntos? Identifica si el alza de un delito predice el alza de otro.',
+        features: ['Matriz de correlación cruzada', 'Identificación de delitos disparadores', 'Vinculación estadística'],
+        tips: ['Correlación alta sugiere los mismos autores o causas raíz', 'Anticipe brotes usando indicadores líderes']
+    },
+    vista9: {
+        title: 'Tipologías Críticas por Comparativo',
+        icon: 'fa-triangle-exclamation',
+        description: '¿En qué somos peores que el resto? Identifica delitos con mayor desviación negativa.',
+        features: ['Benchmark vs promedio regional', 'Ranking de desviaciones críticas', 'Alertas por tipologías'],
+        tips: ['Priorice delitos donde la brecha regional sea mayor', 'Un desvío alto indica vulnerabilidad específica']
+    },
+    vista10: {
+        title: 'Vs. Comunas Similares',
+        icon: 'fa-map-location-dot',
+        description: '¿Cómo estamos respecto de nuestros pares? Comparativo directo con comunas similares.',
+        features: ['Análisis de desempeño relativo', 'Comparativa con comunas gemelas', 'Ranking por grupo de pares'],
+        tips: ['Útil para evaluar la efectividad de políticas locales', 'Compare con pares de similar presupuesto y población']
+    },
+    vista11: {
+        title: 'Clúster de Comunas Similares',
+        icon: 'fa-ranking-star',
+        description: '¿A qué grupo de seguridad pertenecemos? Análisis de clúster por performance.',
+        features: ['Identificación de clúster municipal', 'Análisis de proximidad estadística', 'Atributos compartidos'],
+        tips: ['Busque referentes dentro de su mismo clúster', 'Analice por qué otras comunas del grupo rinden mejor']
+    },
+    vista12: {
+        title: 'Evolución de Factores de Riesgo',
+        icon: 'fa-biohazard',
+        description: '¿Están aumentando los delitos violentos? Análisis de tendencia de violencia.',
+        features: ['Tendencia de violencia (VPR)', 'Análisis cualitativo del delito', 'Riesgo de escalada'],
+        tips: ['Un aumento en violencia precede a un aumento en volumen', 'Priorice la reducción del factor de fuerza']
+    },
+    vista13: {
+        title: 'Gravedad por Delito',
+        icon: 'fa-sitemap',
+        description: '¿Qué tan violentos son nuestros delitos? Clasificación por impacto y tipo de fuerza.',
+        features: ['Matriz de severidad', 'Impacto social estimado', 'Escala de violencia'],
+        tips: ['Diferencie entre delitos contra la propiedad y las personas', 'La gravedad es clave para la percepción de miedo']
+    },
+    vista14: {
+        title: 'Priorización Estratégica',
+        icon: 'fa-bullseye',
+        description: 'Matriz de decisión táctica que cruza el volumen absoluto de casos con su aceleración porcentual para definir dónde concentrar los recursos.',
+        features: [
+            'Clasificación en 4 cuadrantes: Alarma, Alerta, Monitoreo y Control',
+            'Identificación de "Focos" (Alto volumen + Alza crítica)',
+            'Seguimiento de variación semanal vs. semana anterior',
+            'Cálculo automático de prioridad basado en riesgo'
+        ],
+        tips: [
+            'Concéntrese primero en los delitos de la columna ALARMA/FOCO',
+            'Los delitos en CONTROL tienen bajo volumen y tendencia estable, requiriendo solo supervisión pasiva'
+        ]
+    },
+    vista15: {
+        title: 'Análisis por Categoría (Taxonomía Multidimensional)',
+        icon: 'fa-layer-group',
+        description: 'Desglose del fenómeno criminal según su naturaleza jurídica, modus operandi y nivel de severidad del impacto social.',
+        features: [
+            'Tendencia histórica de 12 semanas por Severidad (Vida, Integridad, Patrimonio)',
+            'Análisis de evolución por Modus Operandi (Violencia, Fuerza, Oportunidad)',
+            'Seguimiento por Naturaleza Jurídica (Personas, Propiedad, Orden Público)',
+            'Distribución porcentual actual por cada eje analizado'
+        ],
+        tips: [
+            'Observe si un alza en el total se debe a delitos de "Oportunidad" o a delitos "Contra la Vida"',
+            'El cambio en el "Modus Operandi" puede indicar la entrada de nuevas bandas o cambios en el comportamiento delictual'
+        ]
+    },
+    vista16: {
+        title: 'Auditoría de Integridad y Salud de Datos',
+        icon: 'fa-database',
+        description: 'Herramienta de control de calidad que certifica la confiabilidad, completitud y consistencia de las fuentes de datos (STOP y CEAD).',
+        features: [
+            'Cálculo de Score de Salud de Datos global',
+            'Detección de Gaps (periodos sin datos) y Outliers (anomalías estadísticas)',
+            'Monitoreo de latencia de actualización de fuentes oficiales',
+            'Comparativa de completitud entre registros semanales y mensuales'
+        ],
+        tips: [
+            'Una puntuación menor al 70% sugiere precaución al interpretar tendencias de largo plazo',
+            'Los Gaps e Outliers pueden indicar problemas en el proceso de carga o reporte de datos oficiales'
+        ]
+    },
+    vista17: {
+        title: 'Momentum y Rachas',
+        icon: 'fa-bolt',
+        description: 'Análisis profundo de la velocidad de crecimiento delictual (Momentum) y la persistencia temporal de las tendencias (Rachas).',
+        features: [
+            'Cálculo de CAGR (Tasa de Crecimiento Compuesto) a 4 semanas',
+            'Detección de rachas de alza/baja por 2 o 3+ semanas consecutivas',
+            'Gráfico de aceleración para identificar delitos que crecen exponencialmente',
+            'Alertas tempranas de brotes delictuales antes de que se consoliden'
+        ],
+        tips: [
+            'Un delito con Racha 3+ y CAGR positivo es la prioridad operativa máxima',
+            'Las rachas de baja permiten identificar sectores donde la presión delictual está cediendo'
+        ]
+    },
+    vista18: {
+        title: 'Gestión de Éxito (Éxitos Operativos)',
+        icon: 'fa-medal',
+        description: 'Identificación de tipologías delictuales que presentan una disminución sostenida, validando la efectividad de las políticas de seguridad implementadas.',
+        features: [
+            'Comparativa de éxitos a corto plazo (fuente STOP)',
+            'Detección de reducción estructural a largo plazo (fuente CEAD)',
+            'Cálculo de Z-Score para identificar desviaciones positivas significativas',
+            'Análisis de IA sobre la consolidación de resultados'
+        ],
+        tips: [
+            'Los delitos con Z < -0.5 en largo plazo indican una reducción estructural, no coyuntural',
+            'Utilice estos datos para rendición de cuentas sobre la efectividad de patrullajes y operativos'
+        ]
+    },
+    vista19: {
+        title: 'Reporte Directivo (Executive Dashboard)',
+        icon: 'fa-file-invoice',
+        description: 'Panel sintético diseñado específicamente para el alto mando y autoridades, resumiendo los hallazgos críticos de la semana en formato de una sola página.',
+        features: [
+            'KPIs maestros: Carga Delictual, Nivel de Riesgo y Rank Regional',
+            'Hallazgos principales generados por analítica avanzada',
+            'Resumen de alertas críticas y tendencia de corto plazo',
+            'Formato de reporte oficial con marca temporal y validación de estado'
+        ],
+        tips: [
+            'Este reporte es ideal para minutas de consejo o reuniones de coordinación de seguridad',
+            'El Nivel de Riesgo (Bajo, Moderado, Crítico) se basa en la desviación respecto a la semana anterior'
+        ]
+    },
+    vista20: {
+        title: 'Gestión de Éxito (Éxitos Operativos)',
+        icon: 'fa-medal',
+        description: 'Identificación de tipologías delictuales que presentan una disminución sostenida, validando la efectividad de las políticas de seguridad implementadas.',
+        features: [
+            'Comparativa de éxitos a corto plazo (fuente STOP)',
+            'Detección de reducción estructural a largo plazo (fuente CEAD)',
+            'Cálculo de Z-Score para identificar desviaciones positivas significativas',
+            'Análisis de IA sobre la consolidación de resultados'
+        ],
+        tips: [
+            'Los delitos con Z < -0.5 en largo plazo indican una reducción estructural, no coyuntural',
+            'Utilice estos datos para rendición de cuentas sobre la efectividad de patrullajes y operativos'
+        ]
+    },
+    vista21: {
+        title: 'Momentum y Rachas',
+        icon: 'fa-bolt',
+        description: 'Análisis profundo de la velocidad de crecimiento delictual (Momentum) y la persistencia temporal de las tendencias (Rachas).',
+        features: [
+            'Cálculo de CAGR (Tasa de Crecimiento Compuesto) a 4 semanas',
+            'Detección de rachas de alza/baja por 2 o 3+ semanas consecutivas',
+            'Gráfico de aceleración para identificar delitos que crecen exponencialmente',
+            'Alertas tempranas de brotes delictuales antes de que se consoliden'
+        ],
+        tips: [
+            'Un delito con Racha 3+ y CAGR positivo es la prioridad operativa máxima',
+            'Las rachas de baja permiten identificar sectores donde la presión delictual está cediendo'
+        ]
+    },
+    vista22: {
+        title: 'Priorización Estratégica',
+        icon: 'fa-bullseye',
+        description: 'Matriz de decisión táctica que cruza el volumen absoluto de casos con su aceleración porcentual para definir dónde concentrar los recursos.',
+        features: [
+            'Clasificación en 4 cuadrantes: Alarma, Alerta, Monitoreo y Control',
+            'Identificación de "Focos" (Alto volumen + Alza crítica)',
+            'Seguimiento de variación semanal vs. semana anterior',
+            'Cálculo automático de prioridad basado en riesgo'
+        ],
+        tips: [
+            'Concéntrese primero en los delitos de la columna ALARMA/FOCO',
+            'Los delitos en CONTROL tienen bajo volumen y tendencia estable, requiriendo solo supervisión pasiva'
+        ]
+    },
+    vista23: {
+        title: 'Análisis por Categoría (Taxonomía Multidimensional)',
+        icon: 'fa-layer-group',
+        description: 'Desglose del fenómeno criminal según su naturaleza jurídica, modus operandi y nivel de severidad del impacto social.',
+        features: [
+            'Tendencia histórica de 12 semanas por Severidad (Vida, Integridad, Patrimonio)',
+            'Análisis de evolución por Modus Operandi (Violencia, Fuerza, Oportunidad)',
+            'Seguimiento por Naturaleza Jurídica (Personas, Propiedad, Orden Público)',
+            'Distribución porcentual actual por cada eje analizado'
+        ],
+        tips: [
+            'Observe si un alza en el total se debe a delitos de "Oportunidad" o a delitos "Contra la Vida"',
+            'El cambio en el "Modus Operandi" puede indicar la entrada de nuevas bandas o cambios en el comportamiento delictual'
+        ]
+    },
+    vista24: {
+        title: 'Reporte Directivo (Executive Dashboard)',
+        icon: 'fa-file-invoice',
+        description: 'Panel sintético diseñado específicamente para el alto mando y autoridades, resumiendo los hallazgos críticos de la semana en formato de una sola página.',
+        features: [
+            'KPIs maestros: Carga Delictual, Nivel de Riesgo y Rank Regional',
+            'Hallazgos principales generados por analítica avanzada',
+            'Resumen de alertas críticas y tendencia de corto plazo',
+            'Formato de reporte oficial con marca temporal y validación de estado'
+        ],
+        tips: [
+            'Este reporte es ideal para minutas de consejo o reuniones de coordinación de seguridad',
+            'El Nivel de Riesgo (Bajo, Moderado, Crítico) se basa en la desviación respecto a la semana anterior'
+        ]
+    },
+    vista25: {
+        title: 'Auditoría de Integridad y Salud de Datos',
+        icon: 'fa-database',
+        description: 'Herramienta de control de calidad que certifica la confiabilidad, completitud y consistencia de las fuentes de datos (STOP y CEAD).',
+        features: [
+            'Cálculo de Score de Salud de Datos global',
+            'Detección de Gaps (periodos sin datos) y Outliers (anomalías estadísticas)',
+            'Monitoreo de latencia de actualización de fuentes oficiales',
+            'Comparativa de completitud entre registros semanales y mensuales'
+        ],
+        tips: [
+            'Una puntuación menor al 70% sugiere precaución al interpretar tendencias de largo plazo',
+            'Los Gaps e Outliers pueden indicar problemas en el proceso de carga o reporte de datos oficiales'
+        ]
+    },
+    // SEGURIDAD VISTAS
+    seguridad_dashboard: {
+        title: 'Módulo de Seguridad Pública',
+        icon: 'fa-shield-halved',
+        description: 'Plataforma integral para el monitoreo y análisis geoespacial del acontecer delictual y despliegue de seguridad ciudadana en la comuna.',
+        features: [
+            'Navegación entre 5 vistas estratégicas de inteligencia delictual',
+            'Resumen ejecutivo con indicadores de alta prioridad (Homicidios, Robos c/Violencia)',
+            'Reportes exportables PDF hoja por hoja o consolidados',
+            'Sincronización de datos con fuentes oficiales (CEAD, Carabineros)'
+        ],
+        tips: [
+            'Utilice las flechas "Anterior" y "Siguiente" en el encabezado superior para fluir entre el Resumen, Análisis de Gravedad y Mapas de priorización',
+            'Haga clic en el botón "Informe PDF" para descargar un resumen consolidado para autoridades'
+        ]
+    },
+    // SECPLAN VISTAS
+    secplan_dashboard: {
+        title: 'Dashboard Estratégico SECPLAN',
+        icon: 'fa-chart-line',
+        description: 'Panel central de inteligencia para la Secretaría Comunal de Planificación, permitiendo el monitoreo integral de la cartera de proyectos municipales desde múltiples dimensiones.',
+        features: [
+            'Visualiza KPIs críticos: Inversión total, cantidad de proyectos y avance promedio porcentual',
+            'Análisis multinivel: Cartera por Estado, Área de Acción, y Fuente de Financiamiento (Gobierno Regional, Sectorial, Municipal)',
+            'Gestión de Capital Humano: Visualización de la carga laboral por profesional y duplas de trabajo',
+            'Distribución Territorial: Identificación de la inversión por Sectores y Unidades Vecinales',
+            'Cronograma Histórico: Línea de tiempo de elaboración vs ejecución de proyectos (2020-2026)',
+            'Alineación Estratégica: Seguimiento del cumplimiento de los Lineamientos del PLADECO'
+        ],
+        tips: [
+            'Los proyectos marcados como "Prioritarios" o "Urgentes" aparecen destacados en las métricas superiores',
+            'Use el Comparativo Anual para evaluar la eficiencia de la gestión entre diferentes períodos',
+            'La sección de "Últimos Proyectos Modificados" permite un seguimiento rápido de la actividad reciente del equipo'
+        ]
+    },
+    mapa2: {
+        title: 'Mapa 2: Análisis Territorial',
+        icon: 'fa-map-location-dot',
+        description: 'Visor geográfico avanzado para el análisis espacial y distribución de la inversión de proyectos por sector territorial.',
+        features: [
+            'Distribución de marcadores interactivos georreferenciados en el territorio',
+            'Tabla resumen de cantidad y montos acumulados ordenados espacialmente (Sector)',
+            'Multi-filtros: Área, Línea Estratégica, Etapas, Años y Fuente de Financiamiento',
+            'Cruce de datos geo-espacial en tiempo real (mapa y tabla sincronizados)'
+        ],
+        tips: [
+            'Al hacer clic en un sector dentro de la tabla resumen de la derecha, el mapa hará zoom automático hacia todos los proyectos de esa zona',
+            'Haga clic sobre cualquier marcador (circulo morado) para inspeccionar el resumen ejecutivo',
+            'Los filtros actúan en cascada: al seleccionar una etapa, las áreas disponibles se limitarán solo a las válidas'
+        ]
+    },
+    informe_dinamico: {
+        title: 'Informe Dinámico 1 (Variables Unitarias)',
+        icon: 'fa-chart-pie',
+        description: 'Herramienta de Business Intelligence (BI) para analizar estadísticamente un solo factor o categoría principal de la cartera de iniciativas.',
+        features: [
+            'Agrupación primaria de información (Ej: Proyectos por Área o Proyectos por Fuente de Financiamiento)',
+            'Exportación integral a formatos CSV, EXCEL y reportes automatizados en PDF',
+            'Generación de 10 familias tipológicas de Gráficos (3D, Pastel, Barras, Línea, Embudo)',
+            'Resumen estadístico con el porcentaje participativo relativo al total filtrado'
+        ],
+        tips: [
+            'Habilite el botón "Generar Informe Detallado" para imprimir los datos pre-renderizados hacia la consola, ideal para logs interinstitucionales',
+            'Maneje el comportamiento de los filtros deseleccionando o seleccionando chips de cada categoría tras utilizar la agrupación central'
+        ]
+    },
+    informe_dinamico2: {
+        title: 'Informe Dimensional Cruzado',
+        icon: 'fa-layer-group',
+        description: 'Tablero de inteligencia de alto nivel (Multicuadrante) diseñado para cruzar DOS dimensiones o variables sobre la misma cartera, descubriendo intersecciones estratégicas.',
+        features: [
+            'Cruce simultáneo de variables (Dimensión 1 vs Dimensión 2) bajo métricas personalizadas (Suma de montos, Proyecciones, Años acumulados)',
+            'Visualizaciones multivariables pesadas (Heatmaps, Treemaps Jerárquicos, Barras Apiladas, Burbujas Cruzadas, Sunburst)',
+            'Tabla dinámica robusta mostrando participación global en la intersección',
+            'Filtrado individual local (check box por fila) además de barra de BI Ribbon generalizada'
+        ],
+        tips: [
+            'Utilice la modalidad "Mapa de Calor" para ver contrastes nítidos de concentración de montos entre variables extensas (Ej: Estado vs Tipo de Financiamiento)',
+            'Note que puede hacer click en las cabeceras de la tabla cruzada para re-ordenar por mayor peso porcentual'
+        ]
+    },
+    // TRANSPARENCIA VISTAS
+    trans_inicio: {
+        title: 'Pagos por Organismos',
+        icon: 'fa-credit-card',
+        description: 'Monitoreo de registros de transparencia gubernamental centrados en la distribución global de pagos.',
+        features: ['Visualización de pagos y remuneraciones globales por organismo', 'Promedios generales de remuneraciones mensuales', 'Filtrado inteligente por tipo de organismo municipal (Municipalidades, Corporaciones)'],
+        tips: ['Utilice los filtros superiores de tipo de municipio para delimitar la información', 'Los gráficos y estadísticas reflejan el estado actual de los agrupamientos de la cartera transparente']
+    },
+    trans_remuneracion: {
+        title: 'Análisis de Remuneraciones Brutas',
+        icon: 'fa-wallet',
+        description: 'Análisis detallado de remuneraciones brutas mensuales de funcionarios a lo largo de las instituciones.',
+        features: ['Seguimiento exhaustivo de remuneraciones y pagos', 'Comparativas y segmentación por clase de planta, funciones, y grupos de edad', 'Dashboard que expone desviaciones y percentiles estadísticos (alto, medio, bajo)'],
+        tips: ['Revise las alertas y colores de desviación estadística en la parte inferior para detectar variaciones anómalas', 'Exporte los datos segmentados en la tabla de vista detallada']
+    },
+    trans_remuneracion_edad: {
+        title: 'Remuneraciones por Edad',
+        icon: 'fa-chart-line',
+        description: 'Análisis del comportamiento salarial segmentado por rangos etarios de los funcionarios.',
+        features: ['Impacto de la edad en los niveles de remuneración bruta', 'Identificación de promedios salariales por generación', 'Cruce de edad con tipos de estamentos y organismos'],
+        tips: ['Observe si existen saltos significativos en las remuneraciones asociados a ciertos rangos de edad']
+    },
+    trans_remuneracion_profesion: {
+        title: 'Remuneraciones por Profesión',
+        icon: 'fa-graduation-cap',
+        description: 'Escalas salariales y promedios de pago según la categoría profesional o técnica declarada.',
+        features: ['Comparativa de sueldos entre distintos títulos y profesiones', 'Visualización de la jerarquía salarial técnica/profesional', 'Análisis de dispersión de pagos para una misma profesión'],
+        tips: ['Utilice esta vista para auditar la equidad salarial entre perfiles profesionales similares']
+    },
+    trans_remuneracion_sexo: {
+        title: 'Remuneraciones por Sexo',
+        icon: 'fa-venus-mars',
+        description: 'Análisis de equidad y brecha salarial comparando remuneraciones entre hombres y mujeres.',
+        features: ['Comparativa directa de promedios de remuneración por género', 'Distribución de la masa salarial por sexo', 'Identificación de brechas en niveles directivos o técnicos'],
+        tips: ['Los porcentajes muestran la participación de cada género en el total del presupuesto de remuneraciones seleccionado']
+    },
+    trans_persona: {
+        title: 'Directorio de Personas (RUT Único)',
+        icon: 'fa-users',
+        description: 'Base de datos unificada de funcionarios según su RUT. Permite el cruce consolidado de pagos y antecedentes de la persona por meses u organismos.',
+        features: ['Búsqueda rápida y detallada por RUT y Nombre de individuo', 'Detalle paramétrico de roles, empleadores y antigüedad de las personas', 'Navegación subyacente para el perfil integral por sexo, profesión, etc.'],
+        tips: ['Navegue al detalle de RUT unificado usando el motor de búsqueda en tiempo real', 'Verifique el cruce interanual de los meses que la persona ejerció']
+    },
+    trans_persona_edad: {
+        title: 'Personas por Edad',
+        icon: 'fa-user-clock',
+        description: 'Distribución demográfica de los funcionarios según sus rangos etarios.',
+        features: ['Pirámide de edad de la fuerza laboral pública', 'Conteo de funcionarios activos por tramos de edad', 'Análisis de renovación generacional por organismo'],
+        tips: ['Identifique organismos con mayor concentración de personal senior o junior para planificación de recursos']
+    },
+    trans_persona_profesion: {
+        title: 'Personas por Profesión',
+        icon: 'fa-briefcase',
+        description: 'Concentración de perfiles profesionales y técnicos registrados en las instituciones.',
+        features: ['Conteo de funcionarios por título o especialidad', 'Identificación de las profesiones más requeridas por organismo', 'Distribución de personal calificado vs técnico'],
+        tips: ['Filtre por organismo para ver la especialización de cada institución gubernamental']
+    },
+    trans_persona_sexo: {
+        title: 'Personas por Sexo',
+        icon: 'fa-restroom',
+        description: 'Distribución de la dotación de personal segmentada por género.',
+        features: ['Indicadores de paridad en la fuerza laboral', 'Conteo de hombres y mujeres por organismo y mes', 'Seguimiento de cuotas de participación de género'],
+        tips: ['Compare la participación femenina vs masculina a través del tiempo con los filtros mensuales']
+    },
+    trans_registro: {
+        title: 'Monitoreo de Registros',
+        icon: 'fa-clipboard-list',
+        description: 'Monitoreo matricial y base de lectura plana de pagos emitidos según la ley de transparencia.',
+        features: ['Matriz de todos los eventos notificados', 'Desglose y segmentación detallada (planta temporal, honorarios, comisiones)', 'Total control en paginación y filtrado analítico con opciones de vista porcentual o número completo'],
+        tips: ['Aproveche los botones para mostrar porcentajes consolidados sobre agrupamientos (Ej: edad y sexo)']
+    },
+    trans_registro_edad: {
+        title: 'Registros por Edad',
+        icon: 'fa-id-badge',
+        description: 'Cuantificación de eventos administrativos y pagos segmentados por edad del beneficiario.',
+        features: ['Conteo de transacciones mensuales por rango de edad', 'Frecuencia de pagos según tramos etarios', 'Auditoría de registros administrativos demográficos'],
+        tips: ['Revise si hay una concentración inusual de registros en tramos de edad específicos que requiera atención']
+    },
+    trans_registro_profesion: {
+        title: 'Registros por Profesión',
+        icon: 'fa-user-tie',
+        description: 'Análisis de registros de pago y actividad administrativa según categoría profesional.',
+        features: ['Conteo de liquidaciones y registros por título profesional', 'Frecuencia de contratación por especialidad', 'Volumen de registros técnicos vs profesionales'],
+        tips: ['Esta vista permite ver qué perfiles profesionales generan mayor volumen de registros administrativos mensualmente']
+    },
+    trans_registro_sexo: {
+        title: 'Registros por Sexo',
+        icon: 'fa-user-friends',
+        description: 'Segmentación de registros administrativos y eventos de transparencia por género.',
+        features: ['Proporción de registros generados por hombres vs mujeres', 'Análisis de actividad administrativa por sexo', 'Auditoría de cumplimiento de registros segmentados'],
+        tips: ['Utilice la vista porcentual para comparar rápidamente la carga administrativa entre géneros']
+    },
+    trans_landing: {
+        title: 'Portal de Transparencia Activa',
+        icon: 'fa-landmark',
+        description: 'Entrada centralizada con la exposición principal e indicadores sintéticos de los presupuestos y remuneraciones.',
+        features: ['Pantalla general o landing page que resume la carga transparente activa', 'Búsqueda cruzada general', 'Acceso a tableros especializados de remuneraciones y personas'],
+        tips: ['Use los accesos de Atajos Funcionales para dirgirise a los menús concretos según la exploración que requiera hacer']
+    }
+};
+
+// Función para mostrar el modal de ayuda
+function showHelpModal(viewName) {
+    const content = helpContent[viewName] || helpContent.dashboard;
+
+    // Crear modal si no existe
+    let modal = document.getElementById('helpModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'helpModal';
+        modal.innerHTML = `
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" onclick="closeHelpModal(event)">
+                <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden" onclick="event.stopPropagation()">
+                    <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
+                                    <i id="helpModalIcon" class="fas ${content.icon} text-xl"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-2xl font-bold" id="helpModalTitle">${content.title}</h2>
+                                    <p class="text-white/80 text-sm">Guía de ayuda</p>
+                                </div>
+                            </div>
+                            <button onclick="closeHelpModal()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6 overflow-y-auto max-h-[60vh]" id="helpModalContent">
+                        <!-- Content will be inserted here -->
+                    </div>
+                    <div class="border-t border-gray-100 p-4 bg-gray-50 flex justify-end">
+                        <button onclick="closeHelpModal()" class="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors font-medium">
+                            <i class="fas fa-check mr-2"></i>Entendido
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    // Actualizar contenido
+    document.getElementById('helpModalTitle').textContent = content.title;
+    document.getElementById('helpModalIcon').className = "fas " + content.icon + " text-xl";
+
+    const contentHtml = `
+        <div class="mb-6">
+            <p class="text-gray-600 text-lg leading-relaxed">${content.description}</p>
+        </div>
+        
+        <div class="mb-6">
+            <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <i class="fas fa-list-check text-indigo-500"></i>
+                ¿Qué puedes hacer aquí?
+            </h3>
+            <ul class="space-y-2">
+                ${content.features.map(f => `
+                    <li class="flex items-start gap-3 text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                        <span>${f}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+        
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <h3 class="font-bold text-amber-800 mb-2 flex items-center gap-2">
+                <i class="fas fa-lightbulb text-amber-500"></i>
+                Consejos útiles
+            </h3>
+            <ul class="space-y-1">
+                ${content.tips.map(t => `
+                    <li class="flex items-start gap-2 text-amber-700 text-sm">
+                        <i class="fas fa-angle-right mt-1 flex-shrink-0"></i>
+                        <span>${t}</span>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+    `;
+
+    document.getElementById('helpModalContent').innerHTML = contentHtml;
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// Función para cerrar el modal
+function closeHelpModal(event) {
+    if (event && event.target !== event.currentTarget) return;
+    const modal = document.getElementById('helpModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+// Cerrar con ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeHelpModal();
+});
+
+// Función para crear el botón de ayuda
+function createHelpButton(viewName) {
+    const btn = document.createElement('button');
+    btn.id = 'helpButton';
+    btn.className = 'fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all z-[9998] flex items-center justify-center group';
+    btn.innerHTML = `
+        <i class="fas fa-question text-xl"></i>
+            <span class="absolute right-full mr-3 bg-gray-800 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Ayuda
+            </span>
+    `;
+    btn.onclick = () => showHelpModal(viewName);
+    document.body.appendChild(btn);
+}
