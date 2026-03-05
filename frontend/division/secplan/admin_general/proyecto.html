@@ -1845,6 +1845,24 @@
             `;
 
             html += `
+                <div class="mt-6 no-print">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-500 p-5">
+                            <h3 class="text-xl font-bold text-white flex items-center gap-3">
+                                <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                                    <i class="fas fa-forward"></i>
+                                </div>
+                                Próximos Pasos
+                            </h3>
+                        </div>
+                        <div class="p-6">
+                            ${nextStepsHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            html += `
                 <div class="mt-8">
                     <div class="bg-gradient-to-r from-gray-700 to-gray-900 rounded-2xl shadow-lg p-6 text-white">
                         <h3 class="text-lg font-bold mb-4 flex items-center gap-2">

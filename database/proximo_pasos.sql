@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS proximos_pasos (
     estado VARCHAR(50) DEFAULT 'PENDIENTE', -- PENDIENTE, EN_PROCESO, COMPLETADO, VENCIDO
     prioridad VARCHAR(50) DEFAULT 'MEDIA', -- ALTA, MEDIA, BAJA
     responsable VARCHAR(255), -- Nombre o entidad responsable del próximo paso
-    creado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    creado_por INTEGER REFERENCES users(user_id) ON DELETE SET NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
