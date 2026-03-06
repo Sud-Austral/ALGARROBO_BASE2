@@ -966,6 +966,7 @@ def get_proyectos4(current_user_id):
 
                     le.id AS lineamiento_id,
                     le.nombre AS lineamiento_nombre,
+                    le.nombre AS lineamiento_estrategico_nombre,
 
                     f.id AS financiamiento_id,
                     f.nombre AS financiamiento_nombre,
@@ -1076,6 +1077,7 @@ def get_proyectos(current_user_id):
 
                     le.id AS lineamiento_id,
                     le.nombre AS lineamiento_nombre,
+                    le.nombre AS lineamiento_estrategico_nombre,
 
                     f.id AS financiamiento_id,
                     f.nombre AS financiamiento_nombre,

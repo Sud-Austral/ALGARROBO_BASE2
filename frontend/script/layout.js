@@ -164,6 +164,7 @@ function renderSidebar(containerId = "sidebarContainer") {
     // --- Sidebar Módulo de Control (Transversal) ---
     if (isControlModule) {
         const ctrlBase = `${BASE_PATH}/frontend/division/control/`;
+
         container.innerHTML = `
         <aside id="sidebar" class="w-72 bg-white border-r border-gray-200 h-screen sticky top-0 hidden lg:block overflow-y-auto font-['Outfit']">
             <nav class="p-4">
@@ -201,6 +202,8 @@ function renderSidebar(containerId = "sidebarContainer") {
                 </div>
             </nav>
         </aside>`;
+
+
         return;
     }
 
@@ -313,7 +316,7 @@ function renderSidebar(containerId = "sidebarContainer") {
             </ul>
         </li>
     ` : "";
-
+    /*
     container.innerHTML = `
     <aside id="sidebar" class="w-72 bg-white border-r border-gray-200 h-screen sticky top-0 hidden lg:block overflow-y-auto font-['Outfit']">
         <nav class="p-4">
@@ -411,6 +414,42 @@ function renderSidebar(containerId = "sidebarContainer") {
                     <a href="${pages.vecinos}" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses(pages.vecinos)}">
                         <i class="fas fa-users w-5 text-center"></i>
                         <span class="font-medium">App Vecinos</span>
+                    </a>
+                </li>
+            </ul>
+
+            <ul class="space-y-1">
+                ${modulosHTML}
+            </ul>
+        </nav>
+    </aside>
+    `;
+    */
+    container.innerHTML = `
+    <aside id="sidebar" class="w-72 bg-white border-r border-gray-200 h-screen sticky top-0 hidden lg:block overflow-y-auto font-['Outfit']">
+        <nav class="p-4">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-3 pt-2">Menu Principal</p>
+            <ul class="space-y-1">
+                <li>
+                    <a href="${pages.proyecto}" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses(pages.proyecto)}">
+                        <i class="fas fa-diagram-project w-5 text-center"></i>
+                        <span class="font-medium">Proyectos</span>
+                    </a>
+                </li>
+                <li>
+                     <a href="${BASE_PATH}/frontend/geoportal/index.html" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                         <i class="fas fa-globe-americas w-5 text-center"></i>
+                         <span class="font-medium">Geoportal</span>
+                     </a>
+                </li>
+
+                <li class="pt-4">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-3">Herramientas</p>
+                </li>
+                <li>
+                    <a href="${pages.chat}" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses(pages.chat)}">
+                        <i class="fas fa-comments w-5 text-center"></i>
+                        <span>ChatBot IA</span>
                     </a>
                 </li>
             </ul>

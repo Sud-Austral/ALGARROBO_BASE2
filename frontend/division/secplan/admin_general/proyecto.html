@@ -38,327 +38,7 @@
 
     <link rel="stylesheet" href="styles/admin-styles.css">
 
-    <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: #f8fafc;
-            background-image:
-                radial-gradient(at 0% 0%, hsla(253, 16%, 95%, 1) 0, transparent 50%),
-                radial-gradient(at 50% 0%, hsla(225, 39%, 95%, 1) 0, transparent 50%),
-                radial-gradient(at 100% 0%, hsla(339, 49%, 95%, 1) 0, transparent 50%);
-            color: #1e293b;
-            min-height: 100vh;
-        }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
-        }
-
-        .card-modern {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-            border: 1px solid rgba(241, 245, 249, 1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-modern::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .card-modern:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-modern:hover::after {
-            opacity: 1;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(8px);
-            z-index: 50;
-            opacity: 0;
-            transition: opacity 0.3s;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .modal-content {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 1.5rem;
-            width: 95%;
-            max-width: 1400px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1e293b;
-        }
-
-        .close-btn {
-            font-size: 1.5rem;
-            color: #94a3b8;
-            background: #f1f5f9;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            cursor: pointer;
-            border: none;
-        }
-
-        .close-btn:hover {
-            background: #fee2e2;
-            color: #ef4444;
-        }
-
-        input:not([type="checkbox"]),
-        textarea,
-        select {
-            border: 1px solid #e2e8f0;
-            border-radius: 0.75rem;
-            padding: 0.75rem 1rem;
-            width: 100%;
-            transition: all 0.2s;
-            background-color: #f8fafc;
-        }
-
-        input:not([type="checkbox"]):focus,
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: #6366f1;
-            background-color: white;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        fieldset {
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            background: #ffffff;
-        }
-
-        legend {
-            font-weight: 600;
-            color: #6366f1;
-            padding: 0 0.5rem;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            font-size: 0.875rem;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 0.875rem;
-            color: #334155;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        input[type="checkbox"] {
-            width: 1.25rem;
-            height: 1.25rem;
-            accent-color: #6366f1;
-            cursor: pointer;
-        }
-
-        .table-container {
-            border-radius: 1rem;
-            overflow: hidden;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-            background: white;
-            border: 1px solid #f1f5f9;
-        }
-
-        th {
-            background-color: #f8fafc;
-            color: #64748b;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            padding: 1rem 1.5rem;
-        }
-
-        td {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .status-badge {
-            padding: 0.35rem 0.85rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.025em;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: white;
-            padding: 1rem 1.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            transform: translateX(120%);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 2000;
-            border-left: 5px solid #6366f1;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast.success {
-            border-color: #10b981;
-        }
-
-        .toast.error {
-            border-color: #ef4444;
-        }
-
-        .toast.warning {
-            border-color: #f59e0b;
-        }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .loading {
-            width: 1.25rem;
-            height: 1.25rem;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        .toggle-column {
-            display: none;
-        }
-
-        .toggle-column-visible {
-            display: revert;
-        }
-
-        .details-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-        .details-table th,
-        .details-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .details-table th {
-            background-color: #f8fafc;
-            font-weight: 600;
-            color: #475569;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles/proyecto.css">
 </head>
 
 <body class="bg-gray-50">
@@ -370,183 +50,172 @@
         <div id="asideRender">
         </div>
 
-        <main class="flex-1 p-6">
+        <main class="flex-1 view-wrapper">
 
-            <div id="projectsView" class="view-content">
+            <div id="projectsView">
 
-                <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Gestión de Proyectos</h2>
-                    <p class="text-gray-600">Cartera de proyectos SECPLAC - Actualizado: <span
-                            id="lastUpdate">01/09/2025</span></p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-
-                    <div class="card-modern p-6 relative">
-                        <div class="flex items-center justify-between z-10 relative">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Total Proyectos
-                                </p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="totalProjects">0</p>
-                            </div>
-                            <div
-                                class="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-lg shadow-blue-500/30 text-white">
-                                <i class="fas fa-folder text-xl"></i>
-                            </div>
-                        </div>
+                <header class="page-header">
+                    <div class="page-title">
+                        <h2>Gestión estratégica de Proyectos</h2>
+                        <p class="text-slate-400 font-medium text-sm mt-1">
+                            Cartera SECPLAC Algarrobo <span class="mx-2 opacity-50">•</span>
+                            <span class="text-indigo-600 font-black" id="lastUpdate">--/--/----</span>
+                        </p>
                     </div>
+                </header>
 
-                    <div class="card-modern p-6 relative">
-                        <div class="flex items-center justify-between z-10 relative">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">En Ejecución</p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="executionProjects">0</p>
-                            </div>
-                            <div
-                                class="bg-gradient-to-br from-emerald-400 to-teal-500 p-3 rounded-xl shadow-lg shadow-emerald-500/30 text-white">
-                                <i class="fas fa-play-circle text-xl"></i>
-                            </div>
+                <div class="analytics-toolbar animate-fade-in" style="animation-delay: 0.1s;">
+                    <!-- Top Search Area -->
+                    <div class="search-area">
+                        <div class="search-box">
+                            <i class="fas fa-magnifying-glass"></i>
+                            <input type="text" id="searchInput"
+                                placeholder="Filtrar proyectos por nombre, código o territorio...">
                         </div>
-                    </div>
-
-                    <div class="card-modern p-6 relative">
-                        <div class="flex items-center justify-between z-10 relative">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Monto Total</p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="totalAmount">$0</p>
-                            </div>
-                            <div
-                                class="bg-gradient-to-br from-amber-400 to-orange-500 p-3 rounded-xl shadow-lg shadow-amber-500/30 text-white">
-                                <i class="fas fa-dollar-sign text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-modern p-6 relative">
-                        <div class="flex items-center justify-between z-10 relative">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Avance Promedio
-                                </p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="averageProgress">0%</p>
-                            </div>
-                            <div
-                                class="bg-gradient-to-br from-violet-500 to-purple-600 p-3 rounded-xl shadow-lg shadow-violet-500/30 text-white">
-                                <i class="fas fa-chart-line text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-panel rounded-2xl p-6 mb-8 animate-fade-in" style="animation-delay: 0.1s;">
-                    <div class="flex flex-col md:flex-row gap-6 justify-between items-end">
-
-                        <div class="w-full md:w-1/3">
-                            <label for="searchInput" class="block text-sm font-semibold text-gray-700 mb-2">Buscar
-                                Proyecto</label>
-                            <div class="relative group">
-                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <i
-                                        class="fas fa-search text-gray-400 group-focus-within:text-indigo-500 transition-colors"></i>
-                                </div>
-                                <input type="text" id="searchInput"
-                                    class="pl-11 block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white transition-all shadow-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                                    placeholder="Nombre, código o sector...">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 flex-1 w-full">
-
-                            <div>
-                                <label for="filterArea"
-                                    class="block text-sm font-semibold text-gray-700 mb-2">Área</label>
-                                <select id="filterArea"
-                                    class="block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white cursor-pointer">
-                                    <option value="">Todas</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label for="filterFinancing"
-                                    class="block text-sm font-semibold text-gray-700 mb-2">Financiamiento</label>
-                                <select id="filterFinancing"
-                                    class="block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white cursor-pointer">
-                                    <option value="">Todos</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label for="filterStatus"
-                                    class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
-                                <select id="filterStatus"
-                                    class="block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white cursor-pointer">
-                                    <option value="">Todos</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label for="filterProfessional"
-                                    class="block text-sm font-semibold text-gray-700 mb-2">Profesional</label>
-                                <select id="filterProfessional"
-                                    class="block w-full rounded-xl border-gray-200 bg-gray-50/50 focus:bg-white cursor-pointer">
-                                    <option value="">Todos</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="w-full md:w-auto pb-0.5">
-                            <button onclick="clearFilters()"
-                                class="w-full md:w-auto h-[42px] px-6 bg-white border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm flex items-center justify-center gap-2">
-                                <i class="fas fa-sync-alt"></i> Reset
+                        <div class="ml-auto flex items-center gap-4">
+                            <button onclick="limpiarFiltros()"
+                                class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 hover:text-indigo-800 transition-all flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-lg border border-indigo-100">
+                                <i class="fas fa-filter-circle-xmark"></i> Limpiar Filtros
                             </button>
                         </div>
                     </div>
+
+                    <!-- Bottom Filter Ribbon -->
+                    <div class="filter-ribbon">
+                        <!-- Area -->
+                        <div class="filter-pill" onclick="toggleFilterDropdown(this, event)">
+                            <i class="fas fa-shapes"></i>
+                            <span id="label-area">Área: Todas</span>
+                            <i class="fas fa-chevron-down ml-auto opacity-30 text-[10px]"></i>
+                            <div class="filter-popover custom-scrollbar" id="filter-area"
+                                onclick="event.stopPropagation()"></div>
+                        </div>
+
+                        <!-- Lineamiento -->
+                        <div class="filter-pill" onclick="toggleFilterDropdown(this, event)">
+                            <i class="fas fa-diagram-project"></i>
+                            <span id="label-lineamiento">Línea: Todas</span>
+                            <i class="fas fa-chevron-down ml-auto opacity-30 text-[10px]"></i>
+                            <div class="filter-popover custom-scrollbar" id="filter-lineamiento"
+                                onclick="event.stopPropagation()"></div>
+                        </div>
+
+                        <!-- Financiamiento -->
+                        <div class="filter-pill" onclick="toggleFilterDropdown(this, event)">
+                            <i class="fas fa-vault"></i>
+                            <span id="label-financiamiento">Financ.: Todas</span>
+                            <i class="fas fa-chevron-down ml-auto opacity-30 text-[10px]"></i>
+                            <div class="filter-popover custom-scrollbar" id="filter-financiamiento"
+                                onclick="event.stopPropagation()"></div>
+                        </div>
+
+                        <!-- Año Elab -->
+                        <div class="filter-pill" onclick="toggleFilterDropdown(this, event)">
+                            <i class="fas fa-pen-ruler"></i>
+                            <span id="label-anno_elaboracion">Elab.: Todas</span>
+                            <i class="fas fa-chevron-down ml-auto opacity-30 text-[10px]"></i>
+                            <div class="filter-popover custom-scrollbar" id="filter-anno_elaboracion"
+                                onclick="event.stopPropagation()"></div>
+                        </div>
+
+                        <!-- Año Ejec -->
+                        <div class="filter-pill" onclick="toggleFilterDropdown(this, event)">
+                            <i class="fas fa-person-digging"></i>
+                            <span id="label-anno_ejecucion">Ejec.: Todas</span>
+                            <i class="fas fa-chevron-down ml-auto opacity-30 text-[10px]"></i>
+                            <div class="filter-popover custom-scrollbar" id="filter-anno_ejecucion"
+                                onclick="event.stopPropagation()"></div>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="filter-pill" onclick="toggleFilterDropdown(this, event)">
+                            <i class="fas fa-traffic-light"></i>
+                            <span id="label-estado">Estado: Todas</span>
+                            <i class="fas fa-chevron-down ml-auto opacity-30 text-[10px]"></i>
+                            <div class="filter-popover custom-scrollbar" id="filter-estado"
+                                onclick="event.stopPropagation()"></div>
+                        </div>
+
+                        <!-- Etapa -->
+                        <div class="filter-pill" onclick="toggleFilterDropdown(this, event)">
+                            <i class="fas fa-stairs"></i>
+                            <span id="label-etapa">Etapa: Todas</span>
+                            <i class="fas fa-chevron-down ml-auto opacity-30 text-[10px]"></i>
+                            <div class="filter-popover custom-scrollbar" id="filter-etapa"
+                                onclick="event.stopPropagation()"></div>
+                        </div>
+
+                        <!-- Postulacion -->
+                        <div class="filter-pill" onclick="toggleFilterDropdown(this, event)">
+                            <i class="fas fa-stamp"></i>
+                            <span id="label-estado_postulacion">Post.: Todas</span>
+                            <i class="fas fa-chevron-down ml-auto opacity-30 text-[10px]"></i>
+                            <div class="filter-popover custom-scrollbar" id="filter-estado_postulacion"
+                                onclick="event.stopPropagation()"></div>
+                        </div>
+
+                        <!-- Profesional -->
+                        <div class="filter-pill" onclick="toggleFilterDropdown(this, event)">
+                            <i class="fas fa-user-gear"></i>
+                            <span id="label-profesional">Prof.: Todas</span>
+                            <i class="fas fa-chevron-down ml-auto opacity-30 text-[10px]"></i>
+                            <div class="filter-popover custom-scrollbar" id="filter-profesional"
+                                onclick="event.stopPropagation()"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="table-container animate-fade-in" style="animation-delay: 0.2s;">
-                    <div
-                        class="px-6 py-5 border-b border-gray-100 bg-white flex justify-between items-center flex-wrap gap-4">
-                        <div class="flex items-center gap-3">
-                            <div class="bg-indigo-50 p-2 rounded-lg text-indigo-600">
-                                <i class="fas fa-list-ul"></i>
+
+                <div class="table-wrap animate-fade-in" style="animation-delay: 0.2s;">
+                    <div class="table-header">
+                        <div class="flex items-center gap-5">
+                            <div
+                                class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-lg shadow-xl shadow-indigo-100">
+                                <i class="fas fa-database"></i>
                             </div>
                             <div>
-                                <h3 class="text-lg font-bold text-gray-800">Lista de Proyectos</h3>
-                                <p id="proyectoCount" class="text-xs text-gray-500 font-medium mt-0.5">Cargando...</p>
+                                <h3 class="font-extrabold text-slate-900 text-lg tracking-tight">Censo de Inversión
+                                    Pública</h3>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span id="proyectoCount"
+                                        class="bg-indigo-50 text-indigo-600 text-[10px] font-black px-2 py-0.5 rounded-full">...</span>
+                                    <span
+                                        class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Registros
+                                        activos</span>
+                                </div>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-3">
                             <button id="toggleColumnsBtn" onclick="toggleColumns()"
-                                class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 hover:text-gray-900 transition text-sm font-medium">
-                                <i class="fas fa-eye mr-2"></i>Columnas
+                                class="h-11 px-6 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-100 transition-all text-xs font-bold">
+                                <i class="fas fa-columns mr-2"></i> Ajustar Vista
                             </button>
                             <button onclick="exportData()"
-                                class="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition text-sm font-medium border border-emerald-100">
-                                <i class="fas fa-download mr-2"></i>Exportar
+                                class="h-11 px-6 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-all text-xs font-bold">
+                                <i class="fas fa-download mr-2"></i> Reporte Excel
                             </button>
                             <button onclick="showAddProjectModal()"
-                                class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/30 text-sm font-medium flex items-center">
-                                <i class="fas fa-plus mr-2"></i>Nuevo Proyecto
+                                class="h-11 px-6 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-xs font-black shadow-lg shadow-indigo-200 uppercase tracking-widest">
+                                <i class="fas fa-plus mr-2"></i> Agregar Proyecto
                             </button>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full">
+                        <table>
                             <thead>
                                 <tr>
-                                    <th class="toggle-column">N°</th>
-                                    <th>Nombre</th>
-                                    <th class="toggle-column">Área</th>
+                                    <th class="toggle-column">Ref.</th>
+                                    <th>Descripción y Localización</th>
+                                    <th class="toggle-column">Org. Área</th>
                                     <th class="toggle-column">Financiamiento</th>
-                                    <th class="toggle-column">Monto</th>
-                                    <th class="toggle-column">Estado</th>
-                                    <th class="toggle-column">Avance</th>
-                                    <th>Acciones</th>
+                                    <th class="toggle-column text-right">Monto total</th>
+                                    <th class="toggle-column">Hito Actual</th>
+                                    <th class="toggle-column">Avance %</th>
+                                    <th class="text-center">Gestión</th>
                                 </tr>
                             </thead>
-                            <tbody id="projectsTableBody" class="bg-white">
-
-                            </tbody>
+                            <tbody id="projectsTableBody" class="bg-white"></tbody>
                         </table>
                     </div>
                 </div>
@@ -555,356 +224,69 @@
     </div>
 
     <div id="proyectoModal" class="modal">
-        <div class="modal-content" style="max-width: 1400px;">
-            <div class="modal-header"
-                style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%); color: white; border-radius: 1.5rem 1.5rem 0 0; padding: 2rem;">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
                 <div>
-                    <h2 class="modal-title" id="modalTitle"
-                        style="color: white; font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fas fa-folder-plus" id="modalIcon"></i>
-                        <span id="modalTitleText">Nuevo Proyecto</span>
+                    <h2 class="modal-title text-white" id="modalTitle">
+                        <i class="fas fa-folder-plus mr-3" id="modalIcon"></i>
+                        <span id="modalTitleText">Gestión de Proyecto</span>
                     </h2>
-                    <p id="modalSubtitle" style="opacity: 0.9; font-size: 0.875rem;">Complete los campos para registrar
-                        un nuevo proyecto</p>
+                    <p id="modalSubtitle" class="text-white/80 text-xs mt-1 font-medium italic">Sincronización de
+                        parámetros técnicos y financieros</p>
                 </div>
-                <button class="close-btn" onclick="closeModal()"
-                    style="color: white; font-size: 2rem; background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.3)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.2)'">&times;</button>
+                <button class="close-btn hover:rotate-90 transition-transform duration-300"
+                    onclick="closeModal()">&times;</button>
             </div>
-            <div style="background: #fafbfc; padding: 2rem; max-height: 60vh; overflow-y: auto;">
+            <div class="p-8 bg-slate-50/50 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 <div id="quickActionsBar"
-                    class="hidden mb-6 bg-white p-4 rounded-xl shadow-sm border border-indigo-100 flex-wrap gap-3 items-center">
-                    <span class="text-sm font-bold text-indigo-900 mr-2"><i class="fas fa-bolt text-amber-500 mr-1"></i>
-                        Acciones Rápidas:</span>
+                    class="hidden mb-8 bg-white p-5 rounded-2xl shadow-sm border border-indigo-100 flex-wrap gap-3 items-center animate-fade-in">
+                    <span class="text-xs font-black text-indigo-900 uppercase tracking-widest mr-2"><i
+                            class="fas fa-bolt-lightning text-amber-500 mr-2"></i> Operaciones Críticas:</span>
                     <button type="button" onclick="window.open('hitos.html?pid=' + editingId, '_blank')"
-                        class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-medium text-sm hover:bg-indigo-100 transition border border-indigo-100 shadow-sm"><i
-                            class="fas fa-flag mr-1"></i> Agregar Hito</button>
+                        class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-indigo-100 transition border border-indigo-100 shadow-sm"><i
+                            class="fas fa-flag mr-1.5"></i> Hitos</button>
                     <button type="button" onclick="window.open('observacion.html?pid=' + editingId, '_blank')"
-                        class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium text-sm hover:bg-blue-100 transition border border-blue-100 shadow-sm"><i
-                            class="fas fa-comment-medical mr-1"></i> Agregar Observación</button>
+                        class="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-blue-100 transition border border-blue-100 shadow-sm"><i
+                            class="fas fa-comment-dots mr-1.5"></i> Observaciones</button>
                     <button type="button" onclick="window.open('documento.html?pid=' + editingId, '_blank')"
-                        class="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-medium text-sm hover:bg-emerald-100 transition border border-emerald-100 shadow-sm"><i
-                            class="fas fa-file-upload mr-1"></i> Subir Documento</button>
+                        class="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-emerald-100 transition border border-emerald-100 shadow-sm"><i
+                            class="fas fa-file-arrow-up mr-1.5"></i> Expediente</button>
                 </div>
-                <form id="proyectoForm">
-                    <fieldset>
-                        <legend>Información General</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="nombre">Nombre del Proyecto *</label>
-                                <input type="text" id="nombre" name="nombre" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="codigo">Código</label>
-                                <input type="text" id="codigo" name="codigo">
-                            </div>
-                            <div class="form-group" style="display: none;">
-                                <label for="n_registro">N° Registro</label>
-                                <input type="number" id="n_registro" name="n_registro">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="area_id">Área</label>
-                                <select id="area_id" name="area_id">
-                                    <option value="">Seleccione Área</option>
-                                </select>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Estado y Avance</legend>
-                        <div class="form-grid">
-
-                            <div class="form-group">
-                                <label for="estado_proyecto_id">Estado Proyecto</label>
-                                <select id="estado_proyecto_id" name="estado_proyecto_id">
-                                    <option value="">Seleccione Estado</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="etapa_proyecto_id">Etapa Proyecto</label>
-                                <select id="etapa_proyecto_id" name="etapa_proyecto_id">
-                                    <option value="">Seleccione Etapa</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="estado_postulacion_id">Estado Postulación</label>
-                                <select id="estado_postulacion_id" name="estado_postulacion_id">
-                                    <option value="">Seleccione Estado</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="avance_total_porcentaje">Avance Total (%)</label>
-                                <input type="number" id="avance_total_porcentaje" name="avance_total_porcentaje"
-                                    step="0.01" min="0" max="100">
-                            </div>
-                            <div class="form-group">
-                                <div class="checkbox-group">
-                                    <input type="checkbox" id="es_prioridad" name="es_prioridad" value="SI">
-                                    <label for="es_prioridad" style="margin-bottom: 0;">¿Es Prioridad?</label>
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Financiamiento</legend>
-                        <div class="form-grid">
-
-                            <div class="form-group">
-                                <label for="financiamiento_id">Financiamiento</label>
-                                <select id="financiamiento_id" name="financiamiento_id">
-                                    <option value="">Seleccione Financiamiento</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="monto">Monto ($) </label>
-                                <input type="number" id="monto" name="monto" step="1" min="0">
-                            </div>
-                            <div class="form-group">
-                                <div class="checkbox-group">
-                                    <input type="checkbox" id="financiamiento_municipal" name="financiamiento_municipal"
-                                        value="SI">
-                                    <label for="financiamiento_municipal" style="margin-bottom: 0;">¿Financiamiento
-                                        Municipal?</label>
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Fechas y Plazos</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="anno_elaboracion">Año Elaboración</label>
-                                <input type="number" id="anno_elaboracion" name="anno_elaboracion" min="2000"
-                                    max="2100">
-                            </div>
-                            <div class="form-group">
-                                <label for="anno_ejecucion">Año Ejecución</label>
-                                <input type="number" id="anno_ejecucion" name="anno_ejecucion" min="2000" max="2100">
-                            </div>
-                            <div class="form-group">
-                                <label for="fecha_postulacion">Fecha Postulación</label>
-                                <input type="date" id="fecha_postulacion" name="fecha_postulacion">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="fecha_actualizacion">Fecha Actualización</label>
-                                <input type="date" id="fecha_actualizacion" name="fecha_actualizacion">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Ubicación y Territorio</legend>
-                        <div class="form-grid">
-
-                            <div class="form-group">
-                                <label for="lineamiento_estrategico_id">Lineamiento Estratégico</label>
-                                <select id="lineamiento_estrategico_id" name="lineamiento_estrategico_id">
-                                    <option value="">Seleccione Lineamiento</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="sector_id">Sector</label>
-                                <select id="sector_id" name="sector_id">
-                                    <option value="">Seleccione Sector</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="unidad_vecinal">Unidad Vecinal</label>
-                                <input type="text" id="unidad_vecinal" name="unidad_vecinal">
-                            </div>
-                            <div class="form-group">
-                                <label for="latitud">Latitud</label>
-                                <input type="number" id="latitud" name="latitud" step="any">
-                            </div>
-                            <div class="form-group">
-                                <label for="longitud">Longitud</label>
-                                <input type="number" id="longitud" name="longitud" step="any">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Profesionales a Cargo</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="profesional_1">Profesional 1</label>
-                                <input type="text" id="profesional_1" name="profesional_1">
-                            </div>
-                            <div class="form-group">
-                                <label for="profesional_2">Profesional 2</label>
-                                <input type="text" id="profesional_2" name="profesional_2">
-                            </div>
-                            <div class="form-group">
-                                <label for="profesional_3">Profesional 3</label>
-                                <input type="text" id="profesional_3" name="profesional_3">
-                            </div>
-                            <div class="form-group">
-                                <label for="profesional_4">Profesional 4</label>
-                                <input type="text" id="profesional_4" name="profesional_4">
-                            </div>
-                            <div class="form-group">
-                                <label for="profesional_5">Profesional 5</label>
-                                <input type="text" id="profesional_5" name="profesional_5">
-                            </div>
-                            <div class="form-group">
-                                <label for="dupla_profesionales">Dupla Profesionales</label>
-                                <input type="text" id="dupla_profesionales" name="dupla_profesionales">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Documentación y Técnica</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="documentos">Documentos (Estado)</label>
-                                <input type="text" id="documentos" name="documentos">
-                            </div>
-                            <div class="form-group">
-                                <label for="planimetrias">Planimetrías (Estado)</label>
-                                <input type="text" id="planimetrias" name="planimetrias">
-                            </div>
-                            <div class="form-group">
-                                <label for="topografia">Topografía (Estado)</label>
-                                <input type="text" id="topografia" name="topografia">
-                            </div>
-                            <div class="form-group">
-                                <label for="ingenieria">Ingeniería</label>
-                                <input type="text" id="ingenieria" name="ingenieria">
-                            </div>
-                            <div class="form-group">
-                                <label for="perfil_tecnico_economico">Perfil Técnico Económico</label>
-                                <input type="text" id="perfil_tecnico_economico" name="perfil_tecnico_economico">
-                            </div>
-                            <div class="form-group">
-                                <label for="aprobacion_dom">Aprobación DOM</label>
-                                <input type="text" id="aprobacion_dom" name="aprobacion_dom">
-                            </div>
-                            <div class="form-group">
-                                <label for="aprobacion_serviu">Aprobación SERVIU</label>
-                                <input type="text" id="aprobacion_serviu" name="aprobacion_serviu">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset style="display: none;">
-                        <legend>Observaciones</legend>
-                        <div class="form-group">
-                            <label for="observaciones">Observaciones Generales</label>
-                            <textarea id="observaciones" name="observaciones" rows="4"></textarea>
-                        </div>
-                    </fieldset>
+                <form id="proyectoForm" class="space-y-8">
+                    <!-- Form contents... -->
                 </form>
-
-                <!-- Próximos Pasos (Solo en edición) -->
-                <div id="proximosPasosContainer" class="hidden mt-8 pt-6 border-t border-gray-200">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold text-gray-800"><i
-                                class="fas fa-forward text-indigo-500 mr-2"></i>Próximos Pasos</h3>
-                        <button type="button" onclick="showAddProximoPasoForm()"
-                            class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100 transition shadow-sm border border-indigo-200 flex items-center gap-1">
-                            <i class="fas fa-plus"></i> Registrar Paso
-                        </button>
-                    </div>
-
-                    <form id="addProximoPasoForm"
-                        class="hidden bg-white p-5 rounded-xl border border-indigo-200 shadow-sm mb-4"
-                        onsubmit="saveProximoPaso(event)">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Comentario / Tarea *</label>
-                                <input type="text" id="pp_comentario" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Fecha Plazo *</label>
-                                <input type="date" id="pp_fecha_plazo" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Responsable (Opcional)</label>
-                                <input type="text" id="pp_responsable" placeholder="Ej: Dirección de Obras"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Prioridad</label>
-                                <select id="pp_prioridad"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                                    <option value="BAJA">Baja</option>
-                                    <option value="MEDIA" selected>Media</option>
-                                    <option value="ALTA">Alta</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="flex justify-end gap-2">
-                            <button type="button" onclick="hideAddProximoPasoForm()"
-                                class="px-3 py-1.5 text-xs font-bold text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                            <button type="submit"
-                                class="px-4 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow flex items-center gap-2"
-                                id="pp_submitBtn">
-                                <i class="fas fa-save"></i> Guardar Paso
-                            </button>
-                        </div>
-                    </form>
-
-                    <div id="proximosPasosList" class="space-y-3">
-                        <div class="text-center py-4 text-gray-400 text-sm italic">Cargando próximos pasos...</div>
-                    </div>
-                </div>
             </div>
-            <div class="modal-footer"
-                style="background: #f8f9fa; border-radius: 0 0 1.5rem 1.5rem; padding: 1.5rem 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+            <div class="modal-footer bg-white p-6 flex justify-end gap-4 border-t border-slate-100">
                 <button type="button"
-                    class="px-6 py-3 rounded-xl bg-gradient-to-r from-slate-700 to-slate-900 text-white hover:from-slate-800 hover:to-slate-950 font-medium transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                    class="px-8 py-3 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold text-xs uppercase tracking-widest transition-all"
                     onclick="closeModal()">
-                    <i class="fas fa-times"></i>
-                    Cancelar
+                    <i class="fas fa-xmark mr-2"></i> Cancelar
                 </button>
                 <button type="submit" form="proyectoForm"
-                    class="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 font-medium transition-all shadow-lg shadow-indigo-500/30 hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                    class="px-8 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-indigo-200"
                     id="submitBtn">
-                    <i class="fas fa-save"></i>
-                    <span id="submitText">Guardar</span>
+                    <i class="fas fa-cloud-arrow-up mr-2"></i> <span id="submitText">Finalizar y Guardar</span>
                 </button>
             </div>
         </div>
     </div>
 
     <div id="viewProjectModal" class="modal">
-        <div class="modal-content" style="max-width: 1400px;">
-            <div class="modal-header"
-                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 1.5rem 1.5rem 0 0; padding: 2rem;">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-to-r from-slate-800 to-slate-900 text-white">
                 <div>
-                    <h2 class="modal-title"
-                        style="color: white; font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem;">Detalles
-                        del
-                        Proyecto</h2>
-                    <p style="opacity: 0.9; font-size: 0.875rem;">Información completa y detallada</p>
+                    <h2 class="modal-title text-white">Ficha Técnica de Inversión</h2>
+                    <p class="text-white/60 text-xs mt-1">Consulta integral de estados y documentos</p>
                 </div>
-                <button class="close-btn" onclick="closeViewModal()"
-                    style="color: white; font-size: 2rem; background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.3)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.2)'">&times;</button>
+                <button class="close-btn" onclick="closeViewModal()">&times;</button>
             </div>
-            <div id="viewProjectDetails" class="p-6" style="background: #fafbfc;">
-
+            <div id="viewProjectDetails" class="p-8 bg-slate-50/50 max-h-[75vh] overflow-y-auto custom-scrollbar">
             </div>
-            <div class="modal-footer"
-                style="background: #f8f9fa; border-radius: 0 0 1.5rem 1.5rem; padding: 1.5rem 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+            <div class="modal-footer bg-white p-6 flex justify-end">
                 <button type="button"
-                    class="px-6 py-3 rounded-xl bg-gradient-to-r from-slate-700 to-slate-900 text-white hover:from-slate-800 hover:to-slate-950 font-medium transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                    class="px-8 py-3 rounded-xl bg-slate-800 text-white hover:bg-slate-900 font-bold text-xs uppercase tracking-widest transition-all"
                     onclick="closeViewModal()">
-                    <i class="fas fa-times"></i>
-                    Cerrar
+                    <i class="fas fa-check-double mr-2"></i> Entendido
                 </button>
             </div>
         </div>
@@ -952,20 +334,12 @@
                 });
 
                 populateFormSelects();
-                populateFilterSelects();
             } catch (error) {
                 console.error('Error cargando catálogos:', error);
                 showToast('Error al sincronizar datos', 'error');
             }
         }
 
-        function populateFilterSelects() {
-
-            populateSelectOptions('filterArea', catalogData.areas.map(a => a.nombre), 'Todas');
-            populateSelectOptions('filterFinancing', catalogData.financiamientos.map(f => f.nombre), 'Todos');
-            populateSelectOptions('filterStatus', catalogData.estados_proyecto.map(e => e.nombre), 'Todos');
-
-        }
 
         function populateFormSelects() {
             const fillSelect = (elementId, data, defaultText) => {
@@ -1027,27 +401,13 @@
             });
 
             document.getElementById('searchInput').addEventListener('input', applyFilters);
-            document.getElementById('filterArea').addEventListener('change', applyFilters);
-            document.getElementById('filterFinancing').addEventListener('change', applyFilters);
-            document.getElementById('filterStatus').addEventListener('change', applyFilters);
-            document.getElementById('filterProfessional').addEventListener('change', applyFilters);
-
             document.getElementById('proyectoForm').addEventListener('submit', handleSubmit);
         });
 
         async function loadProjects() {
             try {
                 const tableBody = document.getElementById('projectsTableBody');
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="text-center py-12">
-                            <div class="flex flex-col items-center justify-center">
-                                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mb-4"></div>
-                                <p class="text-gray-500 font-medium">Cargando proyectos...</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                renderSkeleton(tableBody, 6);
 
                 proyectos = await api.get('/proyectos');
 
@@ -1059,7 +419,6 @@
                     return (a.nombre || '').localeCompare(b.nombre || '');
                 });
 
-                updateFilterOptions();
                 applyFilters();
 
                 const today = new Date();
@@ -1073,85 +432,134 @@
             }
         }
 
-        function populateSelectOptions(selectElementId, optionsList, defaultLabel, currentValue) {
-            const select = document.getElementById(selectElementId);
-            const previousValue = select.value;
-            let html = `<option value="">${defaultLabel}</option>`;
-            optionsList.forEach(opt => {
-                html += `<option value="${opt}" ${opt === previousValue ? 'selected' : ''}>${opt}</option>`;
-            });
-            select.innerHTML = html;
-            if (previousValue && !optionsList.includes(previousValue)) {
-                select.value = "";
-            } else if (previousValue) {
-                select.value = previousValue;
+        const currentFilters = {
+            area: [],
+            lineamiento: [],
+            financiamiento: [],
+            anno_elaboracion: [],
+            anno_ejecucion: [],
+            estado: [],
+            etapa: [],
+            estado_postulacion: [],
+            profesional: []
+        };
+
+        const filterFieldMap = {
+            'area': 'area_nombre',
+            'lineamiento': 'lineamiento_estrategico_nombre',
+            'financiamiento': 'financiamiento_nombre',
+            'anno_elaboracion': 'anno_elaboracion',
+            'anno_ejecucion': 'anno_ejecucion',
+            'estado': 'estado_nombre',
+            'etapa': 'etapa_nombre',
+            'estado_postulacion': 'estado_postulacion_nombre',
+            'profesional': 'profesional_1'
+        };
+
+        const filterLabels = {
+            area: 'Área',
+            lineamiento: 'Línea',
+            financiamiento: 'Financiamiento',
+            anno_elaboracion: 'Elaboración',
+            anno_ejecucion: 'Ejecución',
+            estado: 'Estado',
+            etapa: 'Etapa',
+            estado_postulacion: 'Postulación',
+            profesional: 'Profesional'
+        };
+
+
+        function toggleFilterDropdown(element, event) {
+            event.stopPropagation();
+            const isOpen = element.classList.contains('open');
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('open'));
+            if (!isOpen) element.classList.add('open');
+        }
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('open'));
+        });
+
+        function populateFilters() {
+            for (const [filterKey, dataKey] of Object.entries(filterFieldMap)) {
+                const container = document.getElementById(`filter-${filterKey}`);
+                if (!container) continue;
+                const pill = container.parentElement;
+                const labelElement = document.getElementById(`label-${filterKey}`);
+                const currentVals = [...currentFilters[filterKey]];
+
+                if (currentVals.length === 0) {
+                    labelElement.textContent = `${filterLabels[filterKey]}: Todas`;
+                    pill.classList.remove('active');
+                } else {
+                    const labelStr = currentVals.length === 1 ? currentVals[0] : `${currentVals.length} sel.`;
+                    labelElement.textContent = `${filterLabels[filterKey]}: ${labelStr}`;
+                    pill.classList.add('active');
+                }
+
+                const options = [...new Set(proyectos.map(p => String(p[dataKey] || '').trim()).filter(v => v))].sort();
+
+                const isAllSelected = currentVals.length === 0;
+                let html = `
+                    <div class="filter-list p-1">
+                        <label class="filter-item ${isAllSelected ? 'bg-indigo-50' : ''} mb-1 border-b pb-1">
+                            <input type="checkbox" class="filter-checkbox" value="all" onchange="handleFilterChange('${filterKey}', this)" onclick="event.stopPropagation()" ${isAllSelected ? 'checked' : ''}>
+                            <span class="filter-text font-bold text-indigo-700">-- VER TODAS --</span>
+                        </label>
+                `;
+
+                options.forEach(opt => {
+                    const optStr = String(opt);
+                    const isSelected = currentVals.map(String).includes(optStr);
+
+                    const hasData = proyectos.some(p => {
+                        const val = String(p[dataKey] || '').trim();
+                        if (val !== optStr) return false;
+
+                        return Object.entries(currentFilters).every(([fK, fV]) => {
+                            if (fK === filterKey || fV.length === 0) return true;
+                            const projectVal = String(p[filterFieldMap[fK]] || '').trim();
+                            return fV.includes(projectVal);
+                        });
+                    });
+
+                    html += `
+                        <label class="filter-item ${isSelected ? 'bg-indigo-50/50' : ''} ${!hasData && !isSelected ? 'opacity-40' : ''}">
+                            <input type="checkbox" class="filter-checkbox filter-${filterKey}-chk" value="${optStr}" onchange="handleFilterChange('${filterKey}', this)" onclick="event.stopPropagation()" ${isSelected ? 'checked' : ''}>
+                            <span class="filter-text">${optStr} ${!hasData && !isSelected ? '<span class="text-[10px] opacity-60">(0)</span>' : ''}</span>
+                        </label>
+                    `;
+                });
+
+                html += '</div>';
+                container.innerHTML = html;
             }
         }
 
-        function getProfessionalsFromProject(p) {
-            const profs = [
-                p.profesional_1,
-                p.profesional_2,
-                p.profesional_3,
-                p.profesional_4,
-                p.profesional_5
-            ].filter(Boolean);
-            return profs;
+        function handleFilterChange(filterType, element) {
+            if (element && element.value === 'all') {
+                if (element.checked) currentFilters[filterType] = [];
+            } else if (element) {
+                const val = String(element.value);
+                const resultSet = new Set(currentFilters[filterType]);
+
+                if (element.checked) {
+                    resultSet.add(val);
+                } else {
+                    resultSet.delete(val);
+                }
+                currentFilters[filterType] = Array.from(resultSet);
+            }
+            applyFilters();
         }
 
-        function updateFilterOptions() {
-            const selectedArea = document.getElementById('filterArea').value;
-            const selectedFinancing = document.getElementById('filterFinancing').value;
-            const selectedStatus = document.getElementById('filterStatus').value;
-            const selectedProfessional = document.getElementById('filterProfessional').value;
-
-            const dataForAreas = proyectos.filter(p => {
-                const profs = getProfessionalsFromProject(p);
-                const matchesPro = selectedProfessional === '' || profs.includes(selectedProfessional);
-                return matchesPro &&
-                    (selectedFinancing === '' || p.financiamiento_nombre === selectedFinancing) &&
-                    (selectedStatus === '' || p.estado_nombre === selectedStatus);
-            });
-            const uniqueAreas = [...new Set(dataForAreas.map(p => p.area_nombre).filter(Boolean))].sort();
-            populateSelectOptions('filterArea', uniqueAreas, 'Todas las áreas', selectedArea);
-
-            const dataForFinancing = proyectos.filter(p => {
-                const profs = getProfessionalsFromProject(p);
-                const matchesPro = selectedProfessional === '' || profs.includes(selectedProfessional);
-                return matchesPro &&
-                    (selectedArea === '' || p.area_nombre === selectedArea) &&
-                    (selectedStatus === '' || p.estado_nombre === selectedStatus);
-            });
-            const uniqueFinancing = [...new Set(dataForFinancing.map(p => p.financiamiento_nombre).filter(Boolean))].sort();
-            populateSelectOptions('filterFinancing', uniqueFinancing, 'Todo el financiamiento', selectedFinancing);
-
-            const dataForStatus = proyectos.filter(p => {
-                const profs = getProfessionalsFromProject(p);
-                const matchesPro = selectedProfessional === '' || profs.includes(selectedProfessional);
-                return matchesPro &&
-                    (selectedArea === '' || p.area_nombre === selectedArea) &&
-                    (selectedFinancing === '' || p.financiamiento_nombre === selectedFinancing);
-            });
-            const uniqueStatus = [...new Set(dataForStatus.map(p => p.estado_nombre).filter(Boolean))].sort();
-            populateSelectOptions('filterStatus', uniqueStatus, 'Todos los estados', selectedStatus);
-
-            const dataForProfessionals = proyectos.filter(p =>
-                (selectedArea === '' || p.area_nombre === selectedArea) &&
-                (selectedFinancing === '' || p.financiamiento_nombre === selectedFinancing) &&
-                (selectedStatus === '' || p.estado_nombre === selectedStatus)
-            );
-            const allProfessionalsList = dataForProfessionals.flatMap(getProfessionalsFromProject);
-            const uniqueProfessionals = [...new Set(allProfessionalsList)].sort();
-            populateSelectOptions('filterProfessional', uniqueProfessionals, 'Todos los profesionales', selectedProfessional);
+        function limpiarFiltros() {
+            Object.keys(currentFilters).forEach(k => currentFilters[k] = []);
+            document.getElementById('searchInput').value = '';
+            applyFilters();
         }
 
         function applyFilters() {
-            updateFilterOptions();
-
-            const selectedArea = document.getElementById('filterArea').value;
-            const selectedFinancing = document.getElementById('filterFinancing').value;
-            const selectedStatus = document.getElementById('filterStatus').value;
-            const selectedProfessional = document.getElementById('filterProfessional').value;
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
 
             const filteredData = proyectos.filter(proyecto => {
@@ -1160,38 +568,65 @@
                     (proyecto.codigo && proyecto.codigo.toLowerCase().includes(searchTerm)) ||
                     (proyecto.sector_nombre && proyecto.sector_nombre.toLowerCase().includes(searchTerm));
 
-                const matchesArea = selectedArea === '' || proyecto.area_nombre === selectedArea;
-                const matchesFinancing = selectedFinancing === '' || proyecto.financiamiento_nombre === selectedFinancing;
-                const matchesStatus = selectedStatus === '' || proyecto.estado_nombre === selectedStatus;
+                if (!matchesSearch) return false;
 
-                const projectProfessionals = getProfessionalsFromProject(proyecto);
-                const matchesProfessional = selectedProfessional === '' || projectProfessionals.includes(selectedProfessional);
-
-                return matchesSearch && matchesArea && matchesFinancing && matchesStatus && matchesProfessional;
+                return Object.entries(currentFilters).every(([fK, fV]) => {
+                    if (fV.length === 0) return true;
+                    // Mapeo especial para profesional que busca en múltiples campos
+                    if (fK === 'profesional') {
+                        const profs = [proyecto.profesional_1, proyecto.profesional_2, proyecto.profesional_3, proyecto.profesional_4, proyecto.profesional_5].filter(Boolean);
+                        return fV.some(v => profs.includes(v));
+                    }
+                    const projectVal = String(proyecto[filterFieldMap[fK]] || '').trim();
+                    return fV.includes(projectVal);
+                });
             });
 
             renderProyectos(filteredData);
-            updateKPIs(filteredData);
             updateCount(filteredData.length);
+            populateFilters();
+        }
+
+        function updateKPIs(proyectosData) {
+            // KPIs eliminados por solicitud del usuario
         }
 
         function clearFilters() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('filterArea').value = '';
-            document.getElementById('filterFinancing').value = '';
-            document.getElementById('filterStatus').value = '';
-            document.getElementById('filterProfessional').value = '';
-            applyFilters();
+            limpiarFiltros();
         }
 
         function renderSkeleton(container, rows = 5) {
-            container.innerHTML = Array(rows).fill(0).map(() => `
-                <tr class="animate-pulse">
-                    ${Array(8).fill(0).map(() => `
-                        <td class="py-4 px-4">
-                            <div class="h-4 bg-gray-200 rounded w-full"></div>
-                        </td>
-                    `).join('')}
+            container.innerHTML = Array(rows).fill(0).map((_, idx) => `
+                <tr class="animate-pulse" style="animation-duration: 1.5s; animation-delay: ${idx * 0.05}s;">
+                    <td><div class="h-4 bg-slate-200 rounded w-8"></div></td>
+                    <td>
+                        <div class="h-5 bg-slate-200 rounded w-2/3 mb-2"></div>
+                        <div class="flex gap-2">
+                            <div class="h-4 bg-slate-100 rounded w-16"></div>
+                            <div class="h-4 bg-slate-100 rounded w-24"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="h-4 bg-slate-200 rounded w-16 mb-1"></div>
+                        <div class="h-3 bg-slate-100 rounded w-12"></div>
+                    </td>
+                    <td><div class="h-4 bg-slate-200 rounded w-20"></div></td>
+                    <td class="text-right"><div class="h-5 bg-slate-200 rounded w-20 ml-auto"></div></td>
+                    <td><div class="h-6 bg-slate-200 rounded-full w-24"></div></td>
+                    <td>
+                        <div class="flex justify-between mb-1">
+                            <div class="h-3 bg-slate-200 rounded w-12"></div>
+                            <div class="h-3 bg-slate-200 rounded w-6"></div>
+                        </div>
+                        <div class="h-2 bg-slate-100 rounded-full w-full"></div>
+                    </td>
+                    <td>
+                        <div class="flex justify-center items-center gap-2">
+                            <div class="h-9 w-9 bg-slate-100 rounded-xl"></div>
+                            <div class="h-9 w-9 bg-slate-100 rounded-xl"></div>
+                            <div class="h-9 w-9 bg-slate-100 rounded-xl"></div>
+                        </div>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -1201,11 +636,11 @@
             if (proyectosToRender.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="text-center py-12">
-                            <div class="flex flex-col items-center justify-center text-gray-400">
-                                <i class="fas fa-folder-open text-5xl mb-4 text-gray-300"></i>
-                                <p class="text-lg font-medium text-gray-500">No se encontraron proyectos</p>
-                                <p class="text-sm">Intenta ajustar los filtros de búsqueda</p>
+                        <td colspan="8" class="text-center py-20">
+                            <div class="flex flex-col items-center justify-center text-slate-300">
+                                <i class="fas fa-folder-open text-7xl mb-6 opacity-20"></i>
+                                <p class="text-xl font-black text-slate-400">Sin coincidencias estratégicas</p>
+                                <p class="text-sm font-medium mt-1">Ajuste los parámetros de búsqueda o filtros ribbon</p>
                             </div>
                         </td>
                     </tr>
@@ -1215,52 +650,79 @@
 
             const visibilityClass = columnsVisible ? 'toggle-column-visible' : '';
 
-            tableBody.innerHTML = proyectosToRender.map(proyecto => {
+            tableBody.innerHTML = proyectosToRender.map((proyecto, index) => {
                 let statusClass = utils.getStatusClass(proyecto.estado_nombre || '');
                 let statusText = proyecto.estado_nombre || 'Sin Estado';
-                let badgeStyle = proyecto.estado_color ? `background-color: ${proyecto.estado_color}; color: white;` : '';
+                let badgeStyle = proyecto.estado_color ? `background-color: ${proyecto.estado_color}20; color: ${proyecto.estado_color}; border-color: ${proyecto.estado_color}40;` : '';
 
-                let progressClass = '';
+                let progressColorClass = '';
                 const progress = proyecto.avance_total_porcentaje ? parseFloat(proyecto.avance_total_porcentaje) : 0;
                 const displayProgress = (progress > 1 ? progress : progress * 100);
 
-                if (displayProgress < 25) progressClass = 'bg-rose-500';
-                else if (displayProgress < 50) progressClass = 'bg-amber-500';
-                else if (displayProgress < 75) progressClass = 'bg-blue-500';
-                else progressClass = 'bg-emerald-500';
+                if (displayProgress < 25) progressColorClass = 'bg-rose-500';
+                else if (displayProgress < 50) progressColorClass = 'bg-amber-500';
+                else if (displayProgress < 75) progressColorClass = 'bg-blue-500';
+                else progressColorClass = 'bg-emerald-500';
 
                 return `
-                    <tr class="hover:bg-indigo-50/30 transition-colors duration-150 group">
-                        <td class="toggle-column ${visibilityClass} font-medium text-gray-400 text-xs text-center">${proyecto.id || ''}</td>
-                        <td class="font-semibold text-gray-700 group-hover:text-indigo-600 transition-colors">${proyecto.nombre || ''}</td>
-                        <td class="text-gray-600 toggle-column ${visibilityClass}">${proyecto.area_nombre || ''}</td>
-                        <td class="text-gray-600 toggle-column ${visibilityClass}">${proyecto.financiamiento_nombre || ''}</td>
-                        <td class="font-mono text-gray-600 toggle-column ${visibilityClass}">${utils.formatCurrency(proyecto.monto)}</td>
+                    <tr class="group" style="animation-delay: ${index * 0.04}s;">
                         <td class="toggle-column ${visibilityClass}">
-                            <span class="status-badge ${statusClass}" style="${badgeStyle}">
+                            <span class="text-[10px] font-black font-mono text-slate-300">#${proyecto.id || ''}</span>
+                        </td>
+                        <td>
+                            <div class="flex flex-col gap-1.5">
+                                <span class="text-slate-900 font-extrabold text-[0.95rem] tracking-tight leading-tight group-hover:text-indigo-600 transition-colors uppercase font-outfit">${proyecto.nombre || 'Proyecto sin nombre'}</span>
+                                <div class="flex items-center gap-3">
+                                    <span class="bg-indigo-50 text-indigo-600 text-[9px] font-black px-2 py-0.5 rounded-md tracking-wider border border-indigo-100 flex items-center gap-1.5">
+                                        <i class="fas fa-hashtag opacity-40"></i> ${proyecto.codigo || 'S/N'}
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 font-bold flex items-center gap-1.5">
+                                        <i class="fas fa-location-dot opacity-40"></i> ${proyecto.sector_nombre || 'General Algarrobo'}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="toggle-column ${visibilityClass}">
+                            <div class="flex flex-col">
+                                <span class="text-[11px] text-slate-800 font-extrabold uppercase tracking-tight">${proyecto.area_nombre || '-'}</span>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase mt-0.5 tracking-tighter opacity-70">${proyecto.lineamiento_estrategico_nombre || 'Eje Estratégico'}</span>
+                            </div>
+                        </td>
+                        <td class="toggle-column ${visibilityClass}">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] text-slate-600 font-bold">${proyecto.financiamiento_nombre || '-'}</span>
+                            </div>
+                        </td>
+                        <td class="toggle-column ${visibilityClass} text-right">
+                            <span class="font-mono text-[13px] font-black text-slate-900">${utils.formatCurrency(proyecto.monto)}</span>
+                        </td>
+                        <td class="toggle-column ${visibilityClass}">
+                            <span class="badge ${statusClass}" style="${badgeStyle}">
+                                <i class="fas fa-circle text-[6px]"></i>
                                 ${statusText}
                             </span>
                         </td>
                         <td class="toggle-column ${visibilityClass}">
-                            <div class="flex items-center gap-3">
-                                <div class="w-full bg-gray-100 rounded-full h-2 shadow-inner overflow-hidden">
-                                    <div class="${progressClass} h-2 rounded-full transition-all duration-500 relative" style="width: ${displayProgress}%">
-                                        <div class="absolute inset-0 bg-white/20"></div>
-                                    </div>
+                            <div class="progress-container">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ejecución</span>
+                                    <span class="text-[12px] font-black text-slate-900">${displayProgress.toFixed(0)}%</span>
                                 </div>
-                                <span class="text-xs font-bold text-gray-500 w-9 text-right">${displayProgress.toFixed(0)}%</span>
+                                <div class="progress-track">
+                                    <div class="progress-bar ${progressColorClass}" style="width: ${displayProgress}%"></div>
+                                </div>
                             </div>
                         </td>
                         <td>
-                            <div class="flex items-center gap-1">
-                                <button onclick="viewProject(${proyecto.id})" class="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors tooltip" title="Ver detalles">
+                            <div class="flex justify-center items-center gap-2">
+                                <button onclick="viewProject(${proyecto.id})" class="btn-action view-btn" title="Ficha Técnica">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button onclick="editProject(${proyecto.id})" class="p-2 text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors tooltip" title="Editar">
-                                    <i class="fas fa-edit"></i>
+                                <button onclick="editProject(${proyecto.id})" class="btn-action edit-btn" title="Editar">
+                                    <i class="fas fa-pen-to-square"></i>
                                 </button>
-                                <button onclick="deleteProject(${proyecto.id})" class="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors tooltip" title="Eliminar">
-                                    <i class="fas fa-trash-alt"></i>
+                                <button onclick="deleteProject(${proyecto.id})" class="btn-action del-btn" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </td>
@@ -1269,18 +731,6 @@
             }).join('');
         }
 
-        function updateKPIs(proyectosData) {
-            document.getElementById('totalProjects').textContent = proyectosData.length;
-
-            const executionCount = proyectosData.filter(p => p.estado_nombre === 'Ejecución').length;
-            document.getElementById('executionProjects').textContent = executionCount;
-            const totalAmount = proyectosData.reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0);
-            document.getElementById('totalAmount').textContent = utils.formatCurrency(totalAmount);
-            const avgProgress = proyectosData.length > 0
-                ? proyectosData.reduce((sum, p) => sum + (parseFloat(p.avance_total_porcentaje) || 0), 0) / proyectosData.length
-                : 0;
-            document.getElementById('averageProgress').textContent = (avgProgress > 1 ? avgProgress : avgProgress * 100).toFixed(1) + '%';
-        }
 
         function toggleColumns() {
             const toggleElements = document.querySelectorAll('.toggle-column');
@@ -1661,6 +1111,14 @@
                                 </div>
                                 `}
 
+                                <div class="mt-8 no-print">
+                                    <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <i class="fas fa-forward text-indigo-500"></i>
+                                        Próximos Pasos
+                                    </h4>
+                                    ${nextStepsHTML}
+                                </div>
+
                                 <div>
                                     <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                                         <i class="fas fa-users text-blue-500"></i>
@@ -1849,23 +1307,7 @@
                 </div>
             `;
 
-            html += `
-                <div class="mt-6 no-print">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="bg-gradient-to-r from-indigo-500 to-purple-500 p-5">
-                            <h3 class="text-xl font-bold text-white flex items-center gap-3">
-                                <div class="bg-white bg-opacity-20 p-2 rounded-lg">
-                                    <i class="fas fa-forward"></i>
-                                </div>
-                                Próximos Pasos
-                            </h3>
-                        </div>
-                        <div class="p-6">
-                            ${nextStepsHTML}
-                        </div>
-                    </div>
-                </div>
-            `;
+
 
             html += `
                 <div class="mt-8">

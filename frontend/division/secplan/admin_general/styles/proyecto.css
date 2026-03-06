@@ -1,0 +1,507 @@
+/* 
+   PROYECTO MODERN BI DESIGN SYSTEM
+   Professional Executive Standards for Algarrobo Base
+*/
+
+:root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #eef2ff;
+    --secondary: #ec4899;
+    --accent: #8b5cf6;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--slate-50);
+    background-image:
+        radial-gradient(at 0% 0%, hsla(253, 16%, 95%, 1) 0, transparent 50%),
+        radial-gradient(at 50% 0%, hsla(225, 39%, 95%, 1) 0, transparent 50%),
+        radial-gradient(at 100% 0%, hsla(339, 49%, 95%, 1) 0, transparent 50%);
+    color: var(--slate-800);
+    min-height: 100vh;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-md);
+    border-radius: 1.5rem;
+}
+
+.view-wrapper {
+    max-width: 1650px;
+    margin: 0 auto;
+    padding: 2.5rem;
+}
+
+/* Page Header */
+.page-header {
+    margin-bottom: 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.page-title h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--slate-900);
+    letter-spacing: -0.04em;
+    background: linear-gradient(135deg, var(--slate-900) 0%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Analytics Toolbar (Search + Filters) */
+.analytics-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    background: white;
+    padding: 2rem;
+    border-radius: 2rem;
+    border: 1px solid var(--slate-200);
+    box-shadow: var(--shadow-lg);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 40;
+    /* Base level for toolbar */
+}
+
+/* Fix for z-index overlapping: Elevation on focus/open */
+.analytics-toolbar:focus-within,
+.analytics-toolbar:has(.filter-pill.open) {
+    z-index: 100;
+    /* Overlap table and content */
+    box-shadow: 0 40px 80px -15px rgba(0, 0, 0, 0.12);
+}
+
+.search-area {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    max-width: 800px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary);
+    font-size: 1.25rem;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.search-box input {
+    width: 100%;
+    height: 60px;
+    padding: 0 1.5rem 0 4rem;
+    background: var(--slate-50);
+    border: 2px solid transparent;
+    border-radius: 1.5rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--slate-900);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-box input:focus {
+    background: white;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.12);
+    outline: none;
+}
+
+.search-box input:focus+i {
+    transform: translateY(-50%) scale(1.2);
+    color: var(--primary-dark);
+}
+
+/* Filter Ribbon (Advanced UI) */
+.filter-ribbon {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+
+.filter-pill {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.85rem 1.25rem;
+    background: var(--slate-50);
+    border: 1px solid var(--slate-200);
+    border-radius: 1.25rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 54px;
+    user-select: none;
+}
+
+.filter-pill:hover {
+    border-color: var(--primary);
+    background: white;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -8px rgba(99, 102, 241, 0.25);
+}
+
+.filter-pill.open {
+    z-index: 200 !important;
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.3);
+}
+
+.filter-pill.active {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    border-width: 2px;
+}
+
+.filter-pill i:not(.fa-chevron-down) {
+    color: var(--primary);
+    font-size: 1.2rem;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.filter-pill:hover i:not(.fa-chevron-down) {
+    transform: rotate(15deg) scale(1.1);
+}
+
+.filter-pill span {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--slate-600);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.filter-pill.active span {
+    color: var(--primary-dark);
+}
+
+/* Filter Popover Modernization */
+.filter-popover {
+    position: absolute;
+    top: calc(100% + 14px);
+    left: 0;
+    width: 340px;
+    max-height: 420px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 1.75rem;
+    box-shadow:
+        0 35px 70px -15px rgba(0, 0, 0, 0.2),
+        0 20px 40px -20px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--slate-200);
+    display: none;
+    overflow-y: auto;
+    padding: 1.25rem;
+    z-index: 300;
+    animation: popAndGlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popAndGlide {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.92);
+        filter: blur(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+.filter-pill.open .filter-popover {
+    display: block;
+}
+
+.filter-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.filter-item:hover {
+    background: var(--slate-50);
+    border-color: var(--slate-200);
+}
+
+.filter-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.filter-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--slate-800);
+}
+
+/* Table Design Overhaul */
+.table-wrap {
+    background: white;
+    border-radius: 2rem;
+    border: 1px solid var(--slate-200);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+    z-index: 10;
+}
+
+.table-header {
+    padding: 2rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--slate-100);
+    background: linear-gradient(to right, #ffffff, var(--slate-50));
+    border-radius: 2rem 2rem 0 0;
+}
+
+.overflow-x-auto {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead th {
+    background: var(--slate-50);
+    padding: 1.25rem 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--slate-500);
+    text-align: left;
+    border-bottom: 1px solid var(--slate-200);
+}
+
+tbody tr {
+    background: white;
+    border-bottom: 1px solid var(--slate-100);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+tbody tr:last-child {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px -4px rgba(99, 102, 241, 0.12);
+    background: white;
+    z-index: 10;
+    position: relative;
+}
+
+tbody td {
+    padding: 1.1rem 1.5rem;
+    vertical-align: middle;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modals Modernization */
+.modal-content {
+    width: 95%;
+    max-width: 1300px;
+    border-radius: 2.5rem !important;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    padding: 2.5rem 3rem !important;
+    border: none !important;
+}
+
+/* Buttons and Actions */
+.btn-action {
+    width: 38px;
+    height: 38px;
+    border-radius: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: white;
+    border: 1.5px solid var(--slate-200);
+    color: var(--slate-500);
+    font-size: 0.9rem;
+}
+
+.btn-action:hover {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+}
+
+.view-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.edit-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.del-btn:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    border-color: #fecaca;
+}
+
+/* Evolution Bars */
+.progress-container {
+    width: 140px;
+}
+
+.progress-track {
+    width: 100%;
+    height: 8px;
+    background: var(--slate-100);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid transparent;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--slate-50);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--slate-300);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Toasts */
+.toast {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border-radius: 1.25rem;
+    border: 1px solid var(--slate-200);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* responsive */
+@media (max-width: 1024px) {
+    .filter-ribbon {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
