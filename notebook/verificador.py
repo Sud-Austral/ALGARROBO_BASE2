@@ -61,8 +61,11 @@ def generate_pdf_from_text(lines, filename):
                             
                             # Convertir links tipo [Texto](URL) a <a href="URL">Texto</a> para ReportLab
                             cell_text = str(cell).strip()
+                            # Escapar caracteres especiales para el parser XML de ReportLab (Paragraph)
+                            cell_text = cell_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                            
                             if "[" in cell_text and "](" in cell_text:
-                                cell_text = re.sub(r'\[(.*?)\]\((.*?)\)', r'<a href="\2" color="blue" target="_blank"><u>\1</u></a>', cell_text)
+                                cell_text = re.sub(r'\[(.*?)\]\((.*?)\)', r'<a href="\2" color="blue"><u>\1</u></a>', cell_text)
                             
                             formatted_row.append(Paragraph(cell_text, txt_style))
                     formatted_data.append(formatted_row)
@@ -157,7 +160,7 @@ def generate_pdf_from_text(lines, filename):
 # --- MOTOR DE INTELIGENCIA ARTIFICIAL PARA ANÁLISIS CUALITATIVO ---
 class AIAnalyst:
     def __init__(self):
-        self.API_KEY = "1fdd53bb96924d78b1d799919a7c21e4.PgBhpSwp9Uvpi48a"
+        self.API_KEY = os.environ.get("GLM_API_KEY", "SU_API_KEY_AQUI")
         self.API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
         self.MODEL = "glm-4-flash"
 
@@ -224,7 +227,7 @@ def audit_project(cur, project_id, lote_id=None):
                 p.*,
                 a.nombre as area_nombre,
                 l.nombre as lineamiento_nombre,
-                f.nombre as financiamiento_nombre,
+                COALESCE(f.fuente, f.nombre) as financiamiento_nombre,
                 ep.nombre as estado_nombre,
                 et.nombre as etapa_nombre,
                 es.nombre as postulacion_nombre,

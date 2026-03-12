@@ -4,10 +4,10 @@ import psycopg2
 import psycopg2.extras
 import traceback
 
-DB_CONNECTION_STRING = os.getenv(
-    "DATABASE_URL",
-    "postgresql://neondb_owner:npg_xHS7sA1FDPqI@ep-hidden-grass-a4sa46kc-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
-)
+DB_CONNECTION_STRING = os.getenv("DATABASE_URL")
+if not DB_CONNECTION_STRING:
+    print("ERROR: DATABASE_URL not set.")
+    exit(1)
 
 def debug_query():
     try:

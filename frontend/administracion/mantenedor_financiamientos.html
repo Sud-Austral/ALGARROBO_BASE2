@@ -16,6 +16,10 @@
     <script src="../script/router.js"></script>
     <script src="../script/api.js"></script>
     <script src="../script/utils.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { display: none; }
+        .custom-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
 
 <body class="bg-slate-50 min-h-screen">
@@ -38,7 +42,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <aside class="lg:col-span-1">
-                <div class="card-modern sticky top-24">
+                <div class="card-modern sticky top-24 max-h-[calc(100vh-140px)] overflow-y-auto custom-scrollbar pb-6">
                     <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
                         <div
                             class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -89,7 +93,7 @@
                             <span class="text-sm font-medium text-slate-600">Financiamiento Activo</span>
                         </div>
 
-                        <div class="flex gap-2 pt-2">
+                        <div class="flex gap-2 pt-4 pb-2 border-t border-slate-50 mt-4">
                             <button type="button" id="cancelBtn"
                                 class="hidden flex-1 px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all font-bold text-sm">
                                 Cancelar

@@ -1,3 +1,89 @@
+-- ============================================================
+-- MAESTROS Y TABLAS DE SOPORTE (CREAR PRIMERO POR DEPENDENCIAS)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS hitoscalendario (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(150) UNIQUE NOT NULL,
+    is_hito BOOLEAN DEFAULT TRUE
+);
+
+INSERT INTO hitoscalendario (nombre, is_hito) VALUES
+('RECEPCION_OBSERVACIONES', TRUE),
+('RESPUESTA_OBSERVACIONES', TRUE),
+('APROBACION_CONVENIO', TRUE),
+('INICIO_LICITACION', TRUE),
+('APROBACION_URS', TRUE),
+('APROBACION_NIVEL_CENTRAL', TRUE),
+('OTRO', TRUE),
+('HITO_INICIO_PROYECTO', TRUE),
+('HITO_TERMINO_PROYECTO', TRUE),
+('ENTREGA_IMPORTANTE', TRUE),
+('INAUGURACION', TRUE),
+('POSTULACION_FONDO', TRUE),
+('VENCIMIENTO_PERMISO', TRUE),
+('PLAZO_RENDICION', TRUE),
+('FECHA_ADMINISTRATIVA', FALSE),
+('REUNION_COORDINACION', FALSE),
+('REUNION_EQUIPO', FALSE),
+('VISITA_TERRENO', FALSE),
+('COORDINACION_CONTRATISTA', FALSE),
+('EVENTO_MUNICIPAL', FALSE),
+('CEREMONIA', FALSE),
+('EVENTO_COMUNITARIO_PROYECTO', FALSE)
+ON CONFLICT (nombre) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS areas (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(150) UNIQUE NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS financiamientos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) UNIQUE NOT NULL,
+    fuente VARCHAR(100),
+    anyo VARCHAR(50),
+    comentario TEXT,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS etapas_proyecto (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(150) UNIQUE NOT NULL,
+    orden SMALLINT,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS estados_proyecto (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(150) UNIQUE NOT NULL,
+    color VARCHAR(30),
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS estados_postulacion (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(150) UNIQUE NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS sectores (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(200) UNIQUE NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS lineamientos_estrategicos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(300) UNIQUE NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+-- ============================================================
+-- TABLAS PRINCIPALES
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS proyectos (
     id SERIAL PRIMARY KEY,
 
@@ -54,14 +140,13 @@ CREATE TABLE IF NOT EXISTS proyectos (
     activo BOOLEAN DEFAULT TRUE
 );
 
-
-CREATE TABLE mapas (
+CREATE TABLE IF NOT EXISTS mapas (
     mapa_id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     descripcion TEXT
 );
 
-CREATE TABLE mapas_roles (
+CREATE TABLE IF NOT EXISTS mapas_roles (
     mapa_id INTEGER NOT NULL,
     role_id INTEGER NOT NULL,
     PRIMARY KEY (mapa_id, role_id),
@@ -78,269 +163,96 @@ CREATE TABLE mapas_roles (
 INSERT INTO mapas (nombre, descripcion)
 VALUES 
 ('Varios', '1.html'),
-('Proyectos', '2.html');
+('Proyectos', '2.html'),
+('Camara', '3.html')
+ON CONFLICT DO NOTHING;
 
-INSERT INTO mapas (nombre, descripcion)
-VALUES 
-('Camara', '3.html');
-
-INSERT INTO mapas_roles (mapa_id, role_id)
-VALUES 
-(1, 10),
-(2, 10),
-(1, 11);
-
-INSERT INTO mapas_roles (mapa_id, role_id)
-VALUES 
-(3, 10);
-
-
-
-CREATE TABLE proyectos_documentos (
+CREATE TABLE IF NOT EXISTS proyectos_documentos (
     documento_id SERIAL PRIMARY KEY,
-
-    proyecto_id INT NOT NULL,
-    tipo_documento VARCHAR(100),        -- ej: "Planimetría", "Ingeniería", "Contrato"
-    nombre VARCHAR(255),                -- nombre visible del documento
+    proyecto_id INT NOT NULL REFERENCES proyectos(id) ON DELETE CASCADE,
+    tipo_documento VARCHAR(100),
+    nombre VARCHAR(255),
     descripcion TEXT,
-
-    url TEXT,                            -- URL en storage (Supabase, S3, etc)
+    url TEXT,
     archivo_nombre VARCHAR(255),
     archivo_extension VARCHAR(20),
-    archivo_size BIGINT,                -- bytes
-
-    fecha_subida TIMESTAMP DEFAULT now(),
-
-    CONSTRAINT fk_documentos_proyecto
-        FOREIGN KEY (proyecto_id)
-        REFERENCES proyectos (id)
-        ON DELETE CASCADE
+    archivo_size BIGINT,
+    fecha_subida TIMESTAMP DEFAULT now()
 );
 
-CREATE TABLE proyectos_geomapas (
+CREATE TABLE IF NOT EXISTS proyectos_geomapas (
     geomapa_id SERIAL PRIMARY KEY,
-
-    proyecto_id INT NOT NULL,
+    proyecto_id INT NOT NULL REFERENCES proyectos(id) ON DELETE CASCADE,
     nombre VARCHAR(150),
     descripcion TEXT,
-
     geojson JSONB NOT NULL,
-    fecha_creacion TIMESTAMP DEFAULT now(),
-
-    CONSTRAINT fk_geomapas_proyecto
-        FOREIGN KEY (proyecto_id)
-        REFERENCES proyectos (id)
-        ON DELETE CASCADE
+    fecha_creacion TIMESTAMP DEFAULT now()
 );
 
-
-CREATE TABLE auditoria2 (
+CREATE TABLE IF NOT EXISTS auditoria2 (
     auditoria_id BIGSERIAL PRIMARY KEY,
-
     fecha TIMESTAMP NOT NULL DEFAULT now(),
-
     tabla_nombre TEXT NOT NULL,
-    operacion TEXT NOT NULL,                 -- INSERT | UPDATE | DELETE
-
-    registro_id TEXT,                        -- id del registro afectado
-
-    usuario_bd TEXT DEFAULT current_user,    -- usuario PostgreSQL
-
+    operacion TEXT NOT NULL,
+    registro_id TEXT,
+    usuario_bd TEXT DEFAULT current_user,
     ip_origen TEXT,
     aplicacion TEXT,
-
-    query TEXT,                              -- query ejecutada
+    query TEXT,
     datos_antes JSONB,
     datos_despues JSONB
 );
 
-
-CREATE TABLE proyectos_hitos (
+CREATE TABLE IF NOT EXISTS proyectos_hitos (
     id SERIAL PRIMARY KEY,
-    proyecto_id INT NOT NULL REFERENCES proyectos(id),
-
+    proyecto_id INT NOT NULL REFERENCES proyectos(id) ON DELETE CASCADE,
     fecha DATE NOT NULL,
     observacion TEXT,
-
     categoria_calendario INT REFERENCES hitoscalendario(id),
-
     categoria_hito INT REFERENCES hitoscalendario(id),
-
     creado_por INT NOT NULL REFERENCES users(user_id),
     creado_en TIMESTAMP NOT NULL DEFAULT now()
 );
 
-CREATE TABLE proyectos_observaciones (
+CREATE TABLE IF NOT EXISTS proyectos_observaciones (
     id SERIAL PRIMARY KEY,
-    proyecto_id INT NOT NULL REFERENCES proyectos(id),
+    proyecto_id INT NOT NULL REFERENCES proyectos(id) ON DELETE CASCADE,
     fecha DATE NOT NULL,
     creado_por INT NOT NULL REFERENCES users(user_id),
     observacion TEXT,
     creado_en TIMESTAMP DEFAULT now()
 );
 
-
-
-CREATE TABLE financiamiento_plazos (
+CREATE TABLE IF NOT EXISTS financiamiento_plazos (
     id SERIAL PRIMARY KEY,
-
     financiamiento VARCHAR(50) NOT NULL,
     hito_origen VARCHAR(100) NOT NULL,
     hito_destino VARCHAR(100) NOT NULL,
-
     dias INT NOT NULL,
     tipo_dia VARCHAR(20) NOT NULL
-    -- 'HABILES' | 'CORRIDOS'
 );
 
--- FNDR
-INSERT INTO financiamiento_plazos
-(financiamiento, hito_origen, hito_destino, dias, tipo_dia)
+INSERT INTO financiamiento_plazos (financiamiento, hito_origen, hito_destino, dias, tipo_dia)
 VALUES
 ('FNDR', 'RECEPCION_OBSERVACIONES', 'RESPUESTA_OBSERVACIONES', 60, 'CORRIDOS'),
-('FNDR', 'APROBACION_CONVENIO', 'INICIO_LICITACION', 90, 'CORRIDOS');
-
--- FRIL
-INSERT INTO financiamiento_plazos
-(financiamiento, hito_origen, hito_destino, dias, tipo_dia)
-VALUES
+('FNDR', 'APROBACION_CONVENIO', 'INICIO_LICITACION', 90, 'CORRIDOS'),
 ('FRIL', 'RECEPCION_OBSERVACIONES', 'RESPUESTA_OBSERVACIONES', 20, 'HABILES'),
-('FRIL', 'APROBACION_CONVENIO', 'INICIO_LICITACION', 90, 'CORRIDOS');
+('FRIL', 'APROBACION_CONVENIO', 'INICIO_LICITACION', 90, 'CORRIDOS')
+ON CONFLICT DO NOTHING;
 
-
-CREATE TABLE areas (
+CREATE TABLE IF NOT EXISTS calendario_eventos (
     id SERIAL PRIMARY KEY,
-    nombre VARCHAR(150) UNIQUE NOT NULL,
-    activo BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE financiamientos (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) UNIQUE NOT NULL,
-    fuente VARCHAR(100),
-    anyo VARCHAR(50),
-    comentario TEXT,
-    activo BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE etapas_proyecto (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(150) UNIQUE NOT NULL,
-    orden SMALLINT,
-    activo BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE estados_proyecto (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(150) UNIQUE NOT NULL,
-    color VARCHAR(30),
-    activo BOOLEAN DEFAULT TRUE
-);
-
-
-CREATE TABLE estados_postulacion (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(150) UNIQUE NOT NULL,
-    activo BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE sectores (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(200) UNIQUE NOT NULL,
-    activo BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE lineamientos_estrategicos (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(300) UNIQUE NOT NULL,
-
-    activo BOOLEAN DEFAULT TRUE
-);
-
-
-CREATE TABLE calendario_eventos (
-    id SERIAL PRIMARY KEY,
-    -- =================================
-    -- Datos visibles en el calendario
-    -- =================================
     titulo VARCHAR(200) NOT NULL,
     descripcion TEXT,
     fecha_inicio TIMESTAMP NOT NULL,
     fecha_termino TIMESTAMP,
     todo_el_dia BOOLEAN DEFAULT TRUE,
     categoria_calendario INT REFERENCES hitoscalendario(id),
-    -- =================================
-    -- Origen del evento (CLAVE)
-    -- =================================
     origen_tipo VARCHAR(50),
     origen_id INT,
-    -- Ej:
-    -- hito        → proyectos_hitos.id
-    -- observacion → proyectos_observaciones.id
-    -- manual      → NULL
-    -- =================================
-    -- Metadatos
-    -- =================================
     ubicacion VARCHAR(200),
     activo BOOLEAN DEFAULT TRUE,
-    -- =================================
-    -- Auditoría
-    -- =================================
     creado_por INT NOT NULL REFERENCES users(user_id),
     creado_en TIMESTAMP DEFAULT NOW(),
-    -- =================================
-    -- Integridad
-    -- =================================
     UNIQUE (origen_tipo, origen_id)
 );
-
-
-CREATE TABLE hitoscalendario (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(150) UNIQUE NOT NULL,
-    is_hito BOOLEAN DEFAULT TRUE
-);
-
-INSERT INTO hitoscalendario (nombre, is_hito) VALUES
--- Tipos de Hito (select tipo_hito)
-('RECEPCION_OBSERVACIONES', TRUE),
-('RESPUESTA_OBSERVACIONES', TRUE),
-('APROBACION_CONVENIO', TRUE),
-('INICIO_LICITACION', TRUE),
-('APROBACION_URS', TRUE),
-('APROBACION_NIVEL_CENTRAL', TRUE),
-('OTRO', TRUE),
-
--- Hitos de proyectos
-('HITO_INICIO_PROYECTO', TRUE),
-('HITO_TERMINO_PROYECTO', TRUE),
-('ENTREGA_IMPORTANTE', TRUE),
-('INAUGURACION', TRUE),
-('POSTULACION_FONDO', TRUE),
-('VENCIMIENTO_PERMISO', TRUE),
-('PLAZO_RENDICION', TRUE),
-
--- Calendario / gestión
-('FECHA_ADMINISTRATIVA', FALSE),
-('REUNION_COORDINACION', FALSE),
-('REUNION_EQUIPO', FALSE),
-('VISITA_TERRENO', FALSE),
-('COORDINACION_CONTRATISTA', FALSE),
-
--- Eventos
-('EVENTO_MUNICIPAL', FALSE),
-('CEREMONIA', FALSE),
-('EVENTO_COMUNITARIO_PROYECTO', FALSE)
-ON CONFLICT (nombre) DO NOTHING;
-
-
-
-
-
-
-
-
-
-
-
-

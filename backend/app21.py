@@ -963,7 +963,7 @@ def get_proyectos4(current_user_id):
                     le.nombre AS lineamiento_estrategico_nombre,
 
                     f.id AS financiamiento_id,
-                    f.nombre AS financiamiento_nombre,
+                    COALESCE(f.fuente, f.nombre) AS financiamiento_nombre,
 
                     ep.id AS etapa_id,
                     ep.nombre AS etapa_nombre,
@@ -1019,7 +1019,7 @@ def get_proyectos_chat(current_user_id):
                     ) AS ult_modificacion,
                     a.nombre AS area,
                     le.nombre AS lineamiento,
-                    f.nombre AS financiamiento,
+                    COALESCE(f.fuente, f.nombre) AS financiamiento,
                     ep.nombre AS etapa,                  
                     es.nombre AS estado,
                     epost.nombre AS estado_postulacion,
@@ -1074,7 +1074,7 @@ def get_proyectos(current_user_id):
                     le.nombre AS lineamiento_estrategico_nombre,
 
                     f.id AS financiamiento_id,
-                    f.nombre AS financiamiento_nombre,
+                    COALESCE(f.fuente, f.nombre) AS financiamiento_nombre,
 
                     ep.id AS etapa_id,
                     ep.nombre AS etapa_nombre,
