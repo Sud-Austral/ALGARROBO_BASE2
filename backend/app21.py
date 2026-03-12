@@ -264,8 +264,8 @@ def log_control(user_id, accion, modulo='proyectos',
                 entidad_tipo, entidad_id, entidad_nombre,
                 exitoso, detalle,
                 ip, ua, ep,
-                _json.dumps(datos_antes) if datos_antes else None,
-                _json.dumps(datos_despues) if datos_despues else None
+                _json.dumps(datos_antes, default=str) if datos_antes else None,
+                _json.dumps(datos_despues, default=str) if datos_despues else None
             ))
         conn.commit()
     except Exception as e:

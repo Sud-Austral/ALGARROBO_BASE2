@@ -446,6 +446,20 @@
                 transform: translateY(0);
             }
         }
+
+        /* Highlight for Audit */
+        .audit-highlight {
+            border: 3px solid #f59e0b !important;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4) !important;
+            animation: pulse-highlight 2s infinite !important;
+            background-color: #fffbeb !important;
+        }
+
+        @keyframes pulse-highlight {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 
@@ -1224,7 +1238,9 @@
             checkLoginStatus();
 
             loadCatalogData().then(() => {
-                loadProjects();
+                loadProjects().then(() => {
+                    handleAuditParams();
+                });
             });
 
             const searchInput = document.getElementById('searchInput');
@@ -2625,6 +2641,53 @@
                 label.innerHTML = originInner;
                 label.classList.remove('cursor-not-allowed', 'opacity-70');
                 e.target.value = ''; // clean val
+            }
+        }
+        // ==========================================
+        // GESTIÓN ASISTIDA (AUDITORÍA INTEG.: URL -> MODAL -> HIGHLIGHT)
+        // ==========================================
+        function handleAuditParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pid = parseInt(urlParams.get('pid'));
+            const fieldId = urlParams.get('audit_field');
+
+            if (!pid) return;
+
+            console.log(`[Audit] Detectada petición para Proyecto #${pid}, Campo: ${fieldId}`);
+            
+            // Buscar el proyecto en la lista actual
+            const proyecto = proyectos.find(p => p.id === pid);
+            if (!proyecto) {
+                showToast('Proyecto de auditoría no encontrado en el listado', 'warning');
+                return;
+            }
+
+            // Abrir el modal de edición
+            editProject(pid);
+
+            // Si hay un campo específico, resaltarlo después de que el modal esté listo
+            if (fieldId) {
+                setTimeout(() => {
+                    const target = document.getElementById(fieldId);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        target.classList.add('audit-highlight');
+                        
+                        // Agregar un mensaje flotante cerca del campo
+                        const helpText = document.createElement('div');
+                        helpText.className = 'text-amber-600 text-xs font-bold mt-1 animate-bounce';
+                        helpText.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> Este campo requiere su atención según el reporte de auditoría.';
+                        target.parentNode.appendChild(helpText);
+
+                        // Remover highlight al enfocar o cambiar
+                        target.addEventListener('focus', () => {
+                            target.classList.remove('audit-highlight');
+                            helpText.remove();
+                        }, { once: true });
+                    } else {
+                        console.warn(`[Audit] Campo '${fieldId}' no encontrado en el formulario.`);
+                    }
+                }, 800); // Esperar a que el modal y la carga de datos (hitos/etc) terminen
             }
         }
     </script>

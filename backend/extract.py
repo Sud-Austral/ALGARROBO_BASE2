@@ -6,8 +6,9 @@ import pytesseract
 import subprocess
 import pathlib
 import time
+import os
 
-SOFFICE = r"C:\Program Files\LibreOffice\program\soffice.exe"
+SOFFICE = os.getenv("SOFFICE_PATH", r"C:\Program Files\LibreOffice\program\soffice.exe")
 
 def extract_doc(archivo):
     archivo = pathlib.Path(archivo)

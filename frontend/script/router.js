@@ -60,7 +60,8 @@ function checkLoginStatus() {
     const token = localStorage.getItem('authToken');
 
     if (!isLoggedIn || isLoggedIn !== 'true' || !token) {
-        window.location.href = `${BASE}/frontend/index.html`;
+        const currentUrl = window.location.href;
+        window.location.href = `${BASE}/frontend/index.html?redirect=${encodeURIComponent(currentUrl)}`;
         return [null, null];
     }
 

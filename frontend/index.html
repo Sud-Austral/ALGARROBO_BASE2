@@ -277,7 +277,8 @@
 
                 clearAlerts();
 
-                fetch('https://186.67.61.251:8000/auth/login', {
+                const apiBase = 'https://186.67.61.251:8000';
+                fetch(`${apiBase}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: username, password: password })
@@ -304,8 +305,11 @@
                                 ruta = `administracion/index.html`;
                             }
 
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const redirect = urlParams.get('redirect');
+
                             setTimeout(() => {
-                                window.location.href = ruta;
+                                window.location.href = redirect ? redirect : ruta;
                             }, 500);
                         } else {
                             throw new Error('Respuesta del servidor inválida');

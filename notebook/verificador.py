@@ -1,8 +1,10 @@
 import os
 import psycopg2
 import psycopg2.extras
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
+import requests
+import re
 
 # ==============================================================================
 # SCRIPT DE AUDITORÍA INTEGRAL DE PROYECTOS
@@ -10,7 +12,18 @@ import json
 # ==============================================================================
 
 # NOTA: El usuario debe configurar su DATABASE_URL aquí o en el entorno
-DATABASE_URL = "SU_STRING_DE_CONEXION_AQUI"
+DATABASE_URL = os.environ.get("DATABASE_URL", "SU_STRING_DE_CONEXION_AQUI")
+
+# --- CARGAR CONFIGURACIÓN DE URL ---
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
+BASE_URL_PORTAL = "https://sud-austral.github.io/ALGARROBO_BASE2"
+try:
+    if os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            config = json.load(f)
+            BASE_URL_PORTAL = config.get("url_path", BASE_URL_PORTAL)
+except:
+    pass
 
 def generate_pdf_from_text(lines, filename):
     try:
@@ -26,11 +39,11 @@ def generate_pdf_from_text(lines, filename):
         styles = getSampleStyleSheet()
         story = []
 
-        title_style = ParagraphStyle('title', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#4f46e5'), spaceAfter=8, alignment=TA_CENTER)
-        sub_style = ParagraphStyle('sub_title', parent=styles['Normal'], fontSize=11, textColor=colors.grey, spaceAfter=16, alignment=TA_CENTER)
-        h2_style = ParagraphStyle('h2', parent=styles['Heading2'], fontSize=13, textColor=colors.HexColor('#1e293b'), spaceBefore=12, spaceAfter=6)
-        normal_style = styles['Normal']
-        normal_bold = ParagraphStyle('nb', parent=styles['Normal'], fontName='Helvetica-Bold')
+        title_style = ParagraphStyle('title', parent=styles['Heading1'], fontSize=21, textColor=colors.HexColor('#4f46e5'), spaceAfter=10, alignment=TA_CENTER)
+        sub_style = ParagraphStyle('sub_title', parent=styles['Normal'], fontSize=14, textColor=colors.grey, spaceAfter=20, alignment=TA_CENTER)
+        h2_style = ParagraphStyle('h2', parent=styles['Heading2'], fontSize=17, textColor=colors.HexColor('#1e293b'), spaceBefore=15, spaceAfter=8)
+        body_style = ParagraphStyle('body', parent=styles['Normal'], fontSize=12, leading=15)
+        normal_bold = ParagraphStyle('nb', parent=body_style, fontName='Helvetica-Bold')
 
         current_table_data = []
 
@@ -44,8 +57,14 @@ def generate_pdf_from_text(lines, filename):
                             formatted_row.append(cell)
                         else:
                             # Utilizar texto normal a menos que la fila indique un error
-                            txt_style = normal_bold if len(str(cell)) < 30 and ("⚠️" in str(cell) or "🔴" in str(cell) or "CRÍTICO" in str(cell) or "ALTO" in str(cell)) else styles['Normal']
-                            formatted_row.append(Paragraph(str(cell).strip(), txt_style))
+                            txt_style = normal_bold if len(str(cell)) < 30 and ("⚠️" in str(cell) or "🔴" in str(cell) or "CRÍTICO" in str(cell) or "ALTO" in str(cell)) else body_style
+                            
+                            # Convertir links tipo [Texto](URL) a <a href="URL">Texto</a> para ReportLab
+                            cell_text = str(cell).strip()
+                            if "[" in cell_text and "](" in cell_text:
+                                cell_text = re.sub(r'\[(.*?)\]\((.*?)\)', r'<a href="\2" color="blue"><u>\1</u></a>', cell_text)
+                            
+                            formatted_row.append(Paragraph(cell_text, txt_style))
                     formatted_data.append(formatted_row)
                 
                 cols = len(current_table_data[0])
@@ -75,12 +94,17 @@ def generate_pdf_from_text(lines, filename):
                     header_bg = colors.HexColor('#10b981') # Green for scores
                 elif "ACCIÓN" in header_text and "PRIORIDAD" in header_text:
                     header_bg = colors.HexColor('#f59e0b') # Amber for actions
+                    if cols == 7:
+                        # Sum: 2 + 10 + 3 + 2 + 2 + 3 + 3 = 25 cm (Cabe bien en landscape de 26.7cm útiles)
+                        colWidths = [2*cm, 10*cm, 3*cm, 2*cm, 2*cm, 3.5*cm, 3.5*cm]
+                    else:
+                        colWidths = [2.5*cm, 14*cm, 3.5*cm, 2.5*cm, 2.5*cm, 4*cm]
                     
                 t.setStyle(TableStyle([
                     ('BACKGROUND', (0,0), (-1,0), header_bg),
                     ('TEXTCOLOR',  (0,0), (-1,0), colors.white),
                     ('FONTNAME',   (0,0), (-1,0), 'Helvetica-Bold'),
-                    ('FONTSIZE',   (0,0), (-1,-1), 9),
+                    ('FONTSIZE',   (0,0), (-1,-1), 11),
                     ('VALIGN',     (0,0), (-1,-1), 'MIDDLE'),
                     ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#f8fafc'), colors.white]),
                     ('GRID',       (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
@@ -113,14 +137,14 @@ def generate_pdf_from_text(lines, filename):
                     story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#4f46e5')))
                     story.append(Spacer(1, 0.2*cm))
                 elif "CALIDAD GENERAL:" in line:
-                    score_style = ParagraphStyle('score', parent=styles['Normal'], fontSize=12, fontName='Helvetica-Bold', textColor=colors.HexColor('#ef4444') if "⚠️" in line else colors.HexColor('#10b981'))
+                    score_style = ParagraphStyle('score', parent=body_style, fontSize=16, fontName='Helvetica-Bold', textColor=colors.HexColor('#ef4444') if "⚠️" in line else colors.HexColor('#10b981'))
                     story.append(Paragraph(line, score_style))
                     story.append(Spacer(1, 0.3*cm))
                 elif "PRINCIPAL HALLAZGO" in line or "INSTRUCCIÓN:" in line or "RECOMENDACIÓN:" in line:
-                    story.append(Paragraph(f"<b>{line}</b>", normal_style))
+                    story.append(Paragraph(f"<b>{line}</b>", body_style))
                 else:
                     if "BARRA DE CALIDAD VISUAL" not in line:
-                        story.append(Paragraph(line, normal_style))
+                        story.append(Paragraph(line, body_style))
                         story.append(Spacer(1, 0.1*cm))
                     
         commit_table()
@@ -135,7 +159,7 @@ class AIAnalyst:
     def __init__(self):
         self.API_KEY = "1fdd53bb96924d78b1d799919a7c21e4.PgBhpSwp9Uvpi48a"
         self.API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
-        self.MODEL = "GLM-4.7-Flash"
+        self.MODEL = "glm-4-flash"
 
     def get_analysis(self, report_text):
         prompt = f"""
@@ -221,6 +245,16 @@ def audit_project(cur, project_id, lote_id=None):
             return f"Error: Proyecto ID {project_id} no encontrado.", None
 
         # --- Lógica de Auditoría Interna ---
+        prio_icons = {"CRÍTICO": "🔴", "ALTO": "🟠", "MEDIO": "🟡", "BAJO": "⚪"}
+        prio_map = {"CRÍTICO": 0, "ALTO": 1, "MEDIO": 2, "BAJO": 3}
+        
+        def get_compromiso(plazo_str):
+            try:
+                days = int(re.search(r'\d+', plazo_str).group()) if re.search(r'\d+', plazo_str) else 30
+                return (datetime.now() + timedelta(days=days)).strftime('%d/%m/%Y')
+            except:
+                return (datetime.now() + timedelta(days=30)).strftime('%d/%m/%Y')
+
         alerts = []
         scores = {}
         r = []
@@ -399,6 +433,62 @@ def audit_project(cur, project_id, lote_id=None):
         if etapa != "Idea de Proyecto" and count_docs == 0:
             vi_alerts.append(("CRÍTICO", "VI001", f"Faltan documentos en etapa {etapa}", "Inmediato", profesional))
 
+        # --- CONSOLIDACIÓN DE ALERTAS Y CÁLCULO DE PUNTAJES FINALES ---
+        alerts.extend(validation_alerts)
+        alerts.extend(vi_alerts)
+        
+        high_severity_alerts = [a for a in alerts if a[0] in ["CRÍTICO", "ALTO"]]
+        has_errors = len(high_severity_alerts) > 0
+        
+        # Puntaje Dim 4 (Ponderación agresiva por riesgos)
+        conteo_crit = len([a for a in alerts if a[0] == "CRÍTICO"])
+        conteo_alto = len([a for a in alerts if a[0] == "ALTO"])
+        penalizacion = (conteo_crit * 40) + (conteo_alto * 15)
+        scores['Dim4'] = max(0, 100 - penalizacion)
+        
+        # Ponderación Final del Proyecto
+        final_score = (
+            (scores['Dim1'] * 0.10) + 
+            (scores['Dim2'] * 0.15) + 
+            (scores['Dim3'] * 0.20) + 
+            (scores['Dim4'] * 0.25) + 
+            ((100 if profesional else 0) * 0.10) + 
+            (50.0 * 0.10) +  # Dim 6 base
+            ((100 if project['latitud'] else 0) * 0.10)
+        )
+        
+        sorted_alerts = sorted(alerts, key=lambda x: prio_map.get(x[0], 99))
+
+        # --- CONSTRUCCIÓN DEL REPORTE ESTRUCTURADO ---
+        r.append(f"📋 REPORTE DE CALIDAD INTEGRAL - PROYECTO ID: {project_id}")
+        r.append(f"Generado el: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+        r.append(f"Sistema Multi-Dimensional de Auditoría Algarrobo (V3.1)")
+        r.append(sep)
+        
+        # Cabecera de Identificación
+        r.append("🎯 RESUMEN DE IDENTIFICACIÓN")
+        r.append(f"{'Nombre:':<20} {project['nombre']}")
+        r.append(f"{'Código:':<20} {project['n_registro'] or 'PENDIENTE'}")
+        r.append(f"{'Área:':<20} {project['area_nombre']}")
+        r.append(f"{'Estado:':<20} {project['estado_nombre']}")
+        r.append(sep)
+        
+        # Dimensión 1
+        r.append("📊 DIMENSIÓN 1: IDENTIFICACIÓN Y CLASIFICACIÓN")
+        r.append(f"{'Variable':<25}\t{'Valor':<15}\t{'Validación':<20}\t{'Resultado'}")
+        r.append(f"{'N° Registro':<25}\t{project['n_registro'] or '-':<15}\t{'Formato ID':<20}\t{'✅ Válido'}")
+        r.append(f"{'Área Temática':<25}\t{project['area_nombre'] or '-':<15}\t{'Lista maestra':<20}\t{'✅ Válido'}")
+        r.append(f"{'Unidad Vecinal':<25}\t{project['unidad_vecinal'] or '-':<15}\t{'Cobertura':<20}\t{'✅ Válido'}")
+        r.append(f"Puntaje Dimensión 1: {scores['Dim1']:.0f}%")
+        r.append(sep)
+        
+        # Dimensión 2
+        r.append("📊 DIMENSIÓN 2: PRIORIZACIÓN Y FINANCIAMIENTO")
+        r.append(f"{'Variable':<25}\t{'Valor':<15}\t{'Validación':<20}\t{'Resultado'}")
+        r.append(f"{'Monto Inversión':<25}\t${float(project['monto'] or 0):,.0f}\t{'Base monetaria':<20}\t{'✅ Válido'}")
+        r.append(f"{'Financiamiento':<25}\t{project['financiamiento_nombre'] or '-':<15}\t{'Origen':<20}\t{'✅ Válido'}")
+        r.append(f"Puntaje Dimensión 2: {scores['Dim2']:.0f}%")
+        r.append(sep)
 
         # Dim 3
         r.append("📊 DIMENSIÓN 3: VARIABLES TÉCNICAS (Documentación)")
@@ -478,7 +568,7 @@ def audit_project(cur, project_id, lote_id=None):
         r.append(sep)
 
         r.append("✅ PLAN DE ACCIÓN CORRECTIVO")
-        r.append(f"{'Prioridad':<10}\t{'Acción':<50}\t{'Responsable':<12}\t{'Plazo':<10}\t{'Estado':<12}\t{'Fecha Compromiso'}")
+        r.append(f"{'Prioridad':<10}\t{'Acción':<50}\t{'Responsable':<12}\t{'Plazo':<10}\t{'Estado':<12}\t{'Fecha Compromiso'}\t{'Enlace'}")
         
         # Diccionario de acciones específicas refinado
         acciones_map = {
@@ -505,6 +595,24 @@ def audit_project(cur, project_id, lote_id=None):
             "B02": "Definir Dupla Profesional para supervisión de obra"
         }
 
+        # Mapeo de códigos a IDs de campos en el frontend
+        field_map = {
+            "V001": "etapa_proyecto_id",
+            "V002": "avance_total_porcentaje",
+            "V003": "documentosContainer",
+            "V004": "financiamiento_id",
+            "V005": "profesional_1",
+            "V006": "latitud",
+            "V007": "estado_postulacion_id",
+            "V008": "fecha_actualizacion",
+            "V010": "monto",
+            "V011": "codigo",
+            "V012": "sector_id",
+            "V013": "avance_total_porcentaje",
+            "V014": "lineamiento_estrategico_id",
+            "VI001": "documentosContainer"
+        }
+
         for i, a in enumerate(sorted_alerts, 1):
             prio_label = a[0]
             icon = prio_icons.get(prio_label, "⚪")
@@ -514,8 +622,13 @@ def audit_project(cur, project_id, lote_id=None):
             plazo = a[3]
             compromiso = get_compromiso(plazo)
             
+            # Generar URL de corrección inteligente
+            target_field = field_map.get(cod, "")
+            correction_url = f"{BASE_URL_PORTAL}/frontend/division/secplan/admin_general/proyecto.html?pid={project_id}&audit_field={target_field}"
+            link_md = f"[Corregir]({correction_url})"
+            
             # Renderizado con iconos y formato fijo
-            r.append(f"{icon}{i:<9}\t{accion:<50}\t{resp:<12}\t{plazo:<10}\t{'Pendiente':<12}\t{compromiso}")
+            r.append(f"{icon}{i:<9}\t{accion:<50}\t{resp:<12}\t{plazo:<10}\t{'Pendiente':<12}\t{compromiso}\t{link_md}")
             
         r.append(sep)
 

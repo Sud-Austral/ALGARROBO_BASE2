@@ -237,10 +237,9 @@ logger = logging.getLogger(__name__)
 # -----------------------
 # CONFIG
 # -----------------------
-DB_CONNECTION_STRING = os.getenv(
-    "DATABASE_URL",
-    "postgresql://neondb_owner:npg_xHS7sA1FDPqI@ep-hidden-grass-a4sa46kc-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
-)
+DB_CONNECTION_STRING = os.getenv("DATABASE_URL")
+if not DB_CONNECTION_STRING:
+    raise ValueError("No DATABASE_URL set for Flask application")
 APP_HOST = "0.0.0.0"
 APP_PORT = int(os.getenv("PORT", 8000))
 DEBUG = os.getenv("FLASK_DEBUG", "True").lower() in ("1", "true", "yes")

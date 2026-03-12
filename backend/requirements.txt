@@ -1,0 +1,12 @@
+flask
+flask-cors
+psycopg2-binary
+bcrypt
+python-dotenv
+PyPDF2
+python-docx
+openpyxl
+Pillow
+pytesseract
+httpx
+gunicorn

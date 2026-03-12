@@ -126,7 +126,18 @@ def process_project_history(cur, project_id):
 
         # 1. Obtener avances desde auditoria_proyectos
         cur.execute("""
-            SELECT al.fecha_ejecucion, ap.avance_declarado, ap.etapa, ap.estado, ap.puntaje_general, ap.alertas_criticas
+            SELECT 
+                al.fecha_ejecucion, 
+                ap.avance_declarado, 
+                LAG(ap.avance_declarado) OVER (ORDER BY al.fecha_ejecucion ASC) as prev_avance,
+                ap.etapa, 
+                LAG(ap.etapa) OVER (ORDER BY al.fecha_ejecucion ASC) as prev_etapa,
+                ap.estado, 
+                LAG(ap.estado) OVER (ORDER BY al.fecha_ejecucion ASC) as prev_estado,
+                ap.puntaje_general, 
+                LAG(ap.puntaje_general) OVER (ORDER BY al.fecha_ejecucion ASC) as prev_puntaje,
+                ap.alertas_criticas,
+                LAG(ap.alertas_criticas) OVER (ORDER BY al.fecha_ejecucion ASC) as prev_criticas
             FROM auditoria_proyectos ap
             JOIN auditoria_lotes al ON ap.lote_id = al.id
             WHERE ap.proyecto_id = %s
@@ -138,15 +149,38 @@ def process_project_history(cur, project_id):
         if not auditorias:
             r.append("No hay registros de auditoría para este proyecto.")
         else:
-            r.append(f"{'Fecha Auditoría':<20}\t{'Avance %':<12}\t{'Etapa':<20}\t{'Estado':<20}\t{'Puntaje':<10}\t{'Alertas Críticas'}")
+            r.append(f"{'Fecha Auditoría':<16}\t{'Avance (Ant ➔ Act)':<22}\t{'Etapa (Anterior ➔ Actual)':<40}\t{'Puntaje (Ant ➔ Act)':<22}\t{'Críticas'}")
             for aud in auditorias:
                 fecha = aud['fecha_ejecucion'].strftime("%Y-%m-%d %H:%M") if aud['fecha_ejecucion'] else "-"
-                avance = f"{aud['avance_declarado']}%" if aud['avance_declarado'] is not None else "-"
-                etapa = str(aud['etapa'] or "-")[:20]
-                estado = str(aud['estado'] or "-")[:20]
-                puntaje = f"{aud['puntaje_general']}%" if aud['puntaje_general'] is not None else "-"
-                crit = str(aud['alertas_criticas'] or "0")
-                r.append(f"{fecha:<20}\t{avance:<12}\t{etapa:<20}\t{estado:<20}\t{puntaje:<10}\t{crit}")
+                
+                # Función de normalización para porcentajes (1.0 -> 100%)
+                def norm_pct(val):
+                    if val is None: return 0
+                    v = float(val)
+                    # Si el valor es <= 1.0 (decimal), lo llevamos a base 100
+                    return v * 100 if v <= 1.0 and v > 0 else v
+
+                # Avance
+                ant_avance = norm_pct(aud['prev_avance'])
+                nuevo_avance = norm_pct(aud['avance_declarado'])
+                avance_str = f"{ant_avance:.0f}% ➔ {nuevo_avance:.0f}%" if f"{ant_avance:.0f}" != f"{nuevo_avance:.0f}" else f"{nuevo_avance:.0f}%"
+                
+                # Etapa
+                ant_etapa = aud['prev_etapa'] or "Inicio"
+                nueva_etapa = aud['etapa'] or "-"
+                etapa_str = f"{ant_etapa} ➔ {nueva_etapa}" if ant_etapa != nueva_etapa else nueva_etapa
+                
+                # Puntaje
+                ant_puntaje = norm_pct(aud['prev_puntaje'])
+                nuevo_puntaje = norm_pct(aud['puntaje_general'])
+                puntaje_str = f"{ant_puntaje:.0f}% ➔ {nuevo_puntaje:.0f}%" if f"{ant_puntaje:.0f}" != f"{nuevo_puntaje:.0f}" else f"{nuevo_puntaje:.0f}%"
+
+                # Alertas
+                ant_crit = aud['prev_criticas'] or 0
+                nuevo_crit = aud['alertas_criticas'] or 0
+                crit_str = f"{ant_crit} ➔ {nuevo_crit}" if ant_crit != nuevo_crit else f"{nuevo_crit}"
+                
+                r.append(f"{fecha:<16}\t{avance_str:<22}\t{etapa_str:<40}\t{puntaje_str:<22}\t{crit_str}")
         r.append(sep)
 
         # 2. Obtener historial detallado de cambios (desde control_actividad)
@@ -163,11 +197,11 @@ def process_project_history(cur, project_id):
         if not historial:
             r.append("No hay registros de actividad/cambios para este proyecto.")
         else:
-            r.append(f"{'Fecha':<16}\t{'Acción':<20}\t{'Autor':<20}\t{'Detalle / Cambios'}")
+            r.append(f"{'Fecha':<16}\t{'Acción':<20}\t{'Autor':<15}\t{'Detalle / Cambios Modificados'}")
             for h in historial:
                 fecha = h['fecha'].strftime("%Y-%m-%d %H:%M") if h['fecha'] else "-"
                 accion = str(h['accion'])[:20]
-                autor = str(h['autor'] or "Sistema")[:20]
+                autor = str(h['autor'] or "Sistema")[:15]
                 
                 # Resumir el cambio
                 detalle = h['detalle'] or ""
@@ -180,16 +214,18 @@ def process_project_history(cur, project_id):
                     cambios = []
                     for k, v in despues.items():
                         v_antes = antes.get(k)
-                        if str(v) != str(v_antes) and k not in ['fecha_actualizacion', 'actualizado_por']:
-                            cambios.append(f"{k}: {v_antes} -> {v}")
+                        if str(v) != str(v_antes) and k not in ['fecha_actualizacion', 'actualizado_por', 'user_id']:
+                            label = k.replace('_', ' ').title()
+                            cambios.append(f"{label}: [{v_antes}] ➔ [{v}]")
                     if cambios:
-                        detalle = "Campos Modificados: " + ", ".join(cambios)
-                        if len(detalle) > 100:
-                            detalle = detalle[:97] + "..."
+                        detalle = "CAMBIOS: " + " | ".join(cambios)
+                        # Truncado generoso para reporte
+                        if len(detalle) > 300:
+                            detalle = detalle[:297] + "..."
                     else:
-                        detalle = "Sin cambios detectables en campos auditables."
+                        detalle = "Sin cambios en campos auditables."
                         
-                r.append(f"{fecha:<16}\t{accion:<20}\t{autor:<20}\t{detalle}")
+                r.append(f"{fecha:<16}\t{accion:<20}\t{autor:<15}\t{detalle}")
         
         r.append(sep)
         return "\n".join(r)

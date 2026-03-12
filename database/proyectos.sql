@@ -1,4 +1,4 @@
-CREATE TABLE proyectos (
+CREATE TABLE IF NOT EXISTS proyectos (
     id SERIAL PRIMARY KEY,
 
     user_id INT NOT NULL REFERENCES users(user_id),
@@ -52,66 +52,6 @@ CREATE TABLE proyectos (
     latitud NUMERIC(12,6),
     longitud NUMERIC(12,6),
     activo BOOLEAN DEFAULT TRUE
-);
-
-
-CREATE TABLE proyectos_deprecated (
-    id SERIAL PRIMARY KEY,
-
-    -- 🔗 Usuario dueño del proyecto
-    user_id INT NOT NULL REFERENCES users(user_id),
-
-    actualizado_por INT NOT NULL REFERENCES users(user_id),
-
-    n_registro INT,
-    es_prioridad VARCHAR(20),
-    area VARCHAR(150),
-    lineamiento_estrategico VARCHAR(300),
-
-    financiamiento_municipal VARCHAR(50),
-    financiamiento VARCHAR(100),
-
-    nombre TEXT,
-    monto NUMERIC,
-
-    anno_elaboracion INT,
-    anno_ejecucion INT,
-
-    topografia TEXT,
-    planimetrias TEXT,
-    ingenieria TEXT,
-    perfil_tecnico_economico TEXT,
-    documentos TEXT,
-
-    avance_total_porcentaje NUMERIC(5,2),
-    avance_total_decimal NUMERIC(10,4),
-
-    estado_proyecto VARCHAR(150),
-    codigo VARCHAR(100),
-
-    etapa_proyecto VARCHAR(150),
-    estado_postulacion VARCHAR(150),
-    fecha_postulacion DATE,
-
-    observaciones TEXT,
-
-    dupla_profesionales TEXT,
-    profesional_1 VARCHAR(150),
-    profesional_2 VARCHAR(150),
-    profesional_3 VARCHAR(150),
-    profesional_4 VARCHAR(150),
-    profesional_5 VARCHAR(150),
-
-    unidad_vecinal VARCHAR(150),
-    sector VARCHAR(200),
-
-    aprobacion_dom VARCHAR(100),
-    aprobacion_serviu VARCHAR(100),
-
-    fecha_actualizacion TIMESTAMP DEFAULT NOW(),
-
-    latitud NUMERIC(12,6),
-    longitud NUMERIC(12,6)
 );
 
 
@@ -339,7 +279,6 @@ CREATE TABLE calendario_eventos (
     -- =================================
     ubicacion VARCHAR(200),
     activo BOOLEAN DEFAULT TRUE,
-    categoria_calendario INT REFERENCES hitoscalendario(id),
     -- =================================
     -- Auditoría
     -- =================================
