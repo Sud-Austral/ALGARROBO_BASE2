@@ -551,13 +551,13 @@ def _audit_project(cur, project_id: int, lote_id: int, base_url: str) -> tuple:
 # ──────────────────────────────────────────────
 # TAREA ASÍNCRONA PRINCIPAL
 # ──────────────────────────────────────────────
-def run_auditoria_async(db_factory, release_fn, user_id: int,
+def run_auditoria_async(db_factory, release_fn, ejecutor_nombre: str,
                         base_url: str = "https://sud-austral.github.io/ALGARROBO_BASE2"):
     """
     Lanza la auditoría en un hilo secundario.
     db_factory  → función sin args que retorna una conexión psycopg2
     release_fn  → función(conn) para devolver la conexión al pool
-    user_id     → ID del usuario que inicia la ejecución
+    ejecutor_nombre → Nombre del usuario que inicia la ejecución
     Retorna True si la tarea se lanzó, False si ya había una en curso.
     """
     with _task_lock:
@@ -567,16 +567,16 @@ def run_auditoria_async(db_factory, release_fn, user_id: int,
             "running": True, "lote_id": None, "total": 0,
             "procesados": 0, "errores": 0,
             "iniciado_en": datetime.now().isoformat(),
-            "finalizado_en": None, "ejecutado_por": user_id, "error_fatal": None,
+            "finalizado_en": None, "ejecutado_por": ejecutor_nombre, "error_fatal": None,
         })
 
-    t = threading.Thread(target=_worker, args=(db_factory, release_fn, user_id, base_url),
+    t = threading.Thread(target=_worker, args=(db_factory, release_fn, ejecutor_nombre, base_url),
                          daemon=True)
     t.start()
     return True
 
 
-def _worker(db_factory, release_fn, user_id, base_url):
+def _worker(db_factory, release_fn, ejecutor_nombre, base_url):
     """Hilo de trabajo de la auditoría."""
     import psycopg2.extras
 
@@ -609,7 +609,7 @@ def _worker(db_factory, release_fn, user_id, base_url):
                 cur.execute("""
                     INSERT INTO auditoria_lotes (total_proyectos_auditados, usuario_ejecutor)
                     VALUES (%s, %s) RETURNING id
-                """, (len(ids), str(user_id)))
+                """, (len(ids), str(ejecutor_nombre)))
                 lote_id = cur.fetchone()[0]
             conn.commit()
             _update_status(lote_id=lote_id)

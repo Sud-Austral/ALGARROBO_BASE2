@@ -4819,13 +4819,28 @@ def auditoria_lanzar(current_user_id):
     if not engine:
         return jsonify({"ok": False, "message": "Motor de auditoría no disponible (verificar dependencias como reportlab)"}), 503
 
+    # Obtener nombre del usuario ejecutor
+    ejecutor_nombre = f"ID: {current_user_id}"
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute("SELECT nombre FROM users WHERE user_id = %s", (current_user_id,))
+            user_row = cur.fetchone()
+            if user_row:
+                ejecutor_nombre = user_row[0]
+    except Exception as e:
+        logger.warning(f"Error obteniendo nombre de ejecutor: {e}")
+    finally:
+        if conn: release_db_connection(conn)
+
     base_url = request.json.get("base_url", "https://sud-austral.github.io/ALGARROBO_BASE2") \
         if request.is_json else "https://sud-austral.github.io/ALGARROBO_BASE2"
 
     lanzado = engine.run_auditoria_async(
         db_factory=get_db_connection,
         release_fn=release_db_connection,
-        user_id=current_user_id,
+        ejecutor_nombre=ejecutor_nombre,
         base_url=base_url,
     )
     if not lanzado:
