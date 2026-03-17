@@ -1,17 +1,24 @@
-"""
-auditoria_engine.py
-Motor de auditoría integral de proyectos.
-Adaptado de notebook/verificador.py y notebook/verificador2.py
-para integrarse con el backend Flask (app21.py).
-
-Responsabilidades:
-  - Ejecutar la auditoría de todos los proyectos contra la BD
-  - Generar PDFs individuales por proyecto (guardados en AUDIT_OUTPUT_DIR)
-  - Guardar resultados en auditoria_lotes / auditoria_proyectos
-  - Retornar métricas de avance via callback (para SSE o polling)
-"""
-
 import os
+import hashlib
+
+# ── HACK: Parche de compatibilidad para hashlib ────────────────────────────────
+_orig_new = hashlib.new
+def _patched_new(name, *args, **kwargs):
+    kwargs.pop('usedforsecurity', None)
+    kwargs.pop('useforsecurity', None)
+    return _orig_new(name, *args, **kwargs)
+hashlib.new = _patched_new
+
+try:
+    _orig_md5 = hashlib.md5
+    def _patched_md5(*args, **kwargs):
+        kwargs.pop('usedforsecurity', None)
+        kwargs.pop('useforsecurity', None)
+        return _orig_md5(*args, **kwargs)
+    hashlib.md5 = _patched_md5
+except: pass
+# ───────────────────────────────────────────────────────────────────────────────
+
 import re
 import json
 import logging
