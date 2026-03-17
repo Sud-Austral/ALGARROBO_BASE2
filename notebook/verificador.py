@@ -160,7 +160,7 @@ def generate_pdf_from_text(lines, filename):
 # --- MOTOR DE INTELIGENCIA ARTIFICIAL PARA ANÁLISIS CUALITATIVO ---
 class AIAnalyst:
     def __init__(self):
-        self.API_KEY = os.environ.get("GLM_API_KEY", "SU_API_KEY_AQUI")
+        self.API_KEY = "1fdd53bb96924d78b1d799919a7c21e4.PgBhpSwp9Uvpi48a"
         self.API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
         self.MODEL = "glm-4-flash"
 
@@ -415,6 +415,10 @@ def audit_project(cur, project_id, lote_id=None):
         if not obs and estado != "En preparación":
             validation_alerts.append(("BAJO", "V015", "Se recomiendan observaciones para seguimiento", "90 días", profesional))
 
+        # B02: Sin Dupla Profesional
+        if not project['dupla_profesionales'] and etapa in ["Ejecución", "Licitación"]:
+             validation_alerts.append(("BAJO", "B02", "Definir Dupla Profesional para supervisión de obra", "90 días", profesional))
+
         # --- VALIDACIONES CRUZADAS MULTI-TABLA (REGLAS VI001 - VI006) ---
         vi_alerts = []
         
@@ -431,6 +435,10 @@ def audit_project(cur, project_id, lote_id=None):
         cur.execute("SELECT COUNT(*) FROM proyectos_hitos WHERE proyecto_id = %s", (project_id,))
         count_hitos = cur.fetchone()[0]
         
+        # Próximos Pasos
+        cur.execute("SELECT COUNT(*) FROM proximos_pasos WHERE proyecto_id = %s", (project_id,))
+        count_pasos = cur.fetchone()[0]
+        
         # Geomapas
         cur.execute("SELECT geojson FROM proyectos_geomapas WHERE proyecto_id = %s LIMIT 1", (project_id,))
         geom_row = cur.fetchone()
@@ -438,6 +446,10 @@ def audit_project(cur, project_id, lote_id=None):
         # VI001: Documentos Requeridos por Etapa (Simplificado: Perfil+ requiere al menos 1 doc)
         if etapa != "Idea de Proyecto" and count_docs == 0:
             vi_alerts.append(("CRÍTICO", "VI001", f"Faltan documentos en etapa {etapa}", "Inmediato", profesional))
+
+        # VI007: Próximos Pasos Inexistentes (Requerimiento Crítico de Gestión)
+        if count_pasos == 0:
+            vi_alerts.append(("CRÍTICO", "VI007", "No existen próximos pasos definidos para el proyecto", "Inmediato", profesional))
 
         # --- CONSOLIDACIÓN DE ALERTAS Y CÁLCULO DE PUNTAJES FINALES ---
         alerts.extend(validation_alerts)
@@ -517,6 +529,9 @@ def audit_project(cur, project_id, lote_id=None):
         res_post = "⚠️ Inconsistente" if has_errors else "✅ Válido"
         r.append(f"{'Postulación':<25}\t{(postulacion or '-'):<15}\t{'Coherente':<20}\t{res_post}")
         
+        res_pasos = "🔴 Faltante" if count_pasos == 0 else "✅ Definido"
+        r.append(f"{'Próximos Pasos':<25}\t{count_pasos:<15}\t{'Continuidad':<20}\t{res_pasos}")
+        
         if has_errors:
             r.append("\n🔴 ALERTAS DE ALTA PRIORIDAD DETECTADAS")
             r.append("┌" + "─" * 65 + "┐")
@@ -585,17 +600,19 @@ def audit_project(cur, project_id, lote_id=None):
             "V005": f"Asignar Profesional Responsable en ficha técnica ({profesional or 'Catalán'})",
             "V006": "Georreferenciar proyecto: Ingresar Lat/Long en base de datos",
             "V007": "Regularizar Postulación (RS es inconsistente en Idea/Perfil)",
-            "V008": "Actualizar registro de proyecto (Data desactualizada >90 días)",
+            "V008": "Actualizar fecha de actualización de BD (Regularizar ficha)",
             "V009": f"Revisar cronograma: Brecha de {diff_years} años excede límite de 5",
             "V010": "Definir monto de inversión estimado (Actual: $0)",
             "V011": "Asignar Código de Proyecto institucional definitivo",
             "V012": "Definir Sector territorial para la Unidad Vecinal asignada",
             "V013": "Sincronizar valores de avance: Decimal vs Porcentual",
             "V014": "Vincular Lineamiento Estratégico a proyecto de prioridad SI",
+            "V015": "Registrar Notas/Observaciones técnicas de seguimiento",
             "VI001": f"Subir archivos de respaldo obligatorios para etapa {etapa}",
             "VI002": "Ingresar observaciones de avance justificando la subsanación",
             "VI003": "Regularizar Hitos de Avance vs Porcentaje Declarado",
-            "A02": "Actualizar fecha de actualización de BD (Regularizar ficha)",
+            "VI007": "Definir Próximos Pasos obligatorios para la gestión del proyecto",
+            "A02": f"Revisar brecha de {diff_years} años entre elab. y ejec. (Excede límite profesional)",
             "M01": "Completar Unidad Vecinal en datos de identificación",
             "B01": "Registrar sector territorial del proyecto",
             "B02": "Definir Dupla Profesional para supervisión de obra"
@@ -611,12 +628,21 @@ def audit_project(cur, project_id, lote_id=None):
             "V006": "latitud",
             "V007": "estado_postulacion_id",
             "V008": "fecha_actualizacion",
+            "V009": "anno_ejecucion",
             "V010": "monto",
             "V011": "codigo",
             "V012": "sector_id",
             "V013": "avance_total_porcentaje",
             "V014": "lineamiento_estrategico_id",
-            "VI001": "documentosContainer"
+            "V015": "observaciones",
+            "VI001": "documentosContainer",
+            "VI002": "observaciones",
+            "VI003": "hitosContainer",
+            "VI007": "proximosPasosContainer",
+            "A02": "anno_ejecucion",
+            "M01": "unidad_vecinal",
+            "B01": "sector_id",
+            "B02": "dupla_profesionales"
         }
 
         for i, a in enumerate(sorted_alerts, 1):
@@ -629,7 +655,8 @@ def audit_project(cur, project_id, lote_id=None):
             compromiso = get_compromiso(plazo)
             
             # Generar URL de corrección inteligente
-            target_field = field_map.get(cod, "")
+            # Priorizamos el campo específico, si no existe usamos 'nombre' como fallback para asegurar navegación
+            target_field = field_map.get(cod, "nombre")
             correction_url = f"{BASE_URL_PORTAL}/frontend/division/secplan/admin_general/proyecto.html?pid={project_id}&audit_field={target_field}"
             link_md = f"[Corregir]({correction_url})"
             
@@ -675,7 +702,7 @@ def audit_project(cur, project_id, lote_id=None):
                 project.get('profesional_4'), project.get('profesional_5'),
                 project.get('unidad_vecinal'), project.get('sector_id'), project.get('aprobacion_dom'), project.get('aprobacion_serviu'), 
                 project.get('latitud'), project.get('longitud'), project.get('observaciones'), project.get('activo'),
-                count_docs, count_hitos, count_obs,
+                count_docs, count_hitos, count_obs, count_pasos,
                 final_score, scores.get('Dim1', 0), scores.get('Dim2', 0), scores.get('Dim3', 0), scores.get('Dim4', 0), 
                 (100 if profesional else 0), 50, (100 if project['latitud'] else 0),
                 avance_pct, etapa, estado,
@@ -781,7 +808,7 @@ if __name__ == "__main__":
                             profesional_4, profesional_5,
                             unidad_vecinal, sector_id, aprobacion_dom, aprobacion_serviu, 
                             latitud, longitud, observaciones, activo,
-                            cant_documentos, cant_hitos, cant_observaciones,
+                            cant_documentos, cant_hitos, cant_observaciones, cant_proximos_pasos,
                             puntaje_general, puntaje_d1, puntaje_d2, puntaje_d3, puntaje_d4, puntaje_d5, puntaje_d6, puntaje_d7,
                             avance_declarado, etapa, estado,
                             alertas_criticas, alertas_altas, alertas_medias, alertas_bajas,

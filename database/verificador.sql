@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS auditoria_proyectos (
     cant_documentos INTEGER DEFAULT 0,
     cant_hitos INTEGER DEFAULT 0,
     cant_observaciones INTEGER DEFAULT 0,
+    cant_proximos_pasos INTEGER DEFAULT 0,
 
     -- Métricas principales
     puntaje_general NUMERIC(5,2),

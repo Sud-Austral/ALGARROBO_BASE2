@@ -4772,6 +4772,401 @@ def control_export_pdf(current_user_id):
 
 # ── Fin Módulo de Control ──────────────────────────────────────
 
+
+# ==============================================================================
+# MÓDULO DE AUDITORÍA INTEGRAL (control.py functionality)
+# Endpoints para: lanzar, monitorear, servir PDFs y dashboard KPIs
+# ==============================================================================
+
+from auditoria_engine import (
+    run_auditoria_async, get_status as auditoria_get_status, AUDIT_OUT_DIR
+)
+
+
+@app.route("/auditoria/lanzar", methods=["POST"])
+@session_required
+def auditoria_lanzar(current_user_id):
+    """Lanza la auditoría integral de todos los proyectos (async)."""
+    base_url = request.json.get("base_url", "https://sud-austral.github.io/ALGARROBO_BASE2") \
+        if request.is_json else "https://sud-austral.github.io/ALGARROBO_BASE2"
+
+    lanzado = run_auditoria_async(
+        db_factory=get_db_connection,
+        release_fn=release_db_connection,
+        user_id=current_user_id,
+        base_url=base_url,
+    )
+    if not lanzado:
+        return jsonify({"ok": False, "message": "Ya hay una auditoría en curso"}), 409
+
+    log_control(current_user_id, "lanzar_auditoria", modulo="auditoria",
+                detalle="Auditoría integral iniciada")
+    return jsonify({"ok": True, "message": "Auditoría iniciada en segundo plano"})
+
+
+@app.route("/auditoria/estado", methods=["GET"])
+@session_required
+def auditoria_estado(current_user_id):
+    """Retorna el estado en tiempo real de la auditoría en curso."""
+    return jsonify(auditoria_get_status())
+
+
+@app.route("/auditoria/reportes", methods=["GET"])
+@session_required
+def auditoria_reportes(current_user_id):
+    """
+    Lista los PDFs disponibles con nombre del proyecto via JOIN.
+    Query params: area_id, etapa, estado, profesional, q (texto)
+    """
+    conn = None
+    try:
+        # Obtener archivos del directorio
+        pdf_files = {}
+        if os.path.exists(AUDIT_OUT_DIR):
+            for fn in os.listdir(AUDIT_OUT_DIR):
+                if fn.endswith(".pdf"):
+                    try:
+                        pid = int(fn.replace(".pdf", ""))
+                        fpath = os.path.join(AUDIT_OUT_DIR, fn)
+                        pdf_files[pid] = {
+                            "proyecto_id": pid,
+                            "filename": fn,
+                            "size_kb": round(os.path.getsize(fpath) / 1024, 1),
+                            "modificado": datetime.fromtimestamp(
+                                os.path.getmtime(fpath)
+                            ).isoformat(),
+                        }
+                    except ValueError:
+                        pass
+
+        if not pdf_files:
+            return jsonify({"reportes": [], "total": 0})
+
+        # Enriquecer con datos BD + filtros
+        conn = get_db_connection()
+        filtros = ["p.id = ANY(%s)"]
+        params  = [list(pdf_files.keys())]
+
+        area_id    = request.args.get("area_id")
+        if area_id:
+            filtros.append("p.area_id = %s"); params.append(int(area_id))
+
+        etapa_id   = request.args.get("etapa_id")
+        if etapa_id:
+            filtros.append("p.etapa_proyecto_id = %s"); params.append(int(etapa_id))
+
+        estado_id  = request.args.get("estado_id")
+        if estado_id:
+            filtros.append("p.estado_proyecto_id = %s"); params.append(int(estado_id))
+
+        profesional = request.args.get("profesional")
+        if profesional:
+            filtros.append("p.profesional_1 ILIKE %s"); params.append(f"%{profesional}%")
+
+        q = request.args.get("q")
+        if q:
+            filtros.append("(p.nombre ILIKE %s OR p.n_registro::TEXT ILIKE %s)")
+            params += [f"%{q}%", f"%{q}%"]
+
+        where = "WHERE " + " AND ".join(filtros)
+
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            # Último lote de auditoría
+            cur.execute("""
+                SELECT ap.proyecto_id,
+                       ap.puntaje_general, ap.alertas_criticas, ap.alertas_altas,
+                       ap.etapa, ap.estado, ap.avance_declarado,
+                       al.fecha_ejecucion, al.id AS lote_id
+                FROM auditoria_proyectos ap
+                JOIN auditoria_lotes al ON al.id = ap.lote_id
+                WHERE ap.lote_id = (SELECT MAX(id) FROM auditoria_lotes)
+            """)
+            audit_rows = {row["proyecto_id"]: row for row in cur.fetchall()}
+
+            cur.execute(f"""
+                SELECT p.id, p.nombre,
+                       a.nombre AS area_nombre,
+                       ep.nombre AS estado_nombre,
+                       et.nombre AS etapa_nombre,
+                       p.profesional_1
+                FROM proyectos p
+                LEFT JOIN areas            a  ON a.id = p.area_id
+                LEFT JOIN estados_proyecto ep ON ep.id = p.estado_proyecto_id
+                LEFT JOIN etapas_proyecto  et ON et.id = p.etapa_proyecto_id
+                {where}
+                ORDER BY p.nombre
+            """, params)
+            proyectos = cur.fetchall()
+
+        reportes = []
+        for proy in proyectos:
+            pid = proy["id"]
+            f   = pdf_files.get(pid, {})
+            aud = audit_rows.get(pid, {})
+            reportes.append({
+                **f,
+                "nombre"          : proy["nombre"],
+                "area_nombre"     : proy["area_nombre"],
+                "estado_nombre"   : proy["estado_nombre"],
+                "etapa_nombre"    : proy["etapa_nombre"],
+                "profesional_1"   : proy["profesional_1"],
+                "puntaje_general" : float(aud.get("puntaje_general") or 0),
+                "alertas_criticas": int(aud.get("alertas_criticas") or 0),
+                "alertas_altas"   : int(aud.get("alertas_altas") or 0),
+                "fecha_auditoria" : aud.get("fecha_ejecucion").isoformat()
+                                    if aud.get("fecha_ejecucion") else None,
+            })
+
+        return jsonify({"reportes": reportes, "total": len(reportes)})
+    except Exception as e:
+        logger.error(f"Error auditoria_reportes: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if conn: release_db_connection(conn)
+
+
+@app.route("/auditoria/pdf/<int:proyecto_id>", methods=["GET"])
+@session_required
+def auditoria_pdf_view(current_user_id, proyecto_id):
+    """Sirve el PDF de auditoría de un proyecto. Soporta ?download=1 para descarga."""
+    pdf_path = os.path.join(AUDIT_OUT_DIR, f"{proyecto_id}.pdf")
+    if not os.path.exists(pdf_path):
+        return jsonify({"error": "PDF no encontrado. Ejecute la auditoría primero."}), 404
+
+    as_attachment = request.args.get("download", "0") == "1"
+    # Obtener nombre del proyecto para el nombre de descarga
+    conn = None
+    download_name = f"auditoria_{proyecto_id}.pdf"
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute("SELECT nombre FROM proyectos WHERE id = %s", (proyecto_id,))
+            row = cur.fetchone()
+            if row:
+                safe_name = re.sub(r'[^\w\s-]', '', row[0] or '').strip()[:50]
+                download_name = f"auditoria_{safe_name}_{proyecto_id}.pdf"
+    except Exception:
+        pass
+    finally:
+        if conn: release_db_connection(conn)
+
+    log_control(current_user_id, "ver_pdf_auditoria", modulo="auditoria",
+                entidad_tipo="proyecto", entidad_id=proyecto_id,
+                detalle=f"PDF auditoria proyecto {proyecto_id}")
+
+    return send_file(pdf_path, mimetype="application/pdf",
+                     as_attachment=as_attachment,
+                     download_name=download_name)
+
+
+@app.route("/auditoria/dashboard", methods=["GET"])
+@session_required
+def auditoria_dashboard(current_user_id):
+    """
+    KPIs cruzados de auditoría:
+      - auditoria_lotes: historial de ejecuciones
+      - auditoria_proyectos: últimas métricas por proyecto
+      - control_actividad: resumen de actividad
+    Filtros: area_id, etapa, estado, profesional, lote_id, fecha_desde, fecha_hasta
+    """
+    conn = None
+    try:
+        conn = get_db_connection()
+
+        # ── Recolectar filtros opcionales ──
+        area_id     = request.args.get("area_id")
+        etapa_id    = request.args.get("etapa_id")
+        estado_id   = request.args.get("estado_id")
+        profesional = request.args.get("profesional")
+        lote_id_f   = request.args.get("lote_id")
+        fecha_desde = request.args.get("fecha_desde")
+        fecha_hasta = request.args.get("fecha_hasta")
+
+        # Filtro del lote: si no se especifica, usar el último
+        lote_where = ""
+        lote_param = []
+        if lote_id_f:
+            lote_where = "AND ap.lote_id = %s"
+            lote_param = [int(lote_id_f)]
+        else:
+            lote_where = "AND ap.lote_id = (SELECT MAX(id) FROM auditoria_lotes)"
+
+        # Filtros adicionales sobre proyectos
+        proy_filtros = []
+        proy_params  = []
+        if area_id:
+            proy_filtros.append("p.area_id = %s"); proy_params.append(int(area_id))
+        if etapa_id:
+            proy_filtros.append("p.etapa_proyecto_id = %s"); proy_params.append(int(etapa_id))
+        if estado_id:
+            proy_filtros.append("p.estado_proyecto_id = %s"); proy_params.append(int(estado_id))
+        if profesional:
+            proy_filtros.append("p.profesional_1 ILIKE %s"); proy_params.append(f"%{profesional}%")
+        proy_where = ("AND " + " AND ".join(proy_filtros)) if proy_filtros else ""
+
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+
+            # ── 1. KPIs globales del último lote ──
+            cur.execute(f"""
+                SELECT
+                    COUNT(*)                                       AS total_proyectos,
+                    ROUND(AVG(ap.puntaje_general)::NUMERIC, 1)    AS puntaje_promedio,
+                    COUNT(*) FILTER (WHERE ap.puntaje_general >= 80) AS proyectos_ok,
+                    COUNT(*) FILTER (WHERE ap.puntaje_general <  60) AS proyectos_criticos,
+                    SUM(ap.alertas_criticas)                       AS total_alertas_criticas,
+                    SUM(ap.alertas_altas)                         AS total_alertas_altas,
+                    SUM(ap.alertas_medias)                        AS total_alertas_medias,
+                    SUM(ap.alertas_bajas)                         AS total_alertas_bajas,
+                    COUNT(*) FILTER (WHERE ap.cant_proximos_pasos = 0) AS sin_proximos_pasos,
+                    COUNT(*) FILTER (WHERE ap.cant_documentos    = 0) AS sin_documentos,
+                    MAX(al.fecha_ejecucion)                        AS ultima_ejecucion,
+                    al.id                                          AS lote_id
+                FROM auditoria_proyectos ap
+                JOIN auditoria_lotes al ON al.id = ap.lote_id
+                JOIN proyectos p        ON p.id  = ap.proyecto_id
+                WHERE 1=1 {lote_where} {proy_where}
+                GROUP BY al.id
+            """, lote_param + proy_params)
+            kpi_row = cur.fetchone() or {}
+
+            # ── 2. Historial de lotes (gráfico de evolución) ──
+            cur.execute("""
+                SELECT al.id, al.fecha_ejecucion,
+                       al.total_proyectos_auditados,
+                       ROUND(al.promedio_calidad_general::NUMERIC,1) AS promedio,
+                       al.usuario_ejecutor
+                FROM auditoria_lotes al
+                ORDER BY al.fecha_ejecucion DESC
+                LIMIT 20
+            """)
+            lotes = cur.fetchall()
+
+            # ── 3. Distribución por puntaje (rangos) ──
+            cur.execute(f"""
+                SELECT
+                    COUNT(*) FILTER (WHERE ap.puntaje_general >= 80) AS rango_80_100,
+                    COUNT(*) FILTER (WHERE ap.puntaje_general >= 60 AND ap.puntaje_general < 80) AS rango_60_80,
+                    COUNT(*) FILTER (WHERE ap.puntaje_general >= 40 AND ap.puntaje_general < 60) AS rango_40_60,
+                    COUNT(*) FILTER (WHERE ap.puntaje_general <  40) AS rango_0_40
+                FROM auditoria_proyectos ap
+                JOIN auditoria_lotes al ON al.id = ap.lote_id
+                JOIN proyectos p        ON p.id  = ap.proyecto_id
+                WHERE 1=1 {lote_where} {proy_where}
+            """, lote_param + proy_params)
+            dist_puntaje = cur.fetchone() or {}
+
+            # ── 4. Top 10 proyectos con más alertas críticas ──
+            cur.execute(f"""
+                SELECT p.id, p.nombre, a.nombre AS area_nombre,
+                       ap.puntaje_general, ap.alertas_criticas, ap.alertas_altas,
+                       ap.etapa, ap.avance_declarado
+                FROM auditoria_proyectos ap
+                JOIN auditoria_lotes al ON al.id = ap.lote_id
+                JOIN proyectos p        ON p.id  = ap.proyecto_id
+                LEFT JOIN areas a       ON a.id  = p.area_id
+                WHERE 1=1 {lote_where} {proy_where}
+                ORDER BY ap.alertas_criticas DESC, ap.puntaje_general ASC
+                LIMIT 10
+            """, lote_param + proy_params)
+            top_criticos = cur.fetchall()
+
+            # ── 5. Distribución por área ──
+            cur.execute(f"""
+                SELECT a.nombre AS area, COUNT(*) AS total,
+                       ROUND(AVG(ap.puntaje_general)::NUMERIC,1) AS puntaje_prom,
+                       SUM(ap.alertas_criticas) AS criticas
+                FROM auditoria_proyectos ap
+                JOIN auditoria_lotes al ON al.id = ap.lote_id
+                JOIN proyectos p        ON p.id  = ap.proyecto_id
+                LEFT JOIN areas a       ON a.id  = p.area_id
+                WHERE 1=1 {lote_where} {proy_where}
+                GROUP BY a.nombre ORDER BY criticas DESC
+            """, lote_param + proy_params)
+            por_area = cur.fetchall()
+
+            # ── 6. Distribución por etapa ──
+            cur.execute(f"""
+                SELECT ap.etapa, COUNT(*) AS total,
+                       ROUND(AVG(ap.puntaje_general)::NUMERIC,1) AS puntaje_prom
+                FROM auditoria_proyectos ap
+                JOIN auditoria_lotes al ON al.id = ap.lote_id
+                JOIN proyectos p        ON p.id  = ap.proyecto_id
+                WHERE 1=1 {lote_where} {proy_where}
+                GROUP BY ap.etapa ORDER BY total DESC
+            """, lote_param + proy_params)
+            por_etapa = cur.fetchall()
+
+            # ── 7. Actividad de control (últimos 30 días) ──
+            ctrl_filtros = ["1=1"]
+            ctrl_params  = []
+            if fecha_desde:
+                ctrl_filtros.append("ca.fecha >= %s"); ctrl_params.append(fecha_desde)
+            if fecha_hasta:
+                ctrl_filtros.append("ca.fecha <= %s"); ctrl_params.append(fecha_hasta + " 23:59:59")
+            ctrl_where = " AND ".join(ctrl_filtros)
+
+            cur.execute(f"""
+                SELECT
+                    COUNT(*) AS total_acciones,
+                    COUNT(*) FILTER (WHERE ca.fecha >= NOW() - INTERVAL '24 hours') AS hoy,
+                    COUNT(*) FILTER (WHERE ca.fecha >= NOW() - INTERVAL '7 days')   AS semana,
+                    COUNT(DISTINCT ca.user_id) AS usuarios_activos,
+                    COUNT(*) FILTER (WHERE ca.exitoso = FALSE) AS fallidas
+                FROM control_actividad ca
+                WHERE {ctrl_where}
+            """, ctrl_params)
+            ctrl_kpi = cur.fetchone() or {}
+
+            # ── 8. Evolución promedio de puntaje (todos los lotes) ──
+            cur.execute("""
+                SELECT al.fecha_ejecucion AS fecha,
+                       ROUND(AVG(ap.puntaje_general)::NUMERIC,1) AS puntaje_prom,
+                       SUM(ap.alertas_criticas) AS criticas
+                FROM auditoria_proyectos ap
+                JOIN auditoria_lotes al ON al.id = ap.lote_id
+                GROUP BY al.id, al.fecha_ejecucion
+                ORDER BY al.fecha_ejecucion ASC
+            """)
+            evolucion = cur.fetchall()
+
+            # ── 9. Catálogos para filtros ──
+            cur.execute("SELECT id, nombre FROM areas ORDER BY nombre")
+            areas_cat = cur.fetchall()
+            cur.execute("SELECT id, nombre FROM etapas_proyecto ORDER BY nombre")
+            etapas_cat = cur.fetchall()
+            cur.execute("SELECT id, nombre FROM estados_proyecto ORDER BY nombre")
+            estados_cat = cur.fetchall()
+            cur.execute("SELECT DISTINCT profesional_1 FROM proyectos WHERE profesional_1 IS NOT NULL ORDER BY 1")
+            profesionales_cat = [r["profesional_1"] for r in cur.fetchall()]
+
+        return jsonify({
+            "kpi"             : dict(kpi_row),
+            "lotes"           : [dict(l) for l in lotes],
+            "dist_puntaje"    : dict(dist_puntaje),
+            "top_criticos"    : [dict(r) for r in top_criticos],
+            "por_area"        : [dict(r) for r in por_area],
+            "por_etapa"       : [dict(r) for r in por_etapa],
+            "ctrl_kpi"        : dict(ctrl_kpi),
+            "evolucion"       : [dict(r) for r in evolucion],
+            "catalogos"       : {
+                "areas"        : [dict(r) for r in areas_cat],
+                "etapas"       : [dict(r) for r in etapas_cat],
+                "estados"      : [dict(r) for r in estados_cat],
+                "profesionales": profesionales_cat,
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error auditoria_dashboard: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if conn: release_db_connection(conn)
+
+
+# ── Fin Módulo de Auditoría Integral ──────────────────────────────────────────
+
+
 # -----------------------
 # START
 # -----------------------

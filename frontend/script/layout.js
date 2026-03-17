@@ -192,6 +192,13 @@ function renderSidebar(containerId = "sidebarContainer") {
                             <span class="font-medium">Auditoría Proyectos</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="${ctrlBase}auditoria.html" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses('auditoria.html')}">
+                            <i class="fas fa-clipboard-check w-5 text-center"></i>
+                            <span class="font-medium">Auditoría Integral</span>
+                            <span class="ml-auto text-[10px] font-black bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md">NUEVO</span>
+                        </a>
+                    </li>
                 </ul>
 
                 <div class="mt-10 pt-6 border-t border-gray-100 px-3">

@@ -42,7 +42,7 @@ function downloadProjectPDF(projectId) {
         .max-w-4xl { max-width: 64rem; margin-left: auto; margin-right: auto; }
     </style>
 </head>
-<body onload="setTimeout(function() { window.print(); setTimeout(function() { window.close(); }, 500); }, 1500);">
+<body onload="setTimeout(function() { window.print(); setTimeout(function() { window.close(); }, 1000); }, 3000);">
     <div class="max-w-4xl mx-auto">
         <div style="margin-bottom: 2rem; border-bottom: 4px solid #4f46e5; padding-bottom: 1rem;">
             <h1 style="color: #4f46e5; font-size: 2rem; font-weight: 800; margin: 0;">Informe Analítico de Proyecto</h1>

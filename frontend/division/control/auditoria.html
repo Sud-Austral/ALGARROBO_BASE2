@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <script src="../../script/router.js"></script>
+    <script src="../../script/api.js"></script>
+    <script src="../../script/utils.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría Integral de Proyectos – SECPLAC Algarrobo</title>
+    <meta name="description" content="Dashboard de auditoría integral de calidad de proyectos municipales.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles/admin-styles.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: { primary: '#6366f1', secondary: '#10b981', accent: '#f59e0b' }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #f1f5f9; min-height: 100vh; background-image: radial-gradient(at 0% 0%, hsla(240,70%,96%,1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(160,55%,95%,1) 0, transparent 50%); }
+
+        /* ── Hero banner ── */
+        .audit-hero { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #312e81 70%, #4f46e5 100%); border-radius: 1.5rem; padding: 2.5rem 2.5rem 2rem; color: white; position: relative; overflow: hidden; margin-bottom: 2rem; }
+        .audit-hero::before { content:''; position:absolute; top:-60%; right:-8%; width:45%; height:220%; background:rgba(255,255,255,0.04); border-radius:50%; transform:rotate(-20deg); }
+        .audit-hero::after  { content:''; position:absolute; bottom:-40%; left:28%; width:38%; height:200%; background:rgba(255,255,255,0.025); border-radius:50%; }
+
+        /* ── Progress bar for running audit ── */
+        .progress-track { height:8px; background:rgba(255,255,255,0.15); border-radius:999px; overflow:hidden; }
+        .progress-fill  { height:100%; background:linear-gradient(90deg,#a5f3fc,#6366f1,#ec4899); border-radius:999px; transition:width 0.5s ease; }
+
+        /* ── KPI cards ── */
+        .kpi { background:white; border-radius:1rem; padding:1.25rem 1.5rem; border:1px solid #e8edf3; box-shadow:0 2px 12px -4px rgba(0,0,0,0.06); transition:all .25s ease; }
+        .kpi:hover { transform:translateY(-3px); box-shadow:0 10px 28px -8px rgba(0,0,0,0.1); }
+        .kpi-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.25rem; flex-shrink:0; }
+
+        /* ── Section cards ── */
+        .sc { background:white; border-radius:1.25rem; border:1px solid #e2e8f0; box-shadow:0 4px 18px -6px rgba(0,0,0,0.05); padding:1.5rem; margin-bottom:1.75rem; }
+        .sc-title { display:flex; align-items:center; gap:.75rem; font-size:.95rem; font-weight:700; color:#1e293b; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:2px solid #f1f5f9; }
+        .sc-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:white; font-size:.9rem; flex-shrink:0; }
+
+        /* ── Table ── */
+        .data-table { width:100%; border-collapse:collapse; font-size:.8rem; }
+        .data-table thead th { background:#f8fafc; padding:.65rem .85rem; text-align:left; color:#64748b; font-weight:700; border-bottom:2px solid #e8edf3; white-space:nowrap; }
+        .data-table tbody tr { border-bottom:1px solid #f1f5f9; transition:background .15s; }
+        .data-table tbody tr:hover { background:#f8faff; }
+        .data-table td { padding:.55rem .85rem; vertical-align:middle; }
+
+        /* ── Score badge ── */
+        .score-badge { display:inline-flex; align-items:center; justify-content:center; min-width:48px; padding:.25rem .6rem; border-radius:8px; font-size:.75rem; font-weight:800; }
+        .score-ok   { background:#d1fae5; color:#065f46; }
+        .score-warn { background:#fef3c7; color:#92400e; }
+        .score-bad  { background:#fee2e2; color:#991b1b; }
+        .score-crit { background:#fce7f3; color:#9d174d; }
+
+        /* ── PDF list item ── */
+        .pdf-item { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; border-bottom:1px solid #f1f5f9; transition:background .15s; }
+        .pdf-item:hover { background:#f8faff; }
+        .pdf-item:last-child { border-bottom:none; }
+
+        /* ── Filter bar ── */
+        .filter-input { border:1px solid #e2e8f0; border-radius:.5rem; padding:.45rem .75rem; font-size:.82rem; font-family:'Outfit',sans-serif; background:white; color:#1e293b; outline:none; transition:border-color .15s; }
+        .filter-input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+        select.filter-input { padding-right:1.5rem; }
+
+        /* ── Tabs ── */
+        .tab-bar { display:flex; gap:.5rem; border-bottom:2px solid #e2e8f0; margin-bottom:1.5rem; overflow-x:auto; }
+        .tab-btn { padding:.6rem 1.25rem; font-size:.8rem; font-weight:700; border-radius:.5rem .5rem 0 0; color:#64748b; cursor:pointer; white-space:nowrap; border:none; background:transparent; transition:all .2s; }
+        .tab-btn.active { background:#6366f1; color:white; }
+        .tab-btn:hover:not(.active) { background:#f1f5f9; color:#1e293b; }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+
+        /* ── Progress ring ── */
+        .ring-container { position:relative; display:inline-flex; align-items:center; justify-content:center; }
+        .ring-label { position:absolute; font-size:.7rem; font-weight:800; color:#1e293b; }
+
+        /* ── Animations ── */
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .fu { animation:fadeUp .4s ease forwards; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .spin-anim { animation:spin 1s linear infinite; }
+
+        /* ── Toast ── */
+        #toast { position:fixed; bottom:1.5rem; right:1.5rem; background:white; padding:.9rem 1.4rem; border-radius:1rem; box-shadow:0 20px 40px -10px rgba(0,0,0,0.15); display:flex; align-items:center; gap:.75rem; transform:translateX(130%); transition:transform .4s cubic-bezier(.16,1,.3,1); z-index:9999; border-left:5px solid #6366f1; font-size:.875rem; font-weight:600; max-width:360px; }
+        #toast.show { transform:translateX(0); }
+        #toast.ok { border-color:#10b981; }
+        #toast.err { border-color:#ef4444; }
+    </style>
+</head>
+
+<body>
+    <div id="headerRender"></div>
+    <div class="flex">
+        <div id="asideRender"></div>
+
+        <main class="flex-1 p-6">
+
+            <!-- ── HERO ── -->
+            <div class="audit-hero fu">
+                <div class="relative z-10 flex items-start justify-between gap-6 flex-wrap">
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center" style="background:rgba(255,255,255,.15)">
+                                <i class="fas fa-clipboard-check text-2xl text-white"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-3xl font-bold text-white">Auditoría Integral de Proyectos</h1>
+                                <p class="text-white/70 text-sm mt-0.5">Motor multi-dimensional · SECPLAC Algarrobo</p>
+                            </div>
+                        </div>
+
+                        <!-- Progress bar (visible solo cuando corre) -->
+                        <div id="progressZone" class="hidden mt-4 max-w-lg">
+                            <div class="flex justify-between text-xs text-white/80 mb-1">
+                                <span id="progressLabel">Iniciando auditoría…</span>
+                                <span id="progressPct">0%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                            </div>
+                            <p class="text-xs text-white/50 mt-1" id="progressSub"></p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 flex-wrap">
+                        <button id="btnLanzar" onclick="lanzarAuditoria()"
+                            class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
+                            style="background:rgba(255,255,255,.2); color:white; border:1px solid rgba(255,255,255,.3);">
+                            <i class="fas fa-play" id="iconLanzar"></i> Ejecutar Auditoría
+                        </button>
+                        <button onclick="loadDashboard()"
+                            class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm"
+                            style="background:rgba(255,255,255,.1); color:white; border:1px solid rgba(255,255,255,.2);">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── TABS ── -->
+            <div class="tab-bar fu">
+                <button class="tab-btn active" onclick="switchTab('dashboard')"><i class="fas fa-chart-pie mr-1.5"></i>Dashboard</button>
+                <button class="tab-btn" onclick="switchTab('reportes')"><i class="fas fa-file-pdf mr-1.5"></i>Reportes PDF</button>
+            </div>
+
+            <!-- ── TAB: DASHBOARD ── -->
+            <div id="tab-dashboard" class="tab-panel active">
+
+                <!-- Filtros -->
+                <div class="sc fu">
+                    <div class="sc-title">
+                        <div class="sc-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)"><i class="fas fa-filter"></i></div>
+                        Filtros del Dashboard
+                    </div>
+                    <div class="flex flex-wrap gap-3 items-end">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Área</label>
+                            <select id="f-area" class="filter-input" onchange="loadDashboard()"><option value="">Todas las áreas</option></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Etapa</label>
+                            <select id="f-etapa" class="filter-input" onchange="loadDashboard()"><option value="">Todas las etapas</option></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Estado</label>
+                            <select id="f-estado" class="filter-input" onchange="loadDashboard()"><option value="">Todos los estados</option></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Profesional</label>
+                            <select id="f-profesional" class="filter-input" onchange="loadDashboard()"><option value="">Todos</option></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Lote Auditoría</label>
+                            <select id="f-lote" class="filter-input" onchange="loadDashboard()"><option value="">Último lote</option></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Actividad desde</label>
+                            <input type="date" id="f-desde" class="filter-input" onchange="loadDashboard()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Actividad hasta</label>
+                            <input type="date" id="f-hasta" class="filter-input" onchange="loadDashboard()">
+                        </div>
+                        <button onclick="clearFilters()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 transition">
+                            <i class="fas fa-times mr-1"></i>Limpiar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI row 1: auditoría -->
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 mb-4 fu" id="kpiRowAudit">
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Proyectos Auditados</p><p class="text-2xl font-bold text-gray-800" id="k-total">—</p><p class="text-xs text-indigo-500 mt-1">Último lote</p></div><div class="kpi-icon" style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);color:#4f46e5"><i class="fas fa-folder-open"></i></div></div></div>
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Puntaje Promedio</p><p class="text-2xl font-bold text-gray-800" id="k-puntaje">—</p><p class="text-xs text-emerald-500 mt-1">Calidad general</p></div><div class="kpi-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#059669"><i class="fas fa-star"></i></div></div></div>
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Proyectos ≥ 80%</p><p class="text-2xl font-bold text-gray-800" id="k-ok">—</p><p class="text-xs text-green-500 mt-1">Calidad aceptable</p></div><div class="kpi-icon" style="background:linear-gradient(135deg,#d1fae5,#bbf7d0);color:#16a34a"><i class="fas fa-check-circle"></i></div></div></div>
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Proyectos Críticos</p><p class="text-2xl font-bold text-gray-800" id="k-crit">—</p><p class="text-xs text-red-500 mt-1">Puntaje &lt; 60%</p></div><div class="kpi-icon" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626"><i class="fas fa-exclamation-circle"></i></div></div></div>
+                </div>
+
+                <!-- KPI row 2: alertas -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 fu">
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Alertas Críticas</p><p class="text-2xl font-bold text-red-600" id="k-acrit">—</p></div><div class="kpi-icon" style="background:#fee2e2;color:#dc2626"><i class="fas fa-radiation"></i></div></div></div>
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Alertas Altas</p><p class="text-2xl font-bold text-orange-500" id="k-aalt">—</p></div><div class="kpi-icon" style="background:#ffedd5;color:#ea580c"><i class="fas fa-exclamation-triangle"></i></div></div></div>
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Sin Próximos Pasos</p><p class="text-2xl font-bold text-purple-600" id="k-spp">—</p></div><div class="kpi-icon" style="background:#ede9fe;color:#7c3aed"><i class="fas fa-forward"></i></div></div></div>
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Sin Documentos</p><p class="text-2xl font-bold text-amber-600" id="k-sdoc">—</p></div><div class="kpi-icon" style="background:#fef3c7;color:#d97706"><i class="fas fa-file-slash"></i></div></div></div>
+                </div>
+
+                <!-- KPI row 3: control_actividad -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 fu">
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Acciones Sistema</p><p class="text-2xl font-bold text-gray-800" id="k-ctrl-total">—</p></div><div class="kpi-icon" style="background:#e0f2fe;color:#0284c7"><i class="fas fa-history"></i></div></div></div>
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Acciones Hoy</p><p class="text-2xl font-bold text-gray-800" id="k-ctrl-hoy">—</p></div><div class="kpi-icon" style="background:#ede9fe;color:#6d28d9"><i class="fas fa-bolt"></i></div></div></div>
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Usuarios Activos</p><p class="text-2xl font-bold text-gray-800" id="k-ctrl-users">—</p></div><div class="kpi-icon" style="background:#d1fae5;color:#059669"><i class="fas fa-users"></i></div></div></div>
+                    <div class="kpi"><div class="flex items-center justify-between"><div><p class="text-xs text-gray-500 mb-1 font-medium">Errores Sistema</p><p class="text-2xl font-bold text-gray-800" id="k-ctrl-err">—</p></div><div class="kpi-icon" style="background:#fee2e2;color:#dc2626"><i class="fas fa-times-circle"></i></div></div></div>
+                </div>
+
+                <!-- Charts row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5 fu">
+                    <div class="sc mb-0">
+                        <div class="sc-title"><div class="sc-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)"><i class="fas fa-chart-line"></i></div>Evolución de Calidad por Lote</div>
+                        <div style="height:260px; position:relative"><canvas id="chartEvolucion"></canvas></div>
+                    </div>
+                    <div class="sc mb-0">
+                        <div class="sc-title"><div class="sc-icon" style="background:linear-gradient(135deg,#ef4444,#f97316)"><i class="fas fa-chart-pie"></i></div>Distribución de Puntajes</div>
+                        <div style="height:260px; position:relative"><canvas id="chartDist"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5 fu">
+                    <div class="sc mb-0">
+                        <div class="sc-title"><div class="sc-icon" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="fas fa-layer-group"></i></div>Calidad Promedio por Área</div>
+                        <div style="height:260px; position:relative"><canvas id="chartArea"></canvas></div>
+                    </div>
+                    <div class="sc mb-0">
+                        <div class="sc-title"><div class="sc-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fas fa-stairs"></i></div>Proyectos por Etapa</div>
+                        <div style="height:260px; position:relative"><canvas id="chartEtapa"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Top críticos -->
+                <div class="sc fu">
+                    <div class="sc-title"><div class="sc-icon" style="background:linear-gradient(135deg,#dc2626,#b91c1c)"><i class="fas fa-skull-crossbones"></i></div>Top 10 Proyectos con Mayor Criticidad</div>
+                    <div style="overflow-x:auto">
+                        <table class="data-table">
+                            <thead><tr><th>#</th><th>Proyecto</th><th>Área</th><th>Etapa</th><th>Avance</th><th>Puntaje</th><th>🔴 Críticas</th><th>🟠 Altas</th><th>Acción</th></tr></thead>
+                            <tbody id="tablaCriticos"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Historial de lotes -->
+                <div class="sc fu">
+                    <div class="sc-title"><div class="sc-icon" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)"><i class="fas fa-clock-rotate-left"></i></div>Historial de Ejecuciones de Auditoría</div>
+                    <div style="overflow-x:auto">
+                        <table class="data-table">
+                            <thead><tr><th>Lote ID</th><th>Fecha Ejecución</th><th>Proyectos</th><th>Puntaje Prom.</th><th>Ejecutado por</th></tr></thead>
+                            <tbody id="tablaLotes"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── TAB: REPORTES PDF ── -->
+            <div id="tab-reportes" class="tab-panel">
+
+                <div class="sc">
+                    <div class="sc-title"><div class="sc-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626)"><i class="fas fa-file-pdf"></i></div>Filtros de Reportes</div>
+                    <div class="flex flex-wrap gap-3 items-end">
+                        <input id="r-q" class="filter-input" placeholder="🔍 Buscar proyecto…" oninput="loadReportes()">
+                        <select id="r-area" class="filter-input" onchange="loadReportes()"><option value="">Todas las áreas</option></select>
+                        <select id="r-etapa" class="filter-input" onchange="loadReportes()"><option value="">Todas las etapas</option></select>
+                        <select id="r-estado" class="filter-input" onchange="loadReportes()"><option value="">Todos los estados</option></select>
+                        <select id="r-prof" class="filter-input" onchange="loadReportes()"><option value="">Todos los profesionales</option></select>
+                        <button onclick="clearReporteFilters()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 transition"><i class="fas fa-times mr-1"></i>Limpiar</button>
+                    </div>
+                </div>
+
+                <div class="sc">
+                    <div class="sc-title">
+                        <div class="sc-icon" style="background:linear-gradient(135deg,#ef4444,#b91c1c)"><i class="fas fa-folder-open"></i></div>
+                        <span>Reportes Disponibles</span>
+                        <span id="r-count" class="ml-auto text-xs font-black bg-red-100 text-red-700 px-2 py-0.5 rounded-md">—</span>
+                    </div>
+                    <div id="reportesList">
+                        <div class="text-center py-12 text-slate-400">
+                            <i class="fas fa-file-pdf text-4xl mb-3 block opacity-30"></i>
+                            <p class="font-semibold">Ejecute una auditoría para generar los reportes PDF</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- PDF Viewer Modal -->
+    <div id="pdfModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl" style="width:95vw; height:90vh; display:flex; flex-direction:column;">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg" id="pdfModalTitle">Reporte de Auditoría</h3>
+                    <p class="text-xs text-slate-400" id="pdfModalSub"></p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a id="btnPdfDownload" href="#" target="_blank"
+                        class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition">
+                        <i class="fas fa-download"></i> Descargar
+                    </a>
+                    <button onclick="closePdfModal()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-600 transition flex items-center justify-center">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <iframe id="pdfFrame" class="flex-1 rounded-b-2xl" style="border:none;"></iframe>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"><i id="toastIcon" class="fas fa-check-circle text-emerald-500 text-lg"></i><span id="toastMsg">OK</span></div>
+
+    <script src="../../script/layout.js"></script>
+    <script>
+        // ── Globals ──
+        let charts = {};
+        let catalogos = {};
+        let pollTimer = null;
+        const BASE_URL = API_CONFIG.BASE_URL;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+        });
+
+        async function init() {
+            await loadDashboard();
+        }
+
+        /* ───────────────────────────── TABS ────────────────────────────── */
+        function switchTab(name) {
+            document.querySelectorAll('.tab-btn').forEach((b, i) => {
+                const names = ['dashboard','reportes'];
+                b.classList.toggle('active', names[i] === name);
+            });
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            if (name === 'reportes') loadReportes();
+        }
+
+        /* ───────────────────────────── DASHBOARD ────────────────────────── */
+        async function loadDashboard() {
+            try {
+                const params = buildDashFilters();
+                const data = await api.get('/auditoria/dashboard?' + params);
+                renderKPIs(data.kpi, data.ctrl_kpi);
+                renderCatalogos(data.catalogos);
+                renderLotes(data.lotes);
+                renderCharts(data);
+                renderTopCriticos(data.top_criticos);
+            } catch (e) {
+                console.error('Dashboard error:', e);
+                toast('Error cargando dashboard', 'err');
+            }
+        }
+
+        function buildDashFilters() {
+            const p = new URLSearchParams();
+            const area = document.getElementById('f-area')?.value;
+            const etapa = document.getElementById('f-etapa')?.value;
+            const estado = document.getElementById('f-estado')?.value;
+            const prof = document.getElementById('f-profesional')?.value;
+            const lote = document.getElementById('f-lote')?.value;
+            const desde = document.getElementById('f-desde')?.value;
+            const hasta = document.getElementById('f-hasta')?.value;
+            if (area) p.set('area_id', area);
+            if (etapa) p.set('etapa_id', etapa);
+            if (estado) p.set('estado_id', estado);
+            if (prof) p.set('profesional', prof);
+            if (lote) p.set('lote_id', lote);
+            if (desde) p.set('fecha_desde', desde);
+            if (hasta) p.set('fecha_hasta', hasta);
+            return p.toString();
+        }
+
+        function renderKPIs(k, ctrl) {
+            if (!k) return;
+            setText('k-total', k.total_proyectos ?? '—');
+            setText('k-puntaje', k.puntaje_promedio ? k.puntaje_promedio + '%' : '—');
+            setText('k-ok', k.proyectos_ok ?? '—');
+            setText('k-crit', k.proyectos_criticos ?? '—');
+            setText('k-acrit', k.total_alertas_criticas ?? '—');
+            setText('k-aalt', k.total_alertas_altas ?? '—');
+            setText('k-spp', k.sin_proximos_pasos ?? '—');
+            setText('k-sdoc', k.sin_documentos ?? '—');
+            if (ctrl) {
+                setText('k-ctrl-total', ctrl.total_acciones ?? '—');
+                setText('k-ctrl-hoy', ctrl.hoy ?? '—');
+                setText('k-ctrl-users', ctrl.usuarios_activos ?? '—');
+                setText('k-ctrl-err', ctrl.fallidas ?? '—');
+            }
+        }
+
+        function renderCatalogos(cat) {
+            if (!cat || catalogos.__loaded) return;
+            catalogos = cat;
+            catalogos.__loaded = true;
+
+            const ids = ['f-area','r-area'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.innerHTML = '<option value="">Todas las áreas</option>';
+                (cat.areas || []).forEach(a => {
+                    el.innerHTML += `<option value="${a.id}">${a.nombre}</option>`;
+                });
+            });
+
+            const etapasIds = ['f-etapa','r-etapa'];
+            etapasIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.innerHTML = '<option value="">Todas las etapas</option>';
+                (cat.etapas || []).forEach(e => {
+                    el.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
+                });
+            });
+
+            const estadosIds = ['f-estado','r-estado'];
+            estadosIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.innerHTML = '<option value="">Todos los estados</option>';
+                (cat.estados || []).forEach(e => {
+                    el.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
+                });
+            });
+
+            const profIds = ['f-profesional','r-prof'];
+            profIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.innerHTML = '<option value="">Todos</option>';
+                (cat.profesionales || []).forEach(p => {
+                    el.innerHTML += `<option value="${p}">${p}</option>`;
+                });
+            });
+        }
+
+        function renderLotes(lotes) {
+            if (!lotes?.length) return;
+            // Poblar selector
+            const sel = document.getElementById('f-lote');
+            if (sel) {
+                sel.innerHTML = '<option value="">Último lote</option>';
+                lotes.forEach(l => {
+                    sel.innerHTML += `<option value="${l.id}">Lote #${l.id} – ${fmtDate(l.fecha_ejecucion)}</option>`;
+                });
+            }
+            // Tabla
+            const tbody = document.getElementById('tablaLotes');
+            tbody.innerHTML = lotes.map(l => `
+                <tr>
+                    <td><span class="font-bold text-indigo-600">#${l.id}</span></td>
+                    <td>${fmtDate(l.fecha_ejecucion)}</td>
+                    <td><span class="font-semibold">${l.total_proyectos_auditados}</span></td>
+                    <td>${scoreBadge(l.promedio)}</td>
+                    <td class="text-slate-500 text-xs">${l.usuario_ejecutor || 'SISTEMA'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderCharts(data) {
+            // Evolución
+            const evo = data.evolucion || [];
+            destroyChart('chartEvolucion');
+            if (evo.length > 0) {
+                charts.evo = new Chart(document.getElementById('chartEvolucion').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: evo.map(e => fmtDate(e.fecha)),
+                        datasets: [
+                            { label: 'Puntaje Prom.', data: evo.map(e => e.puntaje_prom), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,.1)', fill: true, tension: 0.4, yAxisID: 'y' },
+                            { label: 'Críticas', data: evo.map(e => e.criticas), borderColor: '#ef4444', borderDash: [4,3], tension: 0.3, yAxisID: 'y1' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } },
+                        scales: { y: { min:0, max:100, title:{ display:true, text:'Puntaje' } }, y1: { position:'right', title:{ display:true, text:'Alertas' } } } }
+                });
+            }
+
+            // Dist puntaje
+            const d = data.dist_puntaje || {};
+            destroyChart('chartDist');
+            charts.dist = new Chart(document.getElementById('chartDist').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['≥ 80% 🟢', '60–80% 🟡', '40–60% 🟠', '< 40% 🔴'],
+                    datasets: [{ data: [d.rango_80_100||0, d.rango_60_80||0, d.rango_40_60||0, d.rango_0_40||0],
+                        backgroundColor: ['#10b981','#f59e0b','#f97316','#ef4444'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right' } } }
+            });
+
+            // Por área
+            const pa = data.por_area || [];
+            destroyChart('chartArea');
+            charts.area = new Chart(document.getElementById('chartArea').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: pa.map(a => a.area || 'Sin área'),
+                    datasets: [
+                        { label: 'Puntaje Prom.', data: pa.map(a => a.puntaje_prom), backgroundColor: 'rgba(99,102,241,.8)', borderRadius: 6, yAxisID: 'y' },
+                        { label: 'Críticas', data: pa.map(a => a.criticas), backgroundColor: 'rgba(239,68,68,.6)', borderRadius: 6, yAxisID: 'y1' },
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero:true, max:100 }, y1: { position:'right', beginAtZero:true } } }
+            });
+
+            // Por etapa
+            const pe = data.por_etapa || [];
+            destroyChart('chartEtapa');
+            charts.etapa = new Chart(document.getElementById('chartEtapa').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: pe.map(e => e.etapa || 'Sin etapa'),
+                    datasets: [
+                        { label: 'Proyectos', data: pe.map(e => e.total), backgroundColor: 'rgba(16,185,129,.8)', borderRadius: 6 },
+                        { label: 'Puntaje Prom.', data: pe.map(e => e.puntaje_prom), backgroundColor: 'rgba(245,158,11,.6)', borderRadius: 6 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function renderTopCriticos(rows) {
+            const tbody = document.getElementById('tablaCriticos');
+            if (!rows?.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400">Sin datos disponibles</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map((r, i) => `
+                <tr>
+                    <td>${i+1}</td>
+                    <td class="font-semibold text-slate-800 max-w-[200px] truncate" title="${r.nombre}">${r.nombre}</td>
+                    <td class="text-xs text-slate-500">${r.area_nombre || '—'}</td>
+                    <td class="text-xs">${r.etapa || '—'}</td>
+                    <td><div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div style="width:${r.avance_declarado||0}%;background:#6366f1" class="h-full rounded-full"></div></div><span class="text-xs text-slate-500">${r.avance_declarado||0}%</span></td>
+                    <td>${scoreBadge(r.puntaje_general)}</td>
+                    <td class="text-center"><span class="font-bold text-red-600">${r.alertas_criticas}</span></td>
+                    <td class="text-center"><span class="font-bold text-orange-500">${r.alertas_altas}</span></td>
+                    <td>
+                        <button onclick="openPdf(${r.id}, '${escHtml(r.nombre)}')"
+                            class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold hover:bg-indigo-100 transition">
+                            <i class="fas fa-file-pdf mr-1"></i>Ver PDF
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        /* ───────────────────────────── REPORTES ─────────────────────────── */
+        async function loadReportes() {
+            const params = buildReporteFilters();
+            try {
+                const data = await api.get('/auditoria/reportes?' + params);
+                setText('r-count', data.total + ' reporte' + (data.total !== 1 ? 's' : ''));
+                renderReportesList(data.reportes || []);
+            } catch (e) {
+                console.error('Reportes error:', e);
+                document.getElementById('reportesList').innerHTML = '<p class="text-center py-8 text-slate-400">Error cargando reportes</p>';
+            }
+        }
+
+        function buildReporteFilters() {
+            const p = new URLSearchParams();
+            const q = document.getElementById('r-q')?.value;
+            const area = document.getElementById('r-area')?.value;
+            const etapa = document.getElementById('r-etapa')?.value;
+            const estado = document.getElementById('r-estado')?.value;
+            const prof = document.getElementById('r-prof')?.value;
+            if (q) p.set('q', q);
+            if (area) p.set('area_id', area);
+            if (etapa) p.set('etapa_id', etapa);
+            if (estado) p.set('estado_id', estado);
+            if (prof) p.set('profesional', prof);
+            return p.toString();
+        }
+
+        function renderReportesList(items) {
+            const el = document.getElementById('reportesList');
+            if (!items.length) {
+                el.innerHTML = '<div class="text-center py-12 text-slate-400"><i class="fas fa-search text-3xl mb-3 block opacity-30"></i><p class="font-semibold">Sin resultados para los filtros seleccionados</p></div>';
+                return;
+            }
+            el.innerHTML = items.map(r => `
+                <div class="pdf-item">
+                    <div class="w-11 h-11 rounded-xl bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0 text-lg">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-slate-800 text-sm truncate">${r.nombre || 'Proyecto ' + r.proyecto_id}</p>
+                        <div class="flex items-center gap-3 mt-0.5 flex-wrap">
+                            <span class="text-xs text-slate-400">${r.area_nombre || '—'}</span>
+                            <span class="text-xs text-slate-400">·</span>
+                            <span class="text-xs text-slate-400">${r.etapa_nombre || '—'}</span>
+                            <span class="text-xs text-slate-400">·</span>
+                            <span class="text-xs text-slate-400">${r.profesional_1 || 'Sin profesional'}</span>
+                        </div>
+                        <p class="text-xs text-slate-300 mt-0.5">${r.modificado ? 'Generado: ' + fmtDate(r.modificado) : ''} · ${r.size_kb} KB</p>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        ${r.puntaje_general !== undefined ? scoreBadge(r.puntaje_general) : ''}
+                        ${r.alertas_criticas > 0 ? `<span class="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-lg">🔴 ${r.alertas_criticas}</span>` : ''}
+                        <button onclick="openPdf(${r.proyecto_id}, '${escHtml(r.nombre)}')"
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition">
+                            <i class="fas fa-eye"></i> Ver
+                        </button>
+                        <a href="${BASE_URL}/auditoria/pdf/${r.proyecto_id}?download=1&token=${API_CONFIG.token}"
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        /* ───────────────────────────── PDF MODAL ────────────────────────── */
+        function openPdf(projectId, nombre) {
+            const url = `${BASE_URL}/auditoria/pdf/${projectId}?token=${API_CONFIG.token}`;
+            document.getElementById('pdfFrame').src = url;
+            document.getElementById('pdfModalTitle').textContent = nombre || `Proyecto #${projectId}`;
+            document.getElementById('pdfModalSub').textContent = `ID: ${projectId}`;
+            document.getElementById('btnPdfDownload').href = url + '&download=1';
+            document.getElementById('pdfModal').classList.remove('hidden');
+            document.getElementById('pdfModal').classList.add('flex');
+        }
+
+        function closePdfModal() {
+            document.getElementById('pdfModal').classList.add('hidden');
+            document.getElementById('pdfModal').classList.remove('flex');
+            document.getElementById('pdfFrame').src = '';
+        }
+
+        /* ── Cerrar modal con Escape ── */
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closePdfModal(); });
+
+        /* ───────────────────────────── LANZAR AUDITORÍA ─────────────────── */
+        async function lanzarAuditoria() {
+            const btn = document.getElementById('btnLanzar');
+            const icon = document.getElementById('iconLanzar');
+            btn.disabled = true;
+            icon.className = 'fas fa-spinner spin-anim';
+            try {
+                await api.post('/auditoria/lanzar', {});
+                toast('Auditoría iniciada en segundo plano', 'ok');
+                startPolling();
+            } catch (e) {
+                const msg = e.message || 'Error al iniciar';
+                toast(msg.includes('409') || msg.includes('curso') ? 'Ya hay una auditoría en curso' : msg, 'err');
+                btn.disabled = false;
+                icon.className = 'fas fa-play';
+            }
+        }
+
+        function startPolling() {
+            document.getElementById('progressZone').classList.remove('hidden');
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(async () => {
+                try {
+                    const s = await api.get('/auditoria/estado');
+                    updateProgress(s);
+                    if (!s.running) {
+                        clearInterval(pollTimer);
+                        pollTimer = null;
+                        document.getElementById('btnLanzar').disabled = false;
+                        document.getElementById('iconLanzar').className = 'fas fa-play';
+                        if (!s.error_fatal) {
+                            toast(`Auditoría completada · ${s.procesados} proyectos`, 'ok');
+                            await loadDashboard();
+                        } else {
+                            toast('Error fatal: ' + s.error_fatal, 'err');
+                        }
+                    }
+                } catch (e) { console.error('Poll error:', e); }
+            }, 3000);
+        }
+
+        function updateProgress(s) {
+            const pct = s.total > 0 ? Math.round(s.procesados / s.total * 100) : 0;
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressPct').textContent = pct + '%';
+            document.getElementById('progressLabel').textContent =
+                s.running ? `Procesando ${s.procesados} de ${s.total} proyectos…` : '¡Auditoría completada!';
+            document.getElementById('progressSub').textContent =
+                s.errores > 0 ? `⚠️ ${s.errores} errores` : (s.lote_id ? `Lote #${s.lote_id}` : '');
+            if (!s.running) {
+                setTimeout(() => document.getElementById('progressZone').classList.add('hidden'), 4000);
+            }
+        }
+
+        /* ───────────────────────────── UTILS ────────────────────────────── */
+        function clearFilters() {
+            ['f-area','f-etapa','f-estado','f-profesional','f-lote'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            ['f-desde','f-hasta'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            catalogos.__loaded = false;
+            loadDashboard();
+        }
+
+        function clearReporteFilters() {
+            ['r-q','r-area','r-etapa','r-estado','r-prof'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            loadReportes();
+        }
+
+        function destroyChart(id) {
+            if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+            // fix: charts keyed by short name
+        }
+
+        function scoreBadge(val) {
+            const v = parseFloat(val) || 0;
+            let cls = v >= 80 ? 'score-ok' : v >= 60 ? 'score-warn' : v >= 40 ? 'score-bad' : 'score-crit';
+            return `<span class="score-badge ${cls}">${v.toFixed(0)}%</span>`;
+        }
+
+        function fmtDate(str) {
+            if (!str) return '—';
+            try { return new Date(str).toLocaleString('es-CL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+            catch { return str; }
+        }
+
+        function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+        function escHtml(str) { return (str||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;"); }
+
+        function toast(msg, type = 'ok') {
+            const el = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMsg').textContent = msg;
+            el.className = el.className.replace(/ok|err/g,'').trim();
+            el.classList.add(type === 'err' ? 'err' : 'ok', 'show');
+            icon.className = type === 'err' ? 'fas fa-times-circle text-red-500 text-lg' : 'fas fa-check-circle text-emerald-500 text-lg';
+            setTimeout(() => el.classList.remove('show'), 4000);
+        }
+
+        // Verificar si hay auditoría en curso al cargar
+        api.get('/auditoria/estado').then(s => {
+            if (s.running) {
+                document.getElementById('progressZone').classList.remove('hidden');
+                updateProgress(s);
+                startPolling();
+            }
+        }).catch(() => {});
+    </script>
+</body>
+
+</html>

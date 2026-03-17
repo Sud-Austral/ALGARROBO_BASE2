@@ -585,7 +585,7 @@
                         </div>
 
                         <!-- Filter Ribbon 2026 -->
-                        <div class="flex flex-wrap items-center gap-3 mt-2" id="filterRibbon">
+                        <div class="flex flex-wrap items-center gap-x-6 gap-y-4 mt-3" id="filterRibbon">
                             <!-- Filters will be populated by JS -->
                         </div>
                     </div>
@@ -1299,25 +1299,34 @@
         function populateFilters() {
             const rib = document.getElementById('filterRibbon');
             if (!rib) return;
+            
+            // Build the standard ribbon view
             rib.innerHTML = Object.keys(mapFilters).map(key => {
                 const count = currentFilters[key].length;
                 const label = count === 0 ? labelFilters[key] : `${labelFilters[key]}: ${count}`;
                 const isActive = count > 0;
-
+                
+                // Check if this menu was open
                 const isMenuOpen = activeMenuKey === key;
 
                 return `
-                    <div class="relative group">
-                        <button type="button" onclick="toggleFilterMenu('${key}', event)" class="px-3.5 py-2 rounded-xl border-2 ${isActive ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300 hover:text-slate-700'} text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all">
-                            <i class="fas fa-filter text-[8px] ${isActive ? 'text-white' : 'text-slate-400'}"></i> ${label}
-                            <i class="fas fa-chevron-down text-[8px] opacity-40 ml-0.5"></i>
+                    <div class="relative">
+                        <button type="button" onclick="toggleFilterMenu('${key}', event)" class="px-5 py-2.5 rounded-2xl border-2 ${isActive ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-300 hover:text-slate-700'} text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                            <i class="fas fa-filter text-[10px] ${isActive ? 'text-white' : 'text-slate-400'}"></i> ${label}
+                            <i class="fas fa-chevron-down text-[10px] opacity-40 ml-1"></i>
                         </button>
-                        <div id="menu-${key}" class="${isMenuOpen ? '' : 'hidden'} absolute top-full left-0 mt-3 w-64 bg-white border border-slate-200 shadow-floating rounded-2xl z-[1000] p-3 max-h-80 overflow-y-auto custom-scrollbar ring-1 ring-black ring-opacity-5">
+                        <div id="menu-${key}" class="${isMenuOpen ? '' : 'hidden'} absolute top-full left-0 mt-3 w-72 bg-white border border-slate-200 shadow-2xl rounded-2xl z-[5000] p-4 max-h-[400px] overflow-y-auto scrollbar-thin ring-1 ring-black ring-opacity-5">
                             ${renderFilterOptions(key)}
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            // Re-apply focus or open state if needed
+            if (activeMenuKey) {
+                const menu = document.getElementById(`menu-${activeMenuKey}`);
+                if (menu) menu.classList.remove('hidden');
+            }
         }
 
         function renderFilterOptions(key) {
@@ -2250,7 +2259,7 @@
 
             try {
                 // Use api wrapper for automatic auth and error handling
-                await api.post(`/ proyectos / ${projectId} /documentos/upload`, formData);
+                await api.post(`/proyectos/${projectId}/documentos/upload`, formData);
 
                 showToast('Documento subido correctamente');
                 // Refresh view
@@ -2268,48 +2277,8 @@
         // PDF Viewer Modal Functions
         // PDF Viewer Modal Functions
         function openDocViewer(docId, docName) {
-            let modal = document.getElementById('docViewerModal');
-
-            if (modal) modal.remove();
-
-            const modalHtml = `
-                < div id = "docViewerModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" role = "dialog" aria - modal="true" onclick = "if(event.target === this) closeDocViewer()" >
-                    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden" onclick="event.stopPropagation()">
-
-                        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white shadow-sm z-20">
-                            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center">
-                                    <i class="fas fa-file-pdf"></i>
-                                </div>
-                                <span class="truncate">${docName}</span>
-                            </h3>
-                            <button type="button" class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex items-center justify-center transition-colors focus:outline-none" onclick="closeDocViewer()">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-
-                        <div class="flex-1 bg-gray-100 relative w-full h-full">
-                            <div id="docLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 transition-opacity duration-300">
-                                <i class="fas fa-spinner fa-spin text-4xl text-indigo-600 mb-4"></i>
-                                <p class="text-gray-500 font-medium">Cargando documento...</p>
-                            </div>
-                            <iframe id="docFrame" class="w-full h-full border-0" src=""></iframe>
-                        </div>
-                    </div>
-            </div > `;
-
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-            const frame = document.getElementById('docFrame');
-            const loading = document.getElementById('docLoading');
-            const url = `${API_CONFIG.BASE_URL} /documentos/${docId}/view?token=${API_CONFIG.token}`;
-
-            frame.src = url;
-
-            frame.onload = () => {
-                loading.classList.add('opacity-0', 'pointer-events-none');
-                setTimeout(() => loading.classList.add('hidden'), 300);
-            };
+            const url = `${API_CONFIG.BASE_URL.replace(/\/$/, '')}/documentos/${docId}/view?token=${API_CONFIG.token}`;
+            window.open(url, '_blank');
         }
 
         function showAddProximoPasoForm() {
