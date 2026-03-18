@@ -189,10 +189,6 @@
                             <select id="f-profesional" class="filter-input" onchange="loadDashboard()"><option value="">Todos</option></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Lote Auditoría</label>
-                            <select id="f-lote" class="filter-input" onchange="loadDashboard()"><option value="">Último lote</option></select>
-                        </div>
-                        <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Actividad desde</label>
                             <input type="date" id="f-desde" class="filter-input" onchange="loadDashboard()">
                         </div>
@@ -367,7 +363,7 @@
                 const params = buildDashFilters();
                 const data = await api.get('/auditoria/dashboard?' + params);
                 renderKPIs(data.kpi, data.ctrl_kpi);
-                renderCatalogos(data.catalogos);
+                renderCatalogos(data.catalogos, 'f');
                 renderLotes(data.lotes);
                 renderCharts(data);
                 renderTopCriticos(data.top_criticos);
@@ -383,14 +379,12 @@
             const etapa = document.getElementById('f-etapa')?.value;
             const estado = document.getElementById('f-estado')?.value;
             const prof = document.getElementById('f-profesional')?.value;
-            const lote = document.getElementById('f-lote')?.value;
             const desde = document.getElementById('f-desde')?.value;
             const hasta = document.getElementById('f-hasta')?.value;
             if (area) p.set('area_id', area);
             if (etapa) p.set('etapa_id', etapa);
             if (estado) p.set('estado_id', estado);
             if (prof) p.set('profesional', prof);
-            if (lote) p.set('lote_id', lote);
             if (desde) p.set('fecha_desde', desde);
             if (hasta) p.set('fecha_hasta', hasta);
             return p.toString();
@@ -414,62 +408,43 @@
             }
         }
 
-        function renderCatalogos(cat) {
-            if (!cat || catalogos.__loaded) return;
-            catalogos = cat;
-            catalogos.__loaded = true;
+        function renderCatalogos(cat, type = 'f') {
+            if (!cat) return;
+            
+            // Si es la primera carga (f-area está vacío), guardamos los catálogos globales para reset
+            if (!catalogos.__loaded) {
+                catalogos = JSON.parse(JSON.stringify(cat));
+                catalogos.__loaded = true;
+            }
 
-            const ids = ['f-area','r-area'];
-            ids.forEach(id => {
+            const prefix = type === 'f' ? 'f-' : 'r-';
+            const areaId = prefix + 'area';
+            const etapaId = prefix + 'etapa';
+            const estadoId = prefix + 'estado';
+            const profId = type === 'f' ? 'f-profesional' : 'r-prof';
+
+            // Función helper para actualizar select preservando valor
+            const updateSelect = (id, options, label, valueKey = 'id', textKey = 'nombre') => {
                 const el = document.getElementById(id);
                 if (!el) return;
-                el.innerHTML = '<option value="">Todas las áreas</option>';
-                (cat.areas || []).forEach(a => {
-                    el.innerHTML += `<option value="${a.id}">${a.nombre}</option>`;
+                const prevVal = el.value;
+                el.innerHTML = `<option value="">${label}</option>`;
+                options.forEach(opt => {
+                    const val = typeof opt === 'object' ? opt[valueKey] : opt;
+                    const txt = typeof opt === 'object' ? opt[textKey] : opt;
+                    const selected = String(val) === String(prevVal) ? 'selected' : '';
+                    el.innerHTML += `<option value="${val}" ${selected}>${txt}</option>`;
                 });
-            });
+            };
 
-            const etapasIds = ['f-etapa','r-etapa'];
-            etapasIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.innerHTML = '<option value="">Todas las etapas</option>';
-                (cat.etapas || []).forEach(e => {
-                    el.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
-                });
-            });
-
-            const estadosIds = ['f-estado','r-estado'];
-            estadosIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.innerHTML = '<option value="">Todos los estados</option>';
-                (cat.estados || []).forEach(e => {
-                    el.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
-                });
-            });
-
-            const profIds = ['f-profesional','r-prof'];
-            profIds.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.innerHTML = '<option value="">Todos</option>';
-                (cat.profesionales || []).forEach(p => {
-                    el.innerHTML += `<option value="${p}">${p}</option>`;
-                });
-            });
+            updateSelect(areaId, cat.areas, 'Todas las áreas');
+            updateSelect(etapaId, cat.etapas, 'Todas las etapas');
+            updateSelect(estadoId, cat.estados, 'Todos los estados');
+            updateSelect(profId, cat.profesionales, 'Todos los profesionales');
         }
 
         function renderLotes(lotes) {
             if (!lotes?.length) return;
-            // Poblar selector
-            const sel = document.getElementById('f-lote');
-            if (sel) {
-                sel.innerHTML = '<option value="">Último lote</option>';
-                lotes.forEach(l => {
-                    sel.innerHTML += `<option value="${l.id}">Lote #${l.id} – ${fmtDate(l.fecha_ejecucion)}</option>`;
-                });
-            }
             // Tabla
             const tbody = document.getElementById('tablaLotes');
             tbody.innerHTML = lotes.map(l => `
@@ -580,6 +555,7 @@
                 const data = await api.get('/auditoria/reportes?' + params);
                 setText('r-count', data.total + ' reporte' + (data.total !== 1 ? 's' : ''));
                 renderReportesList(data.reportes || []);
+                renderCatalogos(data.catalogos, 'r');
             } catch (e) {
                 console.error('Reportes error:', e);
                 document.getElementById('reportesList').innerHTML = '<p class="text-center py-8 text-slate-400">Error cargando reportes</p>';
@@ -760,7 +736,7 @@
 
         /* ───────────────────────────── UTILS ────────────────────────────── */
         function clearFilters() {
-            ['f-area','f-etapa','f-estado','f-profesional','f-lote'].forEach(id => {
+            ['f-area','f-etapa','f-estado','f-profesional'].forEach(id => {
                 const el = document.getElementById(id); if (el) el.value = '';
             });
             ['f-desde','f-hasta'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });

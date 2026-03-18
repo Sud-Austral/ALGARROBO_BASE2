@@ -4869,6 +4869,63 @@ def auditoria_estado(current_user_id):
     if not engine: return jsonify({"error": "No disponible"}), 503
     return jsonify(engine.get_status())
 
+def get_auditoria_catalogos(cur, area_id=None, etapa_id=None, estado_id=None):
+    """Auxiliar para catálogos en cascada del módulo de auditoría."""
+    # ÁREAS: Siempre todas las que tienen proyectos
+    cur.execute("""
+        SELECT DISTINCT a.id, a.nombre 
+        FROM areas a
+        JOIN proyectos p ON p.area_id = a.id
+        ORDER BY a.nombre
+    """)
+    areas = cur.fetchall()
+
+    # ETAPAS: Filtradas por Área
+    sql = "SELECT DISTINCT ep.id, ep.nombre FROM etapas_proyecto ep JOIN proyectos p ON p.etapa_proyecto_id = ep.id WHERE 1=1"
+    params = []
+    if area_id:
+        sql += " AND p.area_id = %s"
+        params.append(int(area_id))
+    sql += " ORDER BY ep.nombre"
+    cur.execute(sql, params)
+    etapas = cur.fetchall()
+
+    # ESTADOS: Filtrados por Área y Etapa
+    sql = "SELECT DISTINCT es.id, es.nombre FROM estados_proyecto es JOIN proyectos p ON p.estado_proyecto_id = es.id WHERE 1=1"
+    params = []
+    if area_id:
+        sql += " AND p.area_id = %s"
+        params.append(int(area_id))
+    if etapa_id:
+        sql += " AND p.etapa_proyecto_id = %s"
+        params.append(int(etapa_id))
+    sql += " ORDER BY es.nombre"
+    cur.execute(sql, params)
+    estados = cur.fetchall()
+
+    # PROFESIONALES: Filtrados por Área, Etapa y Estado
+    sql = "SELECT DISTINCT p.profesional_1 FROM proyectos p WHERE p.profesional_1 IS NOT NULL"
+    params = []
+    if area_id:
+        sql += " AND p.area_id = %s"
+        params.append(int(area_id))
+    if etapa_id:
+        sql += " AND p.etapa_proyecto_id = %s"
+        params.append(int(etapa_id))
+    if estado_id:
+        sql += " AND p.estado_proyecto_id = %s"
+        params.append(int(estado_id))
+    sql += " ORDER BY 1"
+    cur.execute(sql, params)
+    profesionales = [r["profesional_1"] for r in cur.fetchall()]
+
+    return {
+        "areas": [dict(r) for r in areas],
+        "etapas": [dict(r) for r in etapas],
+        "estados": [dict(r) for r in estados],
+        "profesionales": profesionales
+    }
+
 
 @app.route("/auditoria/reportes", methods=["GET"])
 @session_required
@@ -4884,11 +4941,20 @@ def auditoria_reportes(current_user_id):
         pdf_hist = set() # ids con reporte cambios
         if os.path.exists(AUDIT_OUT_DIR):
             for fn in os.listdir(AUDIT_OUT_DIR):
-                if fn.endswith("_cambios.pdf"):
+                if fn.startswith("Historial_Cambios_Proyecto_") and fn.endswith(".pdf"):
+                    try: pdf_hist.add(int(fn.replace("Historial_Cambios_Proyecto_", "").replace(".pdf", "")))
+                    except: pass
+                elif fn.endswith("_cambios.pdf"): # Legacy format
                     try: pdf_hist.add(int(fn.replace("_cambios.pdf", "")))
                     except: pass
-                elif fn.endswith(".pdf"):
-                    try: pdf_qual.add(int(fn.replace(".pdf", "")))
+                elif fn.startswith("Auditoria_Proyecto_") and fn.endswith(".pdf"):
+                    try: pdf_qual.add(int(fn.replace("Auditoria_Proyecto_", "").replace(".pdf", "")))
+                    except: pass
+                elif fn.endswith(".pdf"): # Legacy format
+                    try: 
+                        pid_str = fn.replace(".pdf", "")
+                        if pid_str.isdigit():
+                            pdf_qual.add(int(pid_str))
                     except: pass
 
         if not pdf_qual and not pdf_hist:
@@ -4951,6 +5017,8 @@ def auditoria_reportes(current_user_id):
                 ORDER BY p.nombre
             """, params)
             proyectos = cur.fetchall()
+            # ── Catálogos dinámicos (Cascada) ──
+            catalogos = get_auditoria_catalogos(cur, area_id, etapa_id, estado_id)
 
         reportes = []
         for proy in proyectos:
@@ -4973,7 +5041,11 @@ def auditoria_reportes(current_user_id):
                                     if aud.get("fecha_ejecucion") else None,
             })
 
-        return jsonify({"reportes": reportes, "total": len(reportes)})
+        return jsonify({
+            "reportes": reportes, 
+            "total": len(reportes),
+            "catalogos": catalogos
+        })
     except Exception as e:
         logger.error(f"Error auditoria_reportes: {e}")
         traceback.print_exc()
@@ -4986,7 +5058,23 @@ def auditoria_reportes(current_user_id):
 @session_required
 def auditoria_pdf_view(current_user_id, proyecto_id):
     """Sirve el PDF de auditoría de un proyecto. Soporta ?download=1 para descarga."""
-    pdf_path = os.path.join(AUDIT_OUT_DIR, f"{proyecto_id}.pdf")
+    tipo = request.args.get("tipo", "calidad")
+    if tipo == "cambios":
+        filename = f"Historial_Cambios_Proyecto_{proyecto_id}.pdf"
+    else:
+        filename = f"Auditoria_Proyecto_{proyecto_id}.pdf"
+    
+    pdf_path = os.path.join(AUDIT_OUT_DIR, filename)
+    
+    # Fallback to legacy names
+    if not os.path.exists(pdf_path):
+        if tipo == "cambios":
+            alt_path = os.path.join(AUDIT_OUT_DIR, f"{proyecto_id}_cambios.pdf")
+        else:
+            alt_path = os.path.join(AUDIT_OUT_DIR, f"{proyecto_id}.pdf")
+        if os.path.exists(alt_path):
+            pdf_path = alt_path
+
     if not os.path.exists(pdf_path):
         return jsonify({"error": "PDF no encontrado. Ejecute la auditoría primero."}), 404
 
@@ -5012,7 +5100,7 @@ def auditoria_pdf_view(current_user_id, proyecto_id):
                 detalle=f"PDF auditoria proyecto {proyecto_id}")
 
     return send_file(pdf_path, mimetype="application/pdf",
-                     download_name=download_name)
+                     download_name=download_name, as_attachment=as_attachment)
 
 
 @app.route("/api/proyectos/<int:proyecto_id>/enviar-auditoria", methods=["POST"])
@@ -5332,30 +5420,25 @@ def auditoria_dashboard(current_user_id):
             ctrl_kpi = cur.fetchone() or {}
 
             # ── 8. Evolución promedio de puntaje (últimas 10 ejecuciones) ──
-            cur.execute("""
+            cur.execute(f"""
                 SELECT * FROM (
                     SELECT al.fecha_ejecucion AS fecha,
                            ROUND(AVG(ap.puntaje_general)::NUMERIC,1) AS puntaje_prom,
                            SUM(ap.alertas_criticas) AS criticas
                     FROM auditoria_proyectos ap
                     JOIN auditoria_lotes al ON al.id = ap.lote_id
+                    JOIN proyectos p        ON p.id  = ap.proyecto_id
+                    WHERE 1=1 {proy_where}
                     GROUP BY al.id, al.fecha_ejecucion
                     ORDER BY al.fecha_ejecucion DESC
                     LIMIT 10
                 ) sub
                 ORDER BY fecha ASC
-            """)
+            """, proy_params)
             evolucion = cur.fetchall()
 
-            # ── 9. Catálogos para filtros ──
-            cur.execute("SELECT id, nombre FROM areas ORDER BY nombre")
-            areas_cat = cur.fetchall()
-            cur.execute("SELECT id, nombre FROM etapas_proyecto ORDER BY nombre")
-            etapas_cat = cur.fetchall()
-            cur.execute("SELECT id, nombre FROM estados_proyecto ORDER BY nombre")
-            estados_cat = cur.fetchall()
-            cur.execute("SELECT DISTINCT profesional_1 FROM proyectos WHERE profesional_1 IS NOT NULL ORDER BY 1")
-            profesionales_cat = [r["profesional_1"] for r in cur.fetchall()]
+            # ── 9. Catálogos dinámicos para filtros (Cascada) ──
+            catalogos = get_auditoria_catalogos(cur, area_id, etapa_id, estado_id)
 
         return jsonify({
             "kpi"             : dict(kpi_row),
@@ -5366,12 +5449,7 @@ def auditoria_dashboard(current_user_id):
             "por_etapa"       : [dict(r) for r in por_etapa],
             "ctrl_kpi"        : dict(ctrl_kpi),
             "evolucion"       : [dict(r) for r in evolucion],
-            "catalogos"       : {
-                "areas"        : [dict(r) for r in areas_cat],
-                "etapas"       : [dict(r) for r in etapas_cat],
-                "estados"      : [dict(r) for r in estados_cat],
-                "profesionales": profesionales_cat,
-            }
+            "catalogos"       : catalogos
         })
     except Exception as e:
         logger.error(f"Error auditoria_dashboard: {e}")
