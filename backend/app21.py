@@ -4936,46 +4936,48 @@ def auditoria_reportes(current_user_id):
     """
     conn = None
     try:
-        # Obtener archivos del directorio
-        pdf_qual = set() # ids con reporte calidad
-        pdf_hist = set() # ids con reporte cambios
+        # 1. Obtener archivos
+        pdf_qual = set()
+        pdf_hist = set()
         if os.path.exists(AUDIT_OUT_DIR):
             for fn in os.listdir(AUDIT_OUT_DIR):
                 if fn.startswith("Historial_Cambios_Proyecto_") and fn.endswith(".pdf"):
                     try: pdf_hist.add(int(fn.replace("Historial_Cambios_Proyecto_", "").replace(".pdf", "")))
                     except: pass
-                elif fn.endswith("_cambios.pdf"): # Legacy format
+                elif fn.endswith("_cambios.pdf"):
                     try: pdf_hist.add(int(fn.replace("_cambios.pdf", "")))
                     except: pass
                 elif fn.startswith("Auditoria_Proyecto_") and fn.endswith(".pdf"):
                     try: pdf_qual.add(int(fn.replace("Auditoria_Proyecto_", "").replace(".pdf", "")))
                     except: pass
-                elif fn.endswith(".pdf"): # Legacy format
-                    try: 
+                elif fn.endswith(".pdf"):
+                    try:
                         pid_str = fn.replace(".pdf", "")
-                        if pid_str.isdigit():
-                            pdf_qual.add(int(pid_str))
+                        if pid_str.isdigit(): pdf_qual.add(int(pid_str))
                     except: pass
 
+        # 2. Conectar a BD (necesitamos catálogos siempre)
+        conn = get_db_connection()
+        area_id   = request.args.get("area_id")
+        etapa_id  = request.args.get("etapa_id")
+        estado_id = request.args.get("estado_id")
+
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            catalogos = get_auditoria_catalogos(cur, area_id, etapa_id, estado_id)
+
         if not pdf_qual and not pdf_hist:
-            return jsonify({"reportes": [], "total": 0})
+            return jsonify({"reportes": [], "total": 0, "catalogos": catalogos})
 
         all_ids = list(pdf_qual | pdf_hist)
-
-        # Enriquecer con datos BD + filtros
-        conn = get_db_connection()
         filtros = ["p.id = ANY(%s)"]
         params  = [all_ids]
 
-        area_id    = request.args.get("area_id")
         if area_id:
             filtros.append("p.area_id = %s"); params.append(int(area_id))
 
-        etapa_id   = request.args.get("etapa_id")
         if etapa_id:
             filtros.append("p.etapa_proyecto_id = %s"); params.append(int(etapa_id))
 
-        estado_id  = request.args.get("estado_id")
         if estado_id:
             filtros.append("p.estado_proyecto_id = %s"); params.append(int(estado_id))
 

@@ -429,7 +429,7 @@
                 if (!el) return;
                 const prevVal = el.value;
                 el.innerHTML = `<option value="">${label}</option>`;
-                options.forEach(opt => {
+                (options || []).forEach(opt => {
                     const val = typeof opt === 'object' ? opt[valueKey] : opt;
                     const txt = typeof opt === 'object' ? opt[textKey] : opt;
                     const selected = String(val) === String(prevVal) ? 'selected' : '';
