@@ -46,6 +46,7 @@ APP_PORT = int(os.getenv("PORT", 8000))
 DEBUG = os.getenv("FLASK_DEBUG", "True").lower() in ("1", "true", "yes")
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 1000 * 1024 * 1024  # 1GB para migración ZIP
 CORS(app)
 
 # Logger middleware simplificado
@@ -4790,7 +4791,17 @@ def control_export_pdf(current_user_id):
 # ==============================================================================
 
 # Definición diferida para evitar fallos de arranque si faltan dependencias
-AUDIT_OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "auditoria_reportes")
+# MEJORA: Point to /data/auditoria_reportes if in Railway/Volume mode
+AUDIT_OUT_DIR = os.getenv("AUDIT_OUT_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "auditoria_reportes"))
+# Si estamos en el volumen de Railway, forzarlo allí
+if os.path.exists("/data") or os.path.isdir("/data"):
+    AUDIT_OUT_DIR = "/data/auditoria_reportes"
+
+# Asegurar carpeta de reportes
+os.makedirs(AUDIT_OUT_DIR, exist_ok=True)
+# Asegurar carpeta de fotos (común en el sistema)
+FOTOS_OUT_DIR = AUDIT_OUT_DIR.replace("auditoria_reportes", "fotos_reportes")
+os.makedirs(FOTOS_OUT_DIR, exist_ok=True)
 
 def get_auditoria_engine():
     try:
@@ -5306,6 +5317,117 @@ def auditoria_dashboard(current_user_id):
 # -----------------------
 # START
 # -----------------------
+# ── MÓDULO DE MIGRACIÓN DE VOLUMEN (Zips) ──────────────────────────────────────
+# Proporciona herramientas para mover datos entre Windows Server y Railway
+import zipfile
+import io
+import shutil
+
+@app.route('/api/volume/gui', methods=['GET'])
+def volume_gui():
+    """Interfaz ultra-simple para gestionar el volumen persistente"""
+    html = """
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Control de Migración - Municipal</title>
+        <style>
+            body { font-family: sans-serif; background: #f0f2f5; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+            .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 400px; text-align: center; }
+            h2 { color: #1a73e8; }
+            button { background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 10px 0; width: 100%; transition: background 0.3s; }
+            button:hover { background: #1557b0; }
+            .status { margin-top: 15px; font-size: 13px; color: #5f6368; }
+            .upload-form { margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
+        </style>
+    </head>
+    <body class="p-6">
+        <div class="card">
+            <h2>Gestión de Datos (Servidor Actual)</h2>
+            <p style="font-size: 14px; color: #666;">Carpeta de origen: <b>{docs_folder}</b></p>
+            
+            <a href="/api/volume/export" target="_blank" style="text-decoration: none;">
+                <button>📥 EXPORTAR TODO A ZIP (Backup)</button>
+            </a>
+
+            <div class="upload-form">
+                <p style="font-size: 13px; font-weight: bold;">Importar Datos (ZIP):</p>
+                <form action="/api/volume/import" method="post" enctype="multipart/form-data">
+                    <input type="file" name="file" accept=".zip" required style="margin-bottom: 15px; font-size: 12px;">
+                    <button type="submit" onclick="return confirm('¿Está seguro de importar? Esto podría sobreescribir archivos.')">📤 Cargar e Importar</button>
+                </form>
+            </div>
+            
+            <div class="status">
+                Use esta herramienta para mover sus documentos entre servidores de forma limpia.
+            </div>
+        </div>
+    </body>
+    </html>
+    """.replace("{docs_folder}", DOCS_FOLDER)
+    return html
+
+@app.route('/api/volume/export', methods=['GET'])
+def volume_export():
+    """Exporta docs, auditoria_reportes y fotos_reportes como un único ZIP"""
+    try:
+        # Carpetas a respaldar (nombres relativos al archivo actual)
+        BASE = os.path.dirname(os.path.abspath(__file__))
+        items_to_backup = {
+            "docs": DOCS_FOLDER,
+            "auditoria_reportes": AUDIT_OUT_DIR,
+            "fotos_reportes": FOTOS_OUT_DIR
+        }
+
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for folder_name, full_path in items_to_backup.items():
+                if os.path.exists(full_path) and os.path.isdir(full_path):
+                    print(f">>> EXPORTANDO CARPETA: {folder_name}")
+                    for root, dirs, files in os.walk(full_path):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            # Meter en el ZIP con la estructura "nombre_carpeta/..."
+                            arcname = os.path.join(folder_name, os.path.relpath(file_path, full_path))
+                            zf.write(file_path, arcname)
+        
+        memory_file.seek(0)
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f"full_backup_admin_{datetime.now().strftime('%Y%m%d_%H%M')}.zip"
+        )
+    except Exception as e:
+        logger.error(f"Error en exportación completa: {e}")
+        return str(e), 500
+
+@app.route('/api/volume/import', methods=['POST'])
+def volume_import():
+    """Recibe un ZIP y extrae su contenido en sus respectivas carpetas dentro de la persistencia"""
+    if 'file' not in request.files:
+        return "No hay archivo", 400
+    
+    file = request.files['file']
+    try:
+        # El destino base es donde vive app21.py (o /data en Railway)
+        BASE_TARGET = os.path.dirname(os.path.abspath(__file__))
+        if os.path.exists("/data"):
+            BASE_TARGET = "/data"
+        
+        print(f">>> IMPORTANDO DATOS EN: {BASE_TARGET}")
+        with zipfile.ZipFile(file) as zf:
+            # Extraer preservando la estructura del ZIP (docs/, auditoria_reportes/, etc)
+            zf.extractall(BASE_TARGET)
+        
+        return "Importación MULTI-CARPETA completada con éxito. Archivos fusionados.", 200
+    except Exception as e:
+        logger.error(f"Error en importación completa: {e}")
+        return f"Error: {str(e)}", 500
+
+# ── Fin Módulo de Migración ───────────────────────────────────────────────────
+
 if __name__ == '__main__':
     try:
         cert_path = os.path.abspath("fullchain.pem")
