@@ -158,10 +158,16 @@ import correo
 # -----------------------
 # CONFIG DOCUMENTOS
 # -----------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DOCS_FOLDER = os.path.join(BASE_DIR, "docs")
+# Intentamos usar el volumen persistente de Railway (/data) si existe
+PERSISTENT_STORAGE = "/data"
+if os.path.exists(PERSISTENT_STORAGE):
+    DOCS_FOLDER = PERSISTENT_STORAGE
+    logger.info("Detectado volumen persistente en /data. Usándolo para documentos.")
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DOCS_FOLDER = os.path.join(BASE_DIR, "docs")
+    logger.info(f"No se detectó volumen persistente. Usando carpeta local: {DOCS_FOLDER}")
 
-# Crear carpeta si no existe
 os.makedirs(DOCS_FOLDER, exist_ok=True)
 
 # Opcional: extensiones permitidas
