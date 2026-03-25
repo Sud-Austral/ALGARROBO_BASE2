@@ -8,65 +8,185 @@
     <!-- Mantenemos Tailwind SOLO para inyecciones de layout.js externo -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* Arquitectura CSS V2 (Vanilla Reference View) aislada del tailwind global */
+        /* Arquitectura CSS V3 (Premium Design System) */
         :root {
-            --primary: #2563eb; --primary-hover: #1d4ed8;
-            --surface: #ffffff; --background: #f8fafc;
-            --text-main: #0f172a; --text-muted: #64748b;
-            --border: #e2e8f0; --radius: 8px;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --primary: #2563eb; 
+            --primary-light: #eff6ff;
+            --primary-hover: #1d4ed8;
+            --surface: #ffffff; 
+            --background: #f8fafc;
+            --text-main: #0f172a; 
+            --text-muted: #64748b;
+            --border: #e2e8f0; 
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --glass: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
         }
 
         .dataops-view {
-            font-family: system-ui, -apple-system, sans-serif;
-            color: var(--text-main); line-height: 1.5;
-            padding: 2rem; max-width: 1440px; margin: 0 auto;
-            display: flex; flex-direction: column; gap: 2rem;
-            background-color: var(--background);
+            padding: 2.5rem; max-width: 1440px; margin: 0 auto;
+            display: flex; flex-direction: column; gap: 2.5rem;
         }
 
-        /* KPIs */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
-        .kpi-card { background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
-        .kpi-card h3 { font-size: 0.875rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600; }
-        .kpi-card .value { font-size: 2rem; font-weight: 800; color: var(--text-main); }
+        /* KPI Cards Premium */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+        .kpi-card { 
+            background: var(--surface); 
+            padding: 1.75rem; 
+            border-radius: var(--radius-lg); 
+            border: 1px solid var(--border); 
+            box-shadow: var(--shadow-md);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+        .kpi-card::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); opacity: 0.1;
+        }
+        .kpi-card h3 { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.75rem; font-weight: 700; letter-spacing: 0.05em; }
+        .kpi-card .value { font-size: 2.25rem; font-weight: 800; color: var(--text-main); line-height: 1; }
+        .kpi-card .trend { font-size: 0.875rem; margin-top: 0.5rem; display: flex; align-items: center; gap: 4px; font-weight: 600; }
 
-        /* Filtros y Controles */
-        .filter-ribbon { background: var(--surface); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; }
-        .form-group { display: flex; flex-direction: column; gap: 0.5rem; min-width: 200px; }
-        .form-group label { font-size: 0.875rem; font-weight: 600; color: var(--text-main); }
-        .form-control { padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; background: var(--background); }
-        .form-control:focus { outline: none; border-color: var(--primary); }
+        /* Filtros y Controles Modernos */
+        .filter-ribbon { 
+            background: var(--glass); 
+            backdrop-filter: blur(12px);
+            padding: 1.5rem; 
+            border-radius: var(--radius-lg); 
+            box-shadow: var(--shadow-md); 
+            border: 1px solid var(--glass-border); 
+            display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1.5rem; 
+        }
+        .form-group { display: flex; flex-direction: column; gap: 0.6rem; min-width: 220px; }
+        .form-group label { font-size: 0.875rem; font-weight: 700; color: var(--text-main); }
+        .form-control { 
+            padding: 0.875rem 1rem; 
+            border: 1px solid var(--border); 
+            border-radius: var(--radius-md); 
+            font-size: 0.95rem; 
+            background: var(--surface); 
+            transition: all 0.2s;
+            color: var(--text-main);
+        }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
         
-        .btn-action { padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 150ms; border: none; }
-        .btn-primary { background: var(--primary); color: white; display: flex; gap: 8px; align-items: center;}
-        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-action { padding: 0.875rem 1.75rem; border-radius: var(--radius-md); font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: none; display: flex; align-items: center; gap: 10px; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3); }
+        .btn-primary:active { transform: scale(0.98); }
 
-        /* DataGrid y Tracking Visual */
-        .data-grid-container { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: auto; max-height: 70vh; position: relative; }
+        /* DataGrid Moderno */
+        .data-grid-container { 
+            background: var(--surface); 
+            border-radius: var(--radius-lg); 
+            border: 1px solid var(--border); 
+            box-shadow: var(--shadow-lg); 
+            overflow: hidden; 
+            position: relative; 
+        }
         .dg-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; }
-        .dg-table th, .dg-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); font-size: 0.875rem; white-space: nowrap;}
-        .dg-table th { background: var(--surface); font-weight: 600; color: var(--text-muted); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;}
-        .dg-table tbody tr:hover td { background-color: var(--background); }
+        .dg-table th { 
+            background: #f1f5f9; 
+            padding: 1rem 1.25rem;
+            font-weight: 700; 
+            color: var(--text-muted); 
+            position: sticky; top: 0; z-index: 10; 
+            text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem;
+            border-bottom: 2px solid var(--border);
+        }
+        .dg-table td { padding: 1.25rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
+        .dg-table tbody tr { transition: background-color 0.15s; }
+        .dg-table tbody tr:hover td { background-color: #f8fafc; }
+        .dg-table tbody tr:last-child td { border-bottom: none; }
 
-        /* Progress Bar (Vanilla CSS) */
-        .progress-track { width: 100%; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 4px; }
-        .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+        /* Progress Bar Premium */
+        .progress-track { width: 120px; height: 10px; background: #e2e8f0; border-radius: 99px; overflow: hidden; position: relative; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #60a5fa); border-radius: 99px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* Badge States */
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .badge.open { background: #dcfce7; color: #166534; }
-        .badge.closed { background: #fee2e2; color: #991b1b; }
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+        .badge.open { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge.closed { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
-        /* Overlays (Vanilla Modal) */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 9999; }
-        .modal-overlay.active { display: flex; }
-        .modal-card { background: var(--surface); padding: 2rem; border-radius: var(--radius); width: 100%; max-width: 500px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        /* Modal Premium Glassmorphism */
+        .modal-overlay { 
+            position: fixed; inset: 0; 
+            background: rgba(15, 23, 42, 0.4); 
+            backdrop-filter: blur(8px); 
+            display: none; align-items: center; justify-content: center; z-index: 9999; 
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-card { 
+            background: white; 
+            padding: 2.5rem; 
+            border-radius: 24px; 
+            width: 100%; max-width: 550px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+        .modal-overlay.active .modal-card { transform: scale(1); }
+        
+        /* Searchable Select CSS */
+        .search-select-container { position: relative; width: 100%; }
+        .search-select-display {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.875rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md);
+            background: var(--surface); cursor: pointer; font-size: 0.95rem; transition: all 0.2s;
+        }
+        .search-select-display:hover { border-color: var(--primary); }
+        .search-select-display.open { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+        
+        .search-select-dropdown {
+            position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+            background: white; border-radius: var(--radius-md); border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg); z-index: 100; padding: 0.75rem;
+            display: none; flex-direction: column; gap: 0.75rem;
+            animation: slideDown 0.2s cubic-bezier(0, 0, 0.2, 1);
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .search-select-input {
+            width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 0.875rem; background: var(--background); outline: none;
+        }
+        .search-select-results { max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; }
+        .search-select-item {
+            padding: 0.75rem 1rem; cursor: pointer; border-radius: var(--radius-sm); font-size: 0.9rem;
+            display: flex; flex-direction: column; transition: all 0.15s;
+        }
+        .search-select-item:hover { background: var(--primary-light); color: var(--primary); }
+        .search-select-item .name { font-weight: 600; }
+        .search-select-item .id { font-size: 0.75rem; color: var(--text-muted); font-family: monospace; }
+        .search-select-item:hover .id { color: var(--primary); opacity: 0.7; }
+        
+        .search-select-empty { padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.875rem; }
+
+        /* Animation for Grid Pulse */
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        .loading-shimmer { animation: pulse 1.5s infinite ease-in-out; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="min-h-screen">
     <div id="headerRender"></div>
     <div class="flex">
         <div id="asideRender"></div>
@@ -74,58 +194,84 @@
         <main class="flex-1 w-full relative">
             <div class="dataops-view">
                 
-                <!-- Titulo Base -->
-                <div>
-                    <h1 style="font-size: 1.5rem; font-weight: 700;">Panel Operativo Licitaciones</h1>
-                    <p style="color: var(--text-muted); font-size: 0.875rem;">Seguimiento cronológico (32 Pasos MVP)</p>
+                <!-- Titulo Base con Micro-UX -->
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.025em; color: #1e293b;">Licitaciones & Workflow</h1>
+                        <p style="color: var(--text-muted); font-size: 1rem; font-weight: 500;">Gestión de procesos licitatorios y cumplimiento de hitos operativos.</p>
+                    </div>
+                    <div style="background: white; padding: 0.5rem 1rem; border-radius: 99px; border: 1px solid var(--border); font-size: 0.875rem; font-weight: 600; color: var(--text-muted);">
+                        <i class="fas fa-calendar-alt mr-2 text-blue-500"></i> <span id="currentDate">Cargando fecha...</span>
+                    </div>
                 </div>
 
-                <!-- KPI Metrics O(1) -->
+                <!-- KPI Metrics Premium -->
                 <section class="kpi-grid">
-                    <div class="kpi-card"><h3>Total Procesos</h3><div class="value" id="kpi-total">0</div></div>
-                    <div class="kpi-card"><h3>Licitaciones Abiertas</h3><div class="value" style="color: #166534;" id="kpi-open">0</div></div>
-                    <div class="kpi-card"><h3>Licitaciones Cerradas</h3><div class="value" style="color: #991b1b;" id="kpi-closed">0</div></div>
-                    <div class="kpi-card"><h3>Monto Total Transado</h3><div class="value" id="kpi-amount">$0</div></div>
+                    <div class="kpi-card" style="--primary: #3b82f6;">
+                        <h3>Total de Procesos</h3>
+                        <div class="value" id="kpi-total">0</div>
+                        <div class="trend text-blue-600">Procesos registrados</div>
+                    </div>
+                    <div class="kpi-card" style="--primary: #22c55e;">
+                        <h3>Vigentes / Abiertas</h3>
+                        <div class="value" style="color: #16a34a;" id="kpi-open">0</div>
+                        <div class="trend text-green-600"><i class="fas fa-arrow-up mr-1 text-[10px]"></i> Operativas</div>
+                    </div>
+                    <div class="kpi-card" style="--primary: #ef4444;">
+                        <h3>Cerradas / Histórico</h3>
+                        <div class="value" style="color: #dc2626;" id="kpi-closed">0</div>
+                        <div class="trend text-red-600">Finalizadas</div>
+                    </div>
+                    <div class="kpi-card" style="--primary: #f59e0b;">
+                        <h3>Volumen Financiero</h3>
+                        <div class="value" id="kpi-amount">$0</div>
+                        <div class="trend text-amber-600">Inversión pública proyectada</div>
+                    </div>
                 </section>
 
                 <!-- Filtros & Acciones -->
                 <section class="filter-ribbon">
-                    <div style="display: flex; gap: 1rem;">
-                        <div class="form-group">
-                            <label>Estado de Workflow</label>
+                    <div style="display: flex; gap: 1.5rem; flex-grow: 1;">
+                        <div class="form-group" style="flex: 1; max-width: 300px;">
+                            <label><i class="fas fa-filter mr-2 opacity-50"></i>Estado de Workflow</label>
                             <select id="stateFilter" class="form-control" onchange="DOM_CORE.applyFilters()">
                                 <option value="">Todos los Estados</option>
                                 <option value="Abierta">Operación Abierta</option>
                                 <option value="Cerrada">Operación Cerrada</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>Búsqueda Rápida</label>
-                            <input type="text" id="searchInput" class="form-control" placeholder="ID o Nombre..." onkeyup="DOM_CORE.applyFilters()">
+                        <div class="form-group" style="flex: 2; max-width: 500px;">
+                            <label><i class="fas fa-search mr-2 opacity-50"></i>Búsqueda Inteligente</label>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Escriba código MP o nombre de licitación..." onkeyup="DOM_CORE.applyFilters()">
                         </div>
                     </div>
                     <div>
                         <button class="btn-action btn-primary" onclick="MODAL_CORE.open()">
-                            <i class="fas fa-plus"></i> Aperturar Licitación
+                            <i class="fas fa-plus"></i> Aperturar Nueva Licitación
                         </button>
                     </div>
                 </section>
 
-                <!-- DataGrid -->
+                <!-- DataGrid Premium -->
                 <section class="data-grid-container">
                     <table class="dg-table">
                         <thead>
                             <tr>
-                                <th>Cod. Merc. Público</th>
-                                <th>Descripción / Proyecto Base</th>
-                                <th>Estado</th>
-                                <th>Análisis Avance (Workflow)</th>
-                                <th style="text-align: right;">Ppto. Estimado</th>
-                                <th style="text-align: right;">Acción</th>
+                                <th width="140">Cod. Merc. Público</th>
+                                <th>Nombre Licitación / Proyecto</th>
+                                <th width="120">Estado</th>
+                                <th width="200">Avance Crítico</th>
+                                <th style="text-align: right;" width="160">Monto Estimado</th>
+                                <th style="text-align: center;" width="140">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="tbl-body">
-                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Inicializando Pipeline Activo...</td></tr>
+                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 4rem;">
+                                <div class="loading-shimmer">
+                                    <i class="fas fa-circle-notch fa-spin fa-2x mb-3 text-blue-500"></i>
+                                    <p class="font-semibold">Sincronizando con el servidor central...</p>
+                                </div>
+                            </td></tr>
                         </tbody>
                     </table>
                 </section>
@@ -133,35 +279,59 @@
         </main>
     </div>
 
-    <!-- Modal Workflow V2 -->
-    <div class="modal-overlay" id="opModal">
+    <!-- Modal Workflow V3 (Searchable Select Edition) -->
+    <div class="modal-overlay" id="opModal" onclick="if(event.target === this) MODAL_CORE.close()">
         <div class="modal-card">
-            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Instanciar Workflow</h3>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                <div>
+                    <h3 style="font-size: 1.5rem; font-weight: 800; color: #1e293b;">Iniciar Nueva Licitación</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Vincule un proyecto base para iniciar el workflow de 32 pasos.</p>
+                </div>
+                <button onclick="MODAL_CORE.close()" style="width: 32px; height: 32px; border-radius: 99px; background: #f1f5f9; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
             
-            <div id="alertExist" style="display:none; background:#fef08a; padding:1rem; border-radius:8px; color:#854d0e; font-size:0.875rem; margin-bottom:1rem; font-weight:600;"></div>
+            <div id="alertExist" style="display:none; background:#fff7ed; padding:1.25rem; border-radius:var(--radius-md); color:#9a3412; font-size:0.875rem; margin-bottom:1.5rem; font-weight:600; border: 1px solid #ffedd5; line-height: 1.4;"></div>
 
-            <form id="creationForm" style="display: flex; flex-direction: column; gap: 1rem;">
-                 <div class="form-group">
-                    <label>Dependencia de Proyecto</label>
-                    <select name="proyecto_id" id="selProject" class="form-control" required></select>
+            <form id="creationForm" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                 <!-- Buscador de Proyectos Custom -->
+                 <div class="form-group relative">
+                    <label>Proyecto Dependiente <span class="text-red-500">*</span></label>
+                    <div id="projectSearchContainer" class="search-select-container">
+                        <div class="search-select-display" id="projectDisplay" onclick="PROJECT_SEARCH.toggle()">
+                            <span id="selectedProjectText" style="color: var(--text-muted);">Seleccionar Proyecto...</span>
+                            <i class="fas fa-chevron-down text-blue-500 transition-transform"></i>
+                        </div>
+                        <div id="projectSearchDropdown" class="search-select-dropdown">
+                            <input type="text" id="projectSearchInput" class="search-select-input" placeholder="Buscar por nombre o ID del proyecto..." oninput="PROJECT_SEARCH.filter()">
+                            <div id="projectSearchResults" class="search-select-results">
+                                <!-- Dinámico -->
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="proyecto_id" id="selProjectHidden" required>
                 </div>
+
                 <div class="form-group">
-                    <label>Nombre de Licitación</label>
-                    <input type="text" name="nombre_licitacion" class="form-control" required>
+                    <label>Nombre de la Licitación <span class="text-red-500">*</span></label>
+                    <input type="text" name="nombre_licitacion" class="form-control" placeholder="Ej: Mejoramiento de entorno Plaza de Armas" required>
                 </div>
-                <div style="display: flex; gap: 1rem;">
-                    <div class="form-group" style="flex:1;">
-                        <label>ID Merc. Público</label>
-                        <input type="text" name="id_mercado_publico" class="form-control">
+
+                <div class="flex gap-4">
+                    <div class="form-group flex-1">
+                        <label>ID Mercado Público</label>
+                        <input type="text" name="id_mercado_publico" class="form-control" placeholder="Cod: 1234-56-LP24">
                     </div>
-                    <div class="form-group" style="flex:1;">
-                        <label>Ppto. Asignado ($)</label>
-                        <input type="number" name="monto_estimado" class="form-control">
+                    <div class="form-group flex-1">
+                        <label>Presupuesto Estimado ($)</label>
+                        <input type="number" name="monto_estimado" class="form-control" placeholder="0">
                     </div>
                 </div>
-                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                    <button type="button" class="btn-action" style="flex:1; background: var(--background); border: 1px solid var(--border);" onclick="MODAL_CORE.close()">Cancelar</button>
-                    <button type="submit" id="btnSubmit" class="btn-action btn-primary" style="flex:1; justify-content: center;">Iniciar Pipeline</button>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn-action" style="flex:1; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main);" onclick="MODAL_CORE.close()">Cancelar</button>
+                    <button type="submit" id="btnSubmit" class="btn-action btn-primary" style="flex:1.5; justify-content: center;">
+                        <i class="fas fa-magic mr-2"></i> Crear & Iniciar Workflow
+                    </button>
                 </div>
             </form>
         </div>
@@ -172,8 +342,8 @@
     
     <script>
         /**
-         * @architecture State Management Pattern V2
-         * @author Antigravity Professional
+         * @architecture State Management Pattern V3
+         * @author Alga Assistant
          */
         const STATE = { rawData: [], filtered: [], proys: [] };
 
@@ -185,10 +355,18 @@
         const DATA_CORE = {
             init: async () => {
                 try {
-                    const [lics, proys] = await Promise.all([api.get('/licitaciones'), api.get('/proyectos')]);
-                    STATE.rawData = lics; STATE.proys = proys;
+                    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    
+                    const [lics, proys] = await Promise.all([
+                        api.get('/licitaciones'), 
+                        api.get('/proyectos')
+                    ]);
+                    
+                    STATE.rawData = lics; 
+                    STATE.proys = proys.sort((a,b) => a.nombre.localeCompare(b.nombre));
+                    
                     DOM_CORE.applyFilters();
-                    MODAL_CORE.populateObj(proys);
+                    PROJECT_SEARCH.init();
                 } catch(e) { console.error("API XHR Error", e); }
             }
         };
@@ -215,26 +393,42 @@
                     if(isOpen) mO++; else mC++;
                     sum += Number(r.monto_estimado || 0);
 
-                    const prog = (r.pasos_completados / 32) * 100;
+                    const prog = Math.min((r.pasos_completados / 32) * 100, 100);
 
                     return `<tr>
-                        <td style="font-family: monospace; font-weight: 600;">${r.id_mercado_publico || 'N/A'}</td>
-                        <td><div style="font-weight:700;">${r.nombre_licitacion}</div><div style="font-size:0.75rem; color:var(--text-muted);">${r.proyecto_nombre}</div></td>
-                        <td><span class="badge ${isOpen ? 'open' : 'closed'}">${isOpen ? 'Abierta' : 'Cerrada'}</span></td>
+                        <td style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary); font-size: 0.8rem;">
+                            <div style="background: var(--primary-light); padding: 4px 8px; border-radius: 6px; display: inline-block;">${r.id_mercado_publico || 'PENDIENTE'}</div>
+                        </td>
                         <td>
-                            <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:600; color:var(--primary);">
-                                <span>Paso ${r.estado_actual_paso||1}/32</span> <span>${prog.toFixed(0)}%</span>
+                            <div style="font-weight:700; color: #1e293b;">${r.nombre_licitacion}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
+                                <i class="fas fa-folder-open opacity-50"></i> ${r.proyecto_nombre}
+                            </div>
+                        </td>
+                        <td><span class="badge ${isOpen ? 'open' : 'closed'}"><i class="fas ${isOpen ? 'fa-hourglass-start' : 'fa-check-circle'} mr-1.5 text-[10px]"></i> ${isOpen ? 'Abierta' : 'Cerrada'}</span></td>
+                        <td>
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:700; color:var(--primary); margin-bottom: 6px;">
+                                <span>FASE ${r.estado_actual_paso||1} / 32</span> <span>${prog.toFixed(0)}%</span>
                             </div>
                             <div class="progress-track"><div class="progress-fill" style="width: ${prog}%"></div></div>
                         </td>
-                        <td style="text-align: right; font-weight: 600;">$${UTIL.fmt(r.monto_estimado)}</td>
-                        <td style="text-align: right;">
-                            <a href="seguimiento.html?id=${r.id}" style="color:var(--primary); font-weight:700; font-size:0.75rem; text-decoration:none;">GESTIONAR <i class="fas fa-arrow-right"></i></a>
+                        <td style="text-align: right; font-weight: 800; font-size: 1rem; color: #0f172a;">$${UTIL.fmt(r.monto_estimado)}</td>
+                        <td style="text-align: center;">
+                            <a href="seguimiento.html?id=${r.id}" class="btn-action" style="padding: 0.5rem 0.75rem; background: var(--primary-light); color: var(--primary); font-size: 0.75rem; display: inline-flex; border-radius: 99px; text-decoration: none;">
+                                GESTIONAR <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
                         </td>
                     </tr>`;
                 }).join('');
 
-                document.getElementById('tbl-body').innerHTML = STATE.filtered.length ? html : `<tr><td colspan="6" style="text-align:center; padding: 2rem;">No existen intersecciones válidas.</td></tr>`;
+                document.getElementById('tbl-body').innerHTML = STATE.filtered.length ? html : `
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding: 4rem;">
+                            <img src="https://illustrations.popsy.co/blue/searching.svg" style="width: 150px; margin: 0 auto 1.5rem; opacity: 0.8;">
+                            <div style="font-weight: 700; font-size: 1.1rem; color: #475569;">No se encontraron resultados</div>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">Pruebe con otros criterios de búsqueda o remueva los filtros.</p>
+                        </td>
+                    </tr>`;
 
                 // Update KPIs
                 document.getElementById('kpi-total').textContent = STATE.filtered.length;
@@ -244,41 +438,148 @@
             }
         };
 
-        const MODAL_CORE = {
-            dom: document.getElementById('opModal'),
-            sel: document.getElementById('selProject'),
-            btn: document.getElementById('btnSubmit'),
-            txt: document.getElementById('alertExist'),
-            
-            open: () => MODAL_CORE.dom.classList.add('active'),
-            close: () => MODAL_CORE.dom.classList.remove('active'),
-            
-            populateObj: (arr) => {
-                MODAL_CORE.sel.innerHTML = `<option value="">[ Seleccionar Instancia ]</option>` + arr.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
-                
-                MODAL_CORE.sel.addEventListener('change', () => {
-                    const pid = MODAL_CORE.sel.value;
-                    const exists = STATE.rawData.find(l => l.proyecto_id == pid && (l.estado_licitacion||'Abierta') === 'Abierta');
-                    
-                    if(exists) {
-                        MODAL_CORE.txt.style.display = 'block';
-                        MODAL_CORE.txt.textContent = `CRÍTICO: El proyecto sostiene la operación abierta "${exists.nombre_licitacion}". Debe clausurarse previo a re-instanciar.`;
-                        MODAL_CORE.btn.disabled = true; MODAL_CORE.btn.style.opacity = '0.5';
-                    } else {
-                        MODAL_CORE.txt.style.display = 'none';
-                        MODAL_CORE.btn.disabled = false; MODAL_CORE.btn.style.opacity = '1';
+        /**
+         * Lógica del Buscador Premium de Proyectos
+         */
+        const PROJECT_SEARCH = {
+            isOpen: false,
+            selectedId: null,
+            elements: {
+                container: document.getElementById('projectSearchContainer'),
+                display: document.getElementById('projectDisplay'),
+                dropdown: document.getElementById('projectSearchDropdown'),
+                input: document.getElementById('projectSearchInput'),
+                results: document.getElementById('projectSearchResults'),
+                hidden: document.getElementById('selProjectHidden'),
+                text: document.getElementById('selectedProjectText'),
+                chevron: document.querySelector('#projectDisplay i')
+            },
+
+            init: () => {
+                // Click outside to close
+                document.addEventListener('click', (e) => {
+                    if (!PROJECT_SEARCH.elements.container.contains(e.target)) {
+                        PROJECT_SEARCH.close();
                     }
                 });
+                PROJECT_SEARCH.renderResults(STATE.proys);
+            },
+
+            toggle: () => PROJECT_SEARCH.isOpen ? PROJECT_SEARCH.close() : PROJECT_SEARCH.open(),
+            
+            open: () => {
+                PROJECT_SEARCH.isOpen = true;
+                PROJECT_SEARCH.elements.dropdown.style.display = 'flex';
+                PROJECT_SEARCH.elements.display.classList.add('open');
+                PROJECT_SEARCH.elements.chevron.style.transform = 'rotate(180deg)';
+                PROJECT_SEARCH.elements.input.focus();
+            },
+
+            close: () => {
+                PROJECT_SEARCH.isOpen = false;
+                PROJECT_SEARCH.elements.dropdown.style.display = 'none';
+                PROJECT_SEARCH.elements.display.classList.remove('open');
+                PROJECT_SEARCH.elements.chevron.style.transform = 'rotate(0deg)';
+                PROJECT_SEARCH.elements.input.value = '';
+                PROJECT_SEARCH.renderResults(STATE.proys);
+            },
+
+            filter: () => {
+                const q = UTIL.norm(PROJECT_SEARCH.elements.input.value);
+                const filtered = STATE.proys.filter(p => 
+                    UTIL.norm(p.nombre).includes(q) || UTIL.norm(p.id.toString()).includes(q)
+                );
+                PROJECT_SEARCH.renderResults(filtered);
+            },
+
+            renderResults: (arr) => {
+                if(arr.length === 0) {
+                    PROJECT_SEARCH.elements.results.innerHTML = `<div class="search-select-empty">No se encontraron proyectos</div>`;
+                    return;
+                }
+                
+                PROJECT_SEARCH.elements.results.innerHTML = arr.map(p => `
+                    <div class="search-select-item" onclick="PROJECT_SEARCH.select(${p.id}, '${p.nombre.replace(/'/g, "\\'")}')">
+                        <span class="name">${p.nombre}</span>
+                        <span class="id">ID: ${p.id}</span>
+                    </div>
+                `).join('');
+            },
+
+            select: (id, name) => {
+                PROJECT_SEARCH.selectedId = id;
+                PROJECT_SEARCH.elements.hidden.value = id;
+                PROJECT_SEARCH.elements.text.textContent = name;
+                PROJECT_SEARCH.elements.text.style.color = 'var(--text-main)';
+                PROJECT_SEARCH.elements.text.style.fontWeight = '700';
+                
+                // Check if project has open tenders (copy of MODAL_CORE logic)
+                const exists = STATE.rawData.find(l => l.proyecto_id == id && (l.estado_licitacion||'Abierta') === 'Abierta');
+                const alertEl = document.getElementById('alertExist');
+                const btnSubmit = document.getElementById('btnSubmit');
+
+                if(exists) {
+                    alertEl.style.display = 'block';
+                    alertEl.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i><strong>CONFLICTO DE WORKFLOW:</strong> El proyecto ya tiene una licitación vigente: "<em>${exists.nombre_licitacion}</em>". No es posible iniciar una nueva hasta cerrar la anterior.`;
+                    btnSubmit.disabled = true; 
+                    btnSubmit.style.opacity = '0.5';
+                    btnSubmit.style.cursor = 'not-allowed';
+                } else {
+                    alertEl.style.display = 'none';
+                    btnSubmit.disabled = false; 
+                    btnSubmit.style.opacity = '1';
+                    btnSubmit.style.cursor = 'pointer';
+                }
+                
+                PROJECT_SEARCH.close();
             }
+        };
+
+        const MODAL_CORE = {
+            dom: document.getElementById('opModal'),
+            
+            open: () => {
+                MODAL_CORE.dom.classList.add('active');
+                // Reset select display
+                PROJECT_SEARCH.elements.text.textContent = 'Seleccionar Proyecto...';
+                PROJECT_SEARCH.elements.text.style.color = 'var(--text-muted)';
+                PROJECT_SEARCH.elements.text.style.fontWeight = '400';
+                PROJECT_SEARCH.elements.hidden.value = '';
+                document.getElementById('alertExist').style.display = 'none';
+                document.getElementById('btnSubmit').disabled = false;
+                document.getElementById('btnSubmit').style.opacity = '1';
+            },
+            close: () => MODAL_CORE.dom.classList.remove('active')
         };
 
         document.getElementById('creationForm').addEventListener('submit', async(e) => {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(e.target).entries());
+            
+            if(!data.proyecto_id) {
+                alert('Por favor seleccione un proyecto');
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fas fa-circle-notch fa-spin mr-2"></i> Procesando...`;
+
             try {
                 const res = await api.post('/licitaciones', data);
-                if(res.id) window.location.href = `seguimiento.html?id=${res.id}`;
-            } catch(err) { alert(err.message || 'Error Inesperado'); }
+                if(res.id) {
+                    // Animación de éxito previa a redirección
+                    btn.innerHTML = `<i class="fas fa-check mr-2"></i> ¡Creado con éxito!`;
+                    btn.style.background = '#22c55e';
+                    setTimeout(() => {
+                        window.location.href = `seguimiento.html?id=${res.id}`;
+                    }, 800);
+                }
+            } catch(err) { 
+                alert(err.message || 'Error Inesperado'); 
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fas fa-magic mr-2"></i> Crear & Iniciar Workflow`;
+            }
         });
 
         document.addEventListener('DOMContentLoaded', DATA_CORE.init);

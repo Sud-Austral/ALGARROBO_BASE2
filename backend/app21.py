@@ -4783,9 +4783,6 @@ def control_export_pdf(current_user_id):
 
 
 # ── Fin Módulo de Control ──────────────────────────────────────
-
-
-
 # ==============================================================================
 # MÓDULO DE AUDITORÍA INTEGRAL (control.py functionality)
 # Endpoints para: lanzar, monitorear, servir PDFs y dashboard KPIs

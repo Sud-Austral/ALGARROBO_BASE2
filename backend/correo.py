@@ -26,13 +26,21 @@ def normalize_text(text):
 
 def get_email_config():
     """Obtiene la configuración de correo desde el entorno."""
-    # Asegurar que las variables estén cargadas
-    load_dotenv()
+    # Buscar el archivo .env en la misma carpeta que este script
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    load_dotenv(dotenv_path=env_path)
+    # Obtener y limpiar (quitar comillas que el usuario pueda poner por error)
+    login = os.getenv("BREVO_SMTP_LOGIN")
+    if login: login = login.strip("'\"")
+    
+    key = os.getenv("BREVO_SMTP_KEY")
+    if key: key = key.strip("'\"")
+
     return {
-        "login": os.getenv("BREVO_SMTP_LOGIN"),
-        "key": os.getenv("BREVO_SMTP_KEY"),
-        "remitente": os.getenv("REMITENTE", "geoportal.algarrobo@gmail.com"),
-        "reply_to": os.getenv("REPLY_TO", "geoportal.algarrobo@gmail.com")
+        "login": login,
+        "key": key,
+        "remitente": os.getenv("REMITENTE", "geoportal.algarrobo@gmail.com").strip("'\""),
+        "reply_to": os.getenv("REPLY_TO", "geoportal.algarrobo@gmail.com").strip("'\"")
     }
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -178,24 +186,35 @@ def enviar_email_responsables(proyecto_id, responsables_names, ruta_pdf, proyect
         return {"success": False, "message": "No se encontraron correos configurados para los responsables asignados."}
 
     if not config["login"] or not config["key"]:
+        logger.error(f"Credenciales faltantes: BREVO_SMTP_LOGIN={config['login']!r}, BREVO_SMTP_KEY={'[SET]' if config['key'] else '[MISSING]'}")
         return {"success": False, "message": "Faltan credenciales de SMTP (BREVO_SMTP_LOGIN/KEY) en el entorno."}
 
     try:
         msg = construir_mensaje(destinatarios, ruta_pdf, proyecto_id, proyecto_nombre)
         
-        logger.info(f"Iniciando sesión en Brevo SMTP para enviar a {len(destinatarios)} destinatarios...")
+        logger.info(f"Iniciando sesión en Brevo SMTP como '{config['login']}' para enviar a {len(destinatarios)} destinatarios...")
         with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
             server.ehlo()
             server.starttls()
             server.login(config["login"], config["key"])
             server.sendmail(config["remitente"], destinatarios, msg.as_string())
             
-        logger.info(f"✅ ¡Éxito! Correo enviado para proyecto {proyecto_id}")
+        logger.info(f"Exito! Correo enviado para proyecto {proyecto_id}")
         return {
             "success": True, 
             "message": f"Correo enviado exitosamente a: {', '.join(destinatarios)}",
             "enviados": destinatarios
         }
+
+    except smtplib.SMTPAuthenticationError as e:
+        error_msg = (
+            f"Error de autenticación SMTP (535): Login usado='{config['login']}'. "
+            f"Verifica que BREVO_SMTP_LOGIN sea tu email de cuenta Brevo y "
+            f"BREVO_SMTP_KEY sea la clave SMTP generada en app.brevo.com (no tu contraseña). "
+            f"Detalle: {e}"
+        )
+        logger.error(error_msg)
+        return {"success": False, "message": error_msg}
 
     except Exception as e:
         error_msg = f"Error enviando correo: {str(e)}"
