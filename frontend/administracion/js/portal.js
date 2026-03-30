@@ -25,7 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.getItem('user');
         if (raw) {
             const user = JSON.parse(raw);
+            window.userData = user; // Exponer globalmente para layout.js
             const nombre = user?.nombre || user?.nombre_completo || user?.username || 'Usuario';
+
             const hora = new Date().getHours();
             const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
             const subtitleEl = document.getElementById('hero-subtitle');

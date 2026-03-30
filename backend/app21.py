@@ -17,8 +17,6 @@ from contextlib import contextmanager
 import secrets
 import re
 
-
-
 from dotenv import load_dotenv
 
 load_dotenv()
