@@ -1,4 +1,4 @@
-<!-- Vista 12: Evolución de Factores de Riesgo (Tipologías Críticas) -->
+<!-- Vista 12: Evoluciï¿½n de Factores de Riesgo (Tipologï¿½as Crï¿½ticas) -->
 <div class="card mb-lg">
     <div class="location-source-row"
         style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
@@ -14,14 +14,14 @@
         style="background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%); 
             border-left: 4px solid var(--color-primary); padding: 1.25rem; margin-bottom: 1.5rem; border-radius: 0 8px 8px 0;">
         <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--color-text); margin: 0; letter-spacing: -0.02em;">
-            ¿Están aumentando los delitos violentos?
+            ï¿½Estï¿½n aumentando los delitos violentos?
         </h2>
-        <p style="color: var(--color-text-muted); margin: 0.25rem 0 0 0; font-size: 0.95rem;">Análisis de la tendencia
-            de violencia en la comisión de delitos.</p>
+        <p style="color: var(--color-text-muted); margin: 0.25rem 0 0 0; font-size: 0.95rem;">Anï¿½lisis de la tendencia
+            de violencia en la comisiï¿½n de delitos.</p>
     </div>
 
     <div class="alert alert--info" style="margin-top: 1.5rem;">
-        <strong>?? Análisis de Situación:</strong> <span id="v18_ia_analysis">Cargando análisis...</span>
+        <strong>?? Anï¿½lisis de Situaciï¿½n:</strong> <span id="v18_ia_analysis">Cargando anï¿½lisis...</span>
     </div>
 
     <div class="cards-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
@@ -41,18 +41,18 @@
         <div class="card" style="padding: 1.5rem;">
             <h4
                 style="margin: 0 0 1rem 0; font-size: 0.85rem; font-weight: 800; color: #64748b; text-transform: uppercase;">
-                Evolución del Índice de Violencia (12 Sem)</h4>
+                Evoluciï¿½n del ï¿½ndice de Violencia (12 Sem)</h4>
             <div class="chart-wrapper" style="height: 250px;">
                 <canvas id="v18_chart_trend"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Definición de Categorías -->
+    <!-- Definiciï¿½n de Categorï¿½as -->
     <div class="card" style="margin-top: 1.5rem; padding: 1.5rem; border: 1px solid #e2e8f0; background: #fff;">
         <h4
             style="margin: 0 0 1rem 0; font-size: 0.9rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-            <i class="fa-solid fa-circle-info" style="color: var(--color-primary);"></i> Detalle por Categoría (Semana
+            <i class="fa-solid fa-circle-info" style="color: var(--color-primary);"></i> Detalle por Categorï¿½a (Semana
             Actual)
         </h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
@@ -102,17 +102,17 @@
 </div>
 
 
-<!-- Nota Metodológica -->
+<!-- Nota Metodolï¿½gica -->
 <div class="methodological-note"
     style="background: rgba(59, 130, 246, 0.05); border-left: 3px solid var(--color-primary); padding: 1.25rem; border-radius: 0 8px 8px 0; margin-top: 2rem; display: flex; gap: 1rem; align-items: flex-start;">
     <i class="fa-solid fa-circle-info" style="color: var(--color-primary); margin-top: 3px;"></i>
     <div>
         <h4 style="margin: 0 0 0.25rem 0; font-size: 0.9rem; font-weight: 800; color: var(--color-text);">Nota
-            Metodológica</h4>
+            Metodolï¿½gica</h4>
         <p style="margin: 0; font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.5;">
-            El <strong>Índice de Violencia</strong> se calcula como la proporción de casos violentos (Homicidios, Robos
-            con Violencia, etc.) sobre el total de delitos reportados. Este indicador permite priorizar la gestión
-            táctica sobre la severidad delictual más allá del volumen total de infracciones.
+            El <strong>ï¿½ndice de Violencia</strong> se calcula como la proporciï¿½n de casos violentos (Homicidios, Robos
+            con Violencia, etc.) sobre el total de delitos reportados. Este indicador permite priorizar la gestiï¿½n
+            tï¿½ctica sobre la severidad delictual mï¿½s allï¿½ del volumen total de infracciones.
         </p>
     </div>
 </div>
@@ -137,7 +137,7 @@
 
         const currentData = S.allDataHistory.filter(r => r[C.ID_SEMANA] === S.currentSemana);
 
-        // â”€â”€â”€ Clasificación Dinámica desde delito_class.json â”€â”€â”€
+        // â”€â”€â”€ Clasificaciï¿½n Dinï¿½mica desde delito_class.json â”€â”€â”€
         let taxonomy = {};
         try {
             const response = await fetch('./config/delito_class.json');
@@ -158,7 +158,7 @@
                 console.warn('[V18] No se pudo cargar delito_class.json, usando fallback.');
             }
         } catch (e) {
-            console.error('[V18] Error cargando clasificación:', e);
+            console.error('[V18] Error cargando clasificaciï¿½n:', e);
         }
 
         const classify = (delito) => {
@@ -190,13 +190,13 @@
         const populateList = (listId, categoryKey) => {
             const container = document.getElementById(listId);
             if (!container) return;
-            container.innerHTML = '';
+            container.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : '';
 
             const groupData = stats[categoryKey];
             const sortedCrimes = Object.entries(groupData.crimes).sort((a, b) => b[1] - a[1]);
 
             if (sortedCrimes.length === 0) {
-                container.innerHTML = '<li style="color: #94a3b8; font-style: italic;">Sin registros esta semana</li>';
+                container.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<li style="color: #94a3b8) : '<li style="color: #94a3b8; font-style: italic;">Sin registros esta semana</li>';
                 return;
             }
 
@@ -204,7 +204,7 @@
                 const pct = groupData.total > 0 ? (count / groupData.total * 100).toFixed(1) : 0;
 
                 const li = document.createElement('li');
-                li.innerHTML = `<strong>${name}</strong>: ${count} <span style="color: #64748b;">(${pct}%)</span>`;
+                li.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`<strong>${name}</strong>: ${count} <span style="color: #64748b) : `<strong>${name}</strong>: ${count} <span style="color: #64748b;">(${pct}%)</span>`;
                 container.appendChild(li);
             });
         };
@@ -216,7 +216,7 @@
         // --- Top Level KPIs ---
         const totalCases = stats.VIOLENTO.total + stats.PROPIEDAD.total + stats.OTROS.total;
         const vPct = totalCases > 0 ? (stats.VIOLENTO.total / totalCases * 100) : 0;
-        document.getElementById('v18_violence_index').textContent = `${vPct.toFixed(1)}% Índice Violencia`;
+        document.getElementById('v18_violence_index').textContent = `${vPct.toFixed(1)}% ï¿½ndice Violencia`;
 
         // --- Pie Chart with Datalabels ---
         const pieCtx = document.getElementById('v18_chart_pie').getContext('2d');
@@ -340,7 +340,7 @@
         if (typeof IAModule !== 'undefined') {
             IAModule.getInterpretation('vista18').then(txt => {
                 const el = document.getElementById('v18_ia_analysis');
-                if (el) el.innerHTML = txt;
+                if (el) el.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(txt) : txt;
             });
         }
 

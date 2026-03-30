@@ -17,21 +17,24 @@ const diccionarioRutas = {
         `${BASE}/frontend/division/secplan/admin_general/mapa.html`,
         `${BASE}/frontend/division/secplan/admin_general/informe.html`,
         `${BASE}/frontend/division/secplan/admin_general/calendario.html`,
-        `${BASE}/frontend/administracion/index.html`
+        `${BASE}/frontend/administracion/index.html`,
+        `${BASE}/frontend/administracion/index2.html`
     ],
     11: [
         `${BASE}/frontend/division/secplan/admin_proyectos/dashboard.html`,
         `${BASE}/frontend/division/secplan/admin_proyectos/proyecto.html`,
         `${BASE}/frontend/division/secplan/admin_proyectos/mapa.html`,
         `${BASE}/frontend/division/secplan/admin_proyectos/informe.html`,
-        `${BASE}/frontend/division/secplan/admin_proyectos/calendario.html`
+        `${BASE}/frontend/division/secplan/admin_proyectos/calendario.html`,
+        `${BASE}/frontend/administracion/index.html`
     ],
     12: [
         `${BASE}/frontend/division/secplan/director_obras/dashboard.html`,
         `${BASE}/frontend/division/secplan/director_obras/proyecto.html`,
         `${BASE}/frontend/division/secplan/director_obras/mapa.html`,
         `${BASE}/frontend/division/secplan/director_obras/informe.html`,
-        `${BASE}/frontend/division/secplan/director_obras/calendario.html`
+        `${BASE}/frontend/division/secplan/director_obras/calendario.html`,
+        `${BASE}/frontend/administracion/index.html`
     ]
 };
 
@@ -55,13 +58,41 @@ function checkLoginStatus() {
         return [null, null];
     }
 
-    const userData = JSON.parse(userDataString);
+    let userData;
+    try {
+        userData = JSON.parse(userDataString);
+    } catch (e) {
+        window.location.href = `${BASE}/frontend/index.html`;
+        return [null, null];
+    }
+
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const token = localStorage.getItem('authToken');
 
     if (!isLoggedIn || isLoggedIn !== 'true' || !token) {
         const currentUrl = window.location.href;
         window.location.href = `${BASE}/frontend/index.html?redirect=${encodeURIComponent(currentUrl)}`;
+        return [null, null];
+    }
+
+    // Role verification (Control de Acceso)
+    const validRoles = [10, 11]; // admin_general (10), admin_proyectos (11)
+    let userRole = null;
+    
+    if (userData.roles && userData.roles.length > 0) {
+        userRole = userData.roles[0].role_id;
+    } else if (userData.nivel_acceso) {
+        userRole = parseInt(userData.nivel_acceso);
+    }
+
+    if (!validRoles.includes(userRole)) {
+        console.error("Acceso denegado: Rol no autorizado.");
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('user_data');
+        localStorage.removeItem('user');
+        window.location.href = `${BASE}/frontend/index.html`;
         return [null, null];
     }
 

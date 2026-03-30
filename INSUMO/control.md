@@ -1,8 +1,6 @@
 [ROL: AUDITOR SENIOR DE CIBERSEGURIDAD Y FULL-STACK]
 
-CONTEXTO: El proyecto ALGARROBO_BASE2 ha pasado por una auditoría técnica externa que generó una lista de hallazgos críticos documentados en 
 
-INSUMO/revision.md
 . Necesito que realices una verificación exhaustiva del estado actual del código para determinar si estas observaciones han sido resueltas o si persisten.
 
 INSTRUCCIONES DE EJECUCIÓN: Para cada categoría detallada a continuación, debes:

@@ -620,7 +620,7 @@
                 categoriasHito.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
                 const select = document.getElementById('categoriaHito');
-                select.innerHTML = '<option value="" disabled selected>Selecciona una categoría...</option>';
+                select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<option value="" disabled selected>Selecciona una categoría...</option>') : '<option value="" disabled selected>Selecciona una categoría...</option>';
 
                 categoriasHito.forEach(cat => {
                     const option = document.createElement('option');
@@ -636,7 +636,7 @@
 
         async function loadProjects() {
             const select = document.getElementById('projectSelect');
-            select.innerHTML = '<option value="" disabled selected>Cargando proyectos...</option>';
+            select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<option value="" disabled selected>Cargando proyectos...</option>') : '<option value="" disabled selected>Cargando proyectos...</option>';
             select.disabled = true;
 
             try {
@@ -650,7 +650,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 showToast('Error al cargar proyectos', 'error');
-                select.innerHTML = '<option value="" disabled selected>Error de carga</option>';
+                select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<option value="" disabled selected>Error de carga</option>') : '<option value="" disabled selected>Error de carga</option>';
             }
         }
 
@@ -663,7 +663,7 @@
                 html += `<option value="${opt}" ${opt === previousValue ? 'selected' : ''}>${opt}</option>`;
             });
 
-            select.innerHTML = html;
+            select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(html) : html;
 
             if (previousValue && !optionsList.includes(previousValue)) {
                 select.value = "";
@@ -724,7 +724,7 @@
 
             const currentVal = select.value;
 
-            select.innerHTML = '<option value="" disabled selected>-- Selecciona un proyecto --</option>';
+            select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<option value="" disabled selected>-- Selecciona un proyecto --</option>') : '<option value="" disabled selected>-- Selecciona un proyecto --</option>';
 
             projectList.forEach(p => {
                 const option = document.createElement('option');
@@ -752,7 +752,7 @@
 
             panel.classList.remove('hidden');
             nameDisplay.textContent = projectName;
-            tbody.innerHTML = '';
+            tbody.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : '';
             loading.classList.remove('hidden');
             empty.classList.add('hidden');
 
@@ -779,7 +779,20 @@
                             bgClass = 'bg-emerald-100 text-emerald-700';
                         }
 
-                        tr.innerHTML = `
+                        tr.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 font-mono text-xs">${fechaStr}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                <span class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${bgClass}">
+                                    <i class="fas ${iconClass}"></i> ${categoriaNombre}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate text-xs" title="${hito.observacion || ''}">${obsShort}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <button onclick="openHitoViewer(${hito.id})" class="text-emerald-600 hover:text-emerald-900 transition mx-1 p-2 rounded-full hover:bg-emerald-50">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        `) : `
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 font-mono text-xs">${fechaStr}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                 <span class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${bgClass}">
@@ -800,7 +813,7 @@
                 console.error('Error cargando hitos:', error);
                 loading.classList.add('hidden');
                 showToast('Error al cargar lista de hitos', 'error');
-                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500 text-sm">Error de carga</td></tr>';
+                tbody.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<tr><td colspan="4" class="p-4 text-center text-red-500 text-sm">Error de carga</td></tr>') : '<tr><td colspan="4" class="p-4 text-center text-red-500 text-sm">Error de carga</td></tr>';
             }
         }
 
@@ -829,7 +842,7 @@
                 document.getElementById('detailObs').textContent = data.observacion || 'Sin observaciones.';
 
                 const creador = data.creado_por_nombre || 'Usuario del sistema';
-                document.getElementById('detailCreador').innerHTML = `<i class="fas fa-user text-gray-400"></i> ${creador}`;
+                document.getElementById('detailCreador').innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`<i class="fas fa-user text-gray-400"></i> ${creador}`) : `<i class="fas fa-user text-gray-400"></i> ${creador}`;
 
                 loading.classList.add('hidden');
                 content.classList.remove('hidden');
@@ -863,7 +876,7 @@
 
             try {
                 btn.disabled = true;
-                document.getElementById('btnCreateText').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...';
+                document.getElementById('btnCreateText').innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...') : '<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...';
 
                 await api.post(`/proyectos/${pid}/hitos`, payload);
 
@@ -892,7 +905,7 @@
             const countBadge = document.getElementById('sessionCount');
 
             if (tbody.querySelector('td[colspan]')) {
-                tbody.innerHTML = '';
+                tbody.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : '';
             }
 
             const now = new Date();
@@ -912,7 +925,14 @@
 
             const itemDisplay = itemName.replace(/_/g, ' ');
 
-            tr.innerHTML = `
+            tr.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+                <td class="px-6 py-3 whitespace-nowrap">
+                    <span class="badge ${badgeClass}">${icon} ${statusText}</span>
+                </td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700 font-medium">${itemDisplay}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 truncate max-w-[150px]">${projectName}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-400 font-mono text-xs">${timeString}</td>
+            `) : `
                 <td class="px-6 py-3 whitespace-nowrap">
                     <span class="badge ${badgeClass}">${icon} ${statusText}</span>
                 </td>

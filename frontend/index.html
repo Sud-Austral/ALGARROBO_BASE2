@@ -300,10 +300,15 @@
                             const roles = data.user.roles || [];
                             const rol = roles.length > 0 ? roles[0].nombre.toLowerCase() : 'admin_general'; 
 
-                            let ruta = `division/${division}/${rol}/dashboard.html`;
-                            if (data.user.nivel_acceso == 10) {
+                            const nivel = parseInt(data.user.nivel_acceso);
+                            let ruta = `administracion/index.html`;
+
+                            if (nivel === 10) {
+                                ruta = `administracion/index2.html`;
+                            } else if (nivel === 11) {
                                 ruta = `administracion/index.html`;
                             }
+
 
                             const urlParams = new URLSearchParams(window.location.search);
                             const redirect = urlParams.get('redirect');
@@ -338,7 +343,10 @@
             const icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
 
             alertDiv.className = `alert-slide flex items-center p-4 mb-4 rounded-xl border ${colors} shadow-sm`;
-            alertDiv.innerHTML = `
+            alertDiv.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+                <i class="fas ${icon} text-lg mr-3"></i>
+                <span class="text-sm font-medium">${message}</span>
+            `) : `
                 <i class="fas ${icon} text-lg mr-3"></i>
                 <span class="text-sm font-medium">${message}</span>
             `;
@@ -353,7 +361,7 @@
         }
 
         function clearAlerts() {
-            document.getElementById('alertContainer').innerHTML = '';
+            document.getElementById('alertContainer').innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : '';
         }
     </script>
 </body>

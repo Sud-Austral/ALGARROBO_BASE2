@@ -1,4 +1,4 @@
-<!-- Vista 14: Priorización Estratégica (Matriz de Focalización) -->
+<!-- Vista 14: Priorizaciï¿½n Estratï¿½gica (Matriz de Focalizaciï¿½n) -->
 <div class="card mb-lg">
     <div class="location-source-row"
         style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
@@ -6,7 +6,7 @@
             <i class="fa-solid fa-bullseye"></i> <span class="comuna-fill">CARGANDO...</span>
             <!-- Focus Grid (11 Crimes Breakdown) -->
             <h3 class="section-title mb-lg" style="font-size: 1rem; color: #1e293b; margin-bottom: 1rem;">
-                <i class="fa-solid fa-layer-group" style="color: #4f46e5;"></i> Focalización Táctica (<span
+                <i class="fa-solid fa-layer-group" style="color: #4f46e5;"></i> Focalizaciï¿½n Tï¿½ctica (<span
                     id="v22_crime_count">--</span> Delitos STOP)
             </h3>
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
@@ -70,15 +70,15 @@
         <div class="methodological-note"
             style="background: rgba(59, 130, 246, 0.05); border-left: 3px solid var(--color-primary); padding: 1rem; border-radius: 0 8px 8px 0; font-size: 0.8rem; color: #475569; line-height: 1.5; margin-top: 2rem;">
             <i class="fa-solid fa-circle-info" style="color: var(--color-primary); margin-right: 6px;"></i>
-            <strong>Nota Metodológica:</strong> Cada delito se clasifica en una de cuatro categorías según su
+            <strong>Nota Metodolï¿½gica:</strong> Cada delito se clasifica en una de cuatro categorï¿½as segï¿½n su
             <strong>volumen de
-                casos</strong> y su <strong>variación porcentual respecto a la semana anterior</strong>. El porcentaje
+                casos</strong> y su <strong>variaciï¿½n porcentual respecto a la semana anterior</strong>. El porcentaje
             mostrado
-            a la derecha de cada delito indica si aumentó o disminuyó en la semana actual comparado con la semana
+            a la derecha de cada delito indica si aumentï¿½ o disminuyï¿½ en la semana actual comparado con la semana
             previa: <span style="color:#ef4444; font-weight:700;">+X%</span> = alza, <span
                 style="color:#10b981; font-weight:700;">-X%</span> = baja. Los delitos en <strong>ALARMA/FOCO</strong>
             combinan
-            alto volumen con alza significativa y son la prioridad táctica inmediata.
+            alto volumen con alza significativa y son la prioridad tï¿½ctica inmediata.
         </div>
 
         <script>
@@ -128,7 +128,8 @@
                 const renderCol = (id, list) => {
                     const el = document.getElementById(id);
                     if (list.length > 0) {
-                        el.innerHTML = list.map(d => `
+                        el.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(list.map(d => `
+                    <div style="padding: 8px) : list.map(d => `
                     <div style="padding: 8px; background: rgba(255,255,255,0.6); border-radius: 4px; font-size: 0.75rem;">
                         <div style="font-weight: 700; color: #1e293b;">${d.label}</div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
@@ -138,7 +139,7 @@
                     </div>
                  `).join('');
                     } else {
-                        el.innerHTML = '<span style="font-size:0.7rem; color:#94a3b8;">--</span>';
+                        el.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<span style="font-size:0.7rem) : '<span style="font-size:0.7rem; color:#94a3b8;">--</span>';
                     }
                 };
 
@@ -156,7 +157,7 @@
                 if (typeof IAModule !== 'undefined') {
                     IAModule.getInterpretation('vista22').then(txt => {
                         const el = document.getElementById('v22_ia_analysis');
-                        if (el) el.innerHTML = txt;
+                        if (el) el.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(txt) : txt;
                     });
                 }
 

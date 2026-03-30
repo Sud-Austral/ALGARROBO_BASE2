@@ -326,7 +326,32 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof renderHeader === 'function') renderHeader();
+
+            /* --- 1. Role-based redirection --- */
+            const userDataStr = localStorage.getItem('userData') || localStorage.getItem('user_data');
+            const token = localStorage.getItem('authToken');
+            const base = window.location.hostname.endsWith('github.io') ? '/ALGARROBO_BASE2' : '';
+
+            if (!token) {
+                window.location.href = base + '/frontend/index.html';
+                return;
+            }
+
+            if (userDataStr) {
+                try {
+                    const user = JSON.parse(userDataStr);
+                    const nivel = parseInt(user.nivel_acceso);
+                    // Si es admin_proyectos (11), mandarlo a index.html
+                    if (nivel === 11 && window.location.pathname.includes('index2.html')) {
+                        window.location.href = base + '/frontend/administracion/index.html';
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Error en la redirección por rol:", e);
+                }
+            }
         });
+
     </script>
 
     <section class="hero">

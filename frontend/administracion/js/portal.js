@@ -12,11 +12,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* ── 1. Verificar sesión activa ── */
     const token = localStorage.getItem('authToken');
+    const userDataStr = localStorage.getItem('userData') || localStorage.getItem('user_data');
+    const base = window.location.hostname.endsWith('github.io') ? '/ALGARROBO_BASE2' : '';
+
     if (!token) {
-        const base = window.location.hostname.endsWith('github.io') ? '/ALGARROBO_BASE2' : '';
         window.location.href = base + '/frontend/index.html';
         return;
     }
+
+    // Role-based redirection for index.html
+    if (userDataStr) {
+        try {
+            const user = JSON.parse(userDataStr);
+            const nivel = parseInt(user.nivel_acceso);
+            if (nivel === 10 && !window.location.pathname.includes('index2.html')) {
+                window.location.href = base + '/frontend/administracion/index2.html';
+                return;
+            }
+        } catch (e) {
+            console.error("Error redirecting by role", e);
+        }
+    }
+
 
     /* ── 2. Saludo dinámico usando los datos del layout.js ── */
     try {

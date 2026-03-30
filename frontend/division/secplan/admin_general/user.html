@@ -7,7 +7,7 @@
     <script src="../../../script/utils.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geoportal - Gestión de Usuarios</title>
+    <title>Geoportal - Gestiï¿½n de Usuarios</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -29,7 +29,7 @@
 
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
+                        <h1 class="text-3xl font-bold text-gray-800">Gestiï¿½n de Usuarios</h1>
                         <p class="text-gray-500 mt-1">Administra los accesos y permisos del sistema</p>
                     </div>
                     <button onclick="openModal()" class="btn-primary flex items-center gap-2">
@@ -88,7 +88,7 @@
                             <thead class="bg-gray-50 text-gray-600 text-sm font-semibold uppercase">
                                 <tr>
                                     <th class="px-6 py-4">Usuario</th>
-                                    <th class="px-6 py-4">División</th>
+                                    <th class="px-6 py-4">Divisiï¿½n</th>
                                     <th class="px-6 py-4">Rol</th>
                                     <th class="px-6 py-4 text-center">Estado</th>
                                     <th class="px-6 py-4 text-center">Acciones</th>
@@ -116,23 +116,23 @@
             <form id="userForm" onsubmit="handleSubmit(event)" class="space-y-4">
                 <div class="form-group">
                     <label for="nombre">Nombre Completo</label>
-                    <input type="text" id="nombre" name="nombre" required placeholder="Ej: Juan Pérez">
+                    <input type="text" id="nombre" name="nombre" required placeholder="Ej: Juan Pï¿½rez">
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Correo Electrónico</label>
+                    <label for="email">Correo Electrï¿½nico</label>
                     <input type="email" id="email" name="email" required placeholder="juan@algarrobo.cl">
                 </div>
 
                 <div class="form-group" id="passwordGroup">
-                    <label for="password">Contraseña</label>
+                    <label for="password">Contraseï¿½a</label>
                     <input type="password" id="password" name="password" required
                         placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="form-group">
-                        <label for="division_id">División</label>
+                        <label for="division_id">Divisiï¿½n</label>
                         <select id="division_id" name="division_id" required>
                             <option value="">Seleccionar...</option>
                         </select>
@@ -203,7 +203,7 @@
 
         function renderUsers(usersToRender = users) {
             const tbody = document.getElementById('usersTableBody');
-            tbody.innerHTML = '';
+            tbody.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : '';
 
             usersToRender.forEach(user => {
                 const tr = document.createElement('tr');
@@ -213,7 +213,35 @@
                     ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Activo</span>'
                     : '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Inactivo</span>';
 
-                tr.innerHTML = `
+                tr.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                ${user.nombre?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800">${user.nombre}</p>
+                                <p class="text-xs text-gray-500">${user.email}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">${user.division_nombre || '-'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">${user.nivel_acceso != null ? 'Nivel ' + user.nivel_acceso : '-'}</td>
+                    <td class="px-6 py-4 text-center">${statusBadge}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="editUser(${user.user_id})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="toggleUserStatus(${user.user_id})" class="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition" title="Cambiar Estado">
+                                <i class="fas fa-power-off"></i>
+                            </button>
+                            <button onclick="deleteUser(${user.user_id})" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Eliminar">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </td>
+                `) : `
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
@@ -297,7 +325,7 @@
 
             try {
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...';
+                btn.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...') : '<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...';
 
                 if (editingUserId) {
                     if (!formData.password) delete formData.password;
@@ -331,7 +359,7 @@
         }
 
         async function deleteUser(id) {
-            if (!confirm('¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.')) return;
+            if (!confirm('ï¿½Estï¿½s seguro de eliminar este usuario? Esta acciï¿½n no se puede deshacer.')) return;
             try {
                 await api.delete(`/users/${id}`);
                 showToast('Usuario eliminado');

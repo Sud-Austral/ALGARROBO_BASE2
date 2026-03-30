@@ -574,7 +574,7 @@
 
         async function loadProjects() {
             const select = document.getElementById('projectSelect');
-            select.innerHTML = '<option value="" disabled selected>Cargando proyectos...</option>';
+            select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<option value="" disabled selected>Cargando proyectos...</option>') : '<option value="" disabled selected>Cargando proyectos...</option>';
             select.disabled = true;
 
             try {
@@ -588,7 +588,7 @@
             } catch (error) {
                 console.error('Error:', error);
                 showToast('Error al conectar con el servidor', 'error');
-                select.innerHTML = '<option value="" disabled selected>Error de conexión</option>';
+                select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<option value="" disabled selected>Error de conexión</option>') : '<option value="" disabled selected>Error de conexión</option>';
             }
         }
 
@@ -601,7 +601,7 @@
                 html += `<option value="${opt}" ${opt === previousValue ? 'selected' : ''}>${opt}</option>`;
             });
 
-            select.innerHTML = html;
+            select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(html) : html;
 
             if (previousValue && !optionsList.includes(previousValue)) {
                 select.value = "";
@@ -662,7 +662,7 @@
 
             const currentVal = select.value;
 
-            select.innerHTML = '<option value="" disabled selected>-- Selecciona un proyecto --</option>';
+            select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<option value="" disabled selected>-- Selecciona un proyecto --</option>') : '<option value="" disabled selected>-- Selecciona un proyecto --</option>';
 
             projectList.forEach(p => {
                 const option = document.createElement('option');
@@ -693,7 +693,7 @@
 
             panel.classList.remove('hidden');
             nameDisplay.textContent = projectName;
-            tbody.innerHTML = '';
+            tbody.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : '';
             loading.classList.remove('hidden');
             empty.classList.add('hidden');
 
@@ -714,7 +714,30 @@
 
                         let obsShort = obs.observacion ? obs.observacion.substring(0, 60) + (obs.observacion.length > 60 ? '...' : '') : '-';
 
-                        tr.innerHTML = `
+                        tr.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <span class="text-gray-500 text-xs block">Reg.</span>
+                                <span class="font-medium">${fechaStr}</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-700">
+                                <div class="max-w-md truncate" title="${obs.observacion || ''}">
+                                    ${obsShort}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+                                        ${obs.creado_por ? obs.creado_por.toString().substring(0, 1).toUpperCase() : '?'}
+                                    </div>
+                                    <span class="text-xs">ID: ${obs.creado_por || 'N/A'}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <button onclick="openObservacionViewer(${obs.id})" class="text-blue-600 hover:text-blue-900 transition mx-1 p-2 rounded-full hover:bg-blue-50" title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        `) : `
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 <span class="text-gray-500 text-xs block">Reg.</span>
                                 <span class="font-medium">${fechaStr}</span>
@@ -745,7 +768,7 @@
                 console.error('Error cargando observaciones:', error);
                 loading.classList.add('hidden');
                 showToast('Error al cargar lista de observaciones', 'error');
-                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500 text-sm">Error de carga de datos</td></tr>';
+                tbody.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<tr><td colspan="4" class="p-4 text-center text-red-500 text-sm">Error de carga de datos</td></tr>') : '<tr><td colspan="4" class="p-4 text-center text-red-500 text-sm">Error de carga de datos</td></tr>';
             }
         }
 
@@ -776,9 +799,9 @@
 
                     const creadorEl = document.getElementById('detailCreador');
                     if (data.creado_por) {
-                        creadorEl.innerHTML = `<i class="fas fa-user-check text-blue-500"></i> Usuario ID: ${data.creado_por}`;
+                        creadorEl.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`<i class="fas fa-user-check text-blue-500"></i> Usuario ID: ${data.creado_por}`) : `<i class="fas fa-user-check text-blue-500"></i> Usuario ID: ${data.creado_por}`;
                     } else {
-                        creadorEl.innerHTML = `<i class="fas fa-user text-gray-400"></i> Desconocido`;
+                        creadorEl.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`<i class="fas fa-user text-gray-400"></i> Desconocido`) : `<i class="fas fa-user text-gray-400"></i> Desconocido`;
                     }
 
                     loading.classList.add('hidden');
@@ -786,7 +809,7 @@
                 })
                 .catch(err => {
                     console.error(err);
-                    loading.innerHTML = `<div class="text-red-500 text-center"><i class="fas fa-exclamation-triangle text-2xl mb-2"></i><p class="text-sm">${err.message}</p></div>`;
+                    loading.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`<div class="text-red-500 text-center"><i class="fas fa-exclamation-triangle text-2xl mb-2"></i><p class="text-sm">${err.message}</p></div>`) : `<div class="text-red-500 text-center"><i class="fas fa-exclamation-triangle text-2xl mb-2"></i><p class="text-sm">${err.message}</p></div>`;
                     loading.classList.remove('hidden');
                     content.classList.add('hidden');
                 });
@@ -845,7 +868,7 @@
             const originalText = document.getElementById('btnCreateText').textContent;
             btn.disabled = true;
             btn.classList.add('opacity-75', 'cursor-not-allowed');
-            document.getElementById('btnCreateText').innerHTML = '<span class="loading"></span> Guardando...';
+            document.getElementById('btnCreateText').innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<span class="loading"></span> Guardando...') : '<span class="loading"></span> Guardando...';
 
             try {
                 const data = await api.post(`/proyectos/${pid}/observaciones`, payload);
@@ -872,7 +895,7 @@
             const countBadge = document.getElementById('sessionCount');
 
             if (tbody.querySelector('td[colspan]')) {
-                tbody.innerHTML = '';
+                tbody.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : '';
             }
 
             const now = new Date();
@@ -890,7 +913,14 @@
                 ? (Array.from(select.options).find(o => o.value == projectId)?.text || `#${projectId}`)
                 : `#${projectId}`;
 
-            tr.innerHTML = `
+            tr.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+                <td class="px-6 py-3 whitespace-nowrap">
+                    <span class="badge ${badgeClass}">${icon} ${statusText}</span>
+                </td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700 font-medium">${itemName}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500 truncate max-w-[150px]">${projectName}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-400 font-mono text-xs">${timeString}</td>
+            `) : `
                 <td class="px-6 py-3 whitespace-nowrap">
                     <span class="badge ${badgeClass}">${icon} ${statusText}</span>
                 </td>

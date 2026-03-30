@@ -317,7 +317,14 @@
 
         const breadcrumb = document.createElement('nav');
         breadcrumb.className = 'breadcrumb-nav';
-        breadcrumb.innerHTML = `
+        breadcrumb.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+      <a href="../landing_transparencia.html">Inicio</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="../landing_transparencia.html">Registros</a>
+      <span class="breadcrumb-sep">›</span>
+      ${orgName ? `<span>${orgName}</span><span class="breadcrumb-sep">›</span>` : ''}
+      <span class="breadcrumb-current">${breadcrumbLabel}</span>
+    `) : `
       <a href="../landing_transparencia.html">Inicio</a>
       <span class="breadcrumb-sep">›</span>
       <a href="../landing_transparencia.html">Registros</a>
@@ -351,7 +358,7 @@
         }
         skeletonHTML += '</div>';
 
-        loadingEl.innerHTML = skeletonHTML;
+        loadingEl.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(skeletonHTML) : skeletonHTML;
     }
 
     // ─── #5 Cerrar modal con Escape ────────────────────────────
@@ -375,7 +382,7 @@
             document.body.appendChild(toastEl);
         }
         toastEl.className = 'toast-notification' + (isError ? ' error' : '');
-        toastEl.innerHTML = `${isError ? '⚠️' : '✓'} ${message}`;
+        toastEl.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`${isError ? '⚠️' : '✓'} ${message}`) : `${isError ? '⚠️' : '✓'} ${message}`;
 
         requestAnimationFrame(() => {
             toastEl.classList.add('show');
@@ -412,9 +419,9 @@
         hint.className = 'table-hint';
 
         if (modal) {
-            hint.innerHTML = '<i class="fas fa-info-circle"></i> Haga clic en cualquier celda para ver el detalle de registros';
+            hint.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<i class="fas fa-info-circle"></i> Haga clic en cualquier celda para ver el detalle de registros') : '<i class="fas fa-info-circle"></i> Haga clic en cualquier celda para ver el detalle de registros';
         } else {
-            hint.innerHTML = '<i class="fas fa-info-circle"></i> Pase el cursor sobre las celdas para ver el detalle estadístico';
+            hint.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<i class="fas fa-info-circle"></i> Pase el cursor sobre las celdas para ver el detalle estadístico') : '<i class="fas fa-info-circle"></i> Pase el cursor sobre las celdas para ver el detalle estadístico';
         }
 
         tableSection.appendChild(hint);
@@ -449,7 +456,7 @@
         const chipsBar = document.getElementById('active-filters-chips');
         if (!chipsBar) return;
 
-        chipsBar.innerHTML = '';
+        chipsBar.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : '';
 
         const filterMap = {
             'sexo-filter': { label: 'Sexo', icon: '♀♂' },
@@ -468,7 +475,7 @@
 
             const chip = document.createElement('span');
             chip.className = 'active-filter-chip';
-            chip.innerHTML = `${meta.icon} ${meta.label}: ${select.selectedOptions[0]?.textContent || select.value} <span class="chip-remove">✕</span>`;
+            chip.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`${meta.icon} ${meta.label}: ${select.selectedOptions[0]?.textContent || select.value} <span class="chip-remove">✕</span>`) : `${meta.icon} ${meta.label}: ${select.selectedOptions[0]?.textContent || select.value} <span class="chip-remove">✕</span>`;
             chip.addEventListener('click', () => {
                 if (id === 'year-filter' && typeof maxYear !== 'undefined') {
                     select.value = maxYear;
@@ -537,7 +544,11 @@
                     emptyState = document.createElement('div');
                     emptyState.id = 'empty-state-msg';
                     emptyState.className = 'empty-state';
-                    emptyState.innerHTML = `
+                    emptyState.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+            <div class="empty-state-icon">📊</div>
+            <div class="empty-state-title">Sin datos disponibles</div>
+            <div class="empty-state-desc">No se encontraron registros con los filtros seleccionados. Intente modificar los criterios de búsqueda.</div>
+          `) : `
             <div class="empty-state-icon">📊</div>
             <div class="empty-state-title">Sin datos disponibles</div>
             <div class="empty-state-desc">No se encontraron registros con los filtros seleccionados. Intente modificar los criterios de búsqueda.</div>
@@ -682,7 +693,7 @@
             const start = Math.min((currentPageVal - 1) * rowsPerPageVal + 1, total);
             const end = Math.min(currentPageVal * rowsPerPageVal, total);
 
-            countEl.innerHTML = `Mostrando <strong>${start}-${end}</strong> de <strong>${total}</strong> registros`;
+            countEl.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`Mostrando <strong>${start}-${end}</strong> de <strong>${total}</strong> registros`) : `Mostrando <strong>${start}-${end}</strong> de <strong>${total}</strong> registros`;
         };
     }
 

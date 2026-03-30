@@ -1372,7 +1372,7 @@
             
             showLoading();
 
-            thematicLayersContainer.innerHTML = '';
+            thematicLayersContainer.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : '';
 
             thematicLayersConfig.forEach(layerConfig => {
                 
@@ -1522,7 +1522,13 @@
                     hideLoading();
 
                     const featureInfo = document.getElementById('feature-info');
-                    featureInfo.innerHTML = `
+                    featureInfo.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+                        <div class="error-message">
+                            <h3>Error al cargar la capa</h3>
+                            <p>No se pudo cargar la capa ${layerConfig.name}. Por favor, inténtelo de nuevo más tarde.</p>
+                            <p><strong>Detalles:</strong> ${error.message}</p>
+                        </div>
+                    `) : `
                         <div class="error-message">
                             <h3>Error al cargar la capa</h3>
                             <p>No se pudo cargar la capa ${layerConfig.name}. Por favor, inténtelo de nuevo más tarde.</p>
@@ -1567,7 +1573,12 @@
                 hideLoading();
 
                 const featureInfo = document.getElementById('feature-info');
-                featureInfo.innerHTML = `
+                featureInfo.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+                    <div class="success-message">
+                        <h3>Capas actualizadas</h3>
+                        <p>Todas las capas han sido actualizadas correctamente.</p>
+                    </div>
+                `) : `
                     <div class="success-message">
                         <h3>Capas actualizadas</h3>
                         <p>Todas las capas han sido actualizadas correctamente.</p>
@@ -1657,7 +1668,7 @@
                     hideLoading();
                     
                     if (results.length > 0) {
-                        searchResults.innerHTML = '';
+                        searchResults.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : '';
                         results.forEach(result => {
                             const resultItem = document.createElement('div');
                             resultItem.className = 'search-result-item';
@@ -1691,14 +1702,14 @@
                         });
                         searchResults.style.display = 'block';
                     } else {
-                        searchResults.innerHTML = '<div class="search-result-item">No se encontraron resultados</div>';
+                        searchResults.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<div class="search-result-item">No se encontraron resultados</div>') : '<div class="search-result-item">No se encontraron resultados</div>';
                         searchResults.style.display = 'block';
                     }
                 })
                 .catch(error => {
                     console.error('Error en la búsqueda:', error);
                     hideLoading();
-                    searchResults.innerHTML = '<div class="search-result-item">Error al realizar la búsqueda</div>';
+                    searchResults.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<div class="search-result-item">Error al realizar la búsqueda</div>') : '<div class="search-result-item">Error al realizar la búsqueda</div>';
                     searchResults.style.display = 'block';
                 });
         }
@@ -1747,7 +1758,26 @@
             });
 
             if (!clickedLayer) {
-                featureInfo.innerHTML = `
+                featureInfo.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+                    <table class="feature-table">
+                        <tr>
+                            <th>Propiedad</th>
+                            <th>Valor</th>
+                        </tr>
+                        <tr>
+                            <td>Latitud</td>
+                            <td>${e.latlng.lat.toFixed(6)}</td>
+                        </tr>
+                        <tr>
+                            <td>Longitud</td>
+                            <td>${e.latlng.lng.toFixed(6)}</td>
+                        </tr>
+                        <tr>
+                            <td>Zoom</td>
+                            <td>${map.getZoom()}</td>
+                        </tr>
+                    </table>
+                `) : `
                     <table class="feature-table">
                         <tr>
                             <th>Propiedad</th>

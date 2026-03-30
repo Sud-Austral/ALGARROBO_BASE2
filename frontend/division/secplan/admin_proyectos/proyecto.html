@@ -669,7 +669,13 @@
             const tableBody = document.getElementById('projectsTableBody');
             
             if (proyectosToRender.length === 0) {
-                tableBody.innerHTML = `
+                tableBody.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                            No se encontraron proyectos
+                        </td>
+                    </tr>
+                `) : `
                     <tr>
                         <td colspan="8" class="px-6 py-4 text-center text-gray-500">
                             No se encontraron proyectos
@@ -679,7 +685,9 @@
                 return;
             }
 
-            tableBody.innerHTML = proyectosToRender.map(proyecto => {
+            tableBody.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(proyectosToRender.map(proyecto => {
+                // Determinar el color de la etiqueta de estado
+                let statusClass = '') : proyectosToRender.map(proyecto => {
                 // Determinar el color de la etiqueta de estado
                 let statusClass = '';
                 if (proyecto.estado_proyecto === 'Ejecución') statusClass = 'bg-green-100 text-green-800';
@@ -756,9 +764,9 @@
             });
 
             if (columnsVisible) {
-                toggleBtn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i>Mostrar menos';
+                toggleBtn.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<i class="fas fa-eye-slash mr-2"></i>Mostrar menos') : '<i class="fas fa-eye-slash mr-2"></i>Mostrar menos';
             } else {
-                toggleBtn.innerHTML = '<i class="fas fa-eye mr-2"></i>Mostrar más';
+                toggleBtn.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<i class="fas fa-eye mr-2"></i>Mostrar más') : '<i class="fas fa-eye mr-2"></i>Mostrar más';
             }
         }
 
@@ -779,7 +787,7 @@
             }
             
             const detailsContainer = document.getElementById('viewProjectDetails');
-            detailsContainer.innerHTML = ''; // Limpiar contenido anterior
+            detailsContainer.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('') : ''; // Limpiar contenido anterior
 
             const labels = {
                 id: "ID",
@@ -1070,7 +1078,7 @@
             
             if (show) {
                 submitBtn.disabled = true;
-                submitText.innerHTML = `<span class="loading"></span> ${message}`;
+                submitText.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(`<span class="loading"></span> ${message}`) : `<span class="loading"></span> ${message}`;
             } else {
                 submitBtn.disabled = false;
                 submitText.textContent = 'Guardar';

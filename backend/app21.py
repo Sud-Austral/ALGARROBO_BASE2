@@ -15,11 +15,15 @@ from datetime import datetime, timedelta
 from functools import wraps
 from contextlib import contextmanager
 import secrets
+import jwt
+
 import re
 
 from dotenv import load_dotenv
 
 load_dotenv()
+JWT_SECRET = os.getenv("JWT_SECRET_KEY", "fallback-secret-for-dev-123456")
+
 # -----------------------
 # CONFIGURACIÓN DE LOGGING
 # -----------------------
@@ -46,7 +50,24 @@ DEBUG = os.getenv("FLASK_DEBUG", "True").lower() in ("1", "true", "yes")
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1000 * 1024 * 1024  # 1GB para migración ZIP
-CORS(app)
+# -----------------------
+# CORS: Configuración Restrictiva Dynamica
+# -----------------------
+# Permite definir orígenes vía variable de entorno (ej: https://midominio.com,http://localhost:3000)
+allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
+if allowed_origins_raw:
+    # Separar por comas y limpiar espacios (soporta múltiples dominios)
+    allowed_origins = [origin.strip() for origin in allowed_origins_raw.split(",")]
+else:
+    # Fallback seguro para desarrollo local si la variable no existe
+    allowed_origins = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000"
+    ]
+
+# Aplicar políticas de CORS solo a rutas de API para mayor seguridad
+CORS(app, resources={r"/api/*": {"origins": allowed_origins}, r"/auth/*": {"origins": allowed_origins}}, supports_credentials=True)
 
 # Logger middleware simplificado
 @app.before_request
@@ -56,10 +77,10 @@ def log_request_info():
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    response = jsonify({"error": str(e)})
-    response.status_code = 500
-    if hasattr(e, 'code'):
-        response.status_code = e.code
+    logger.error(f"Internal server error: {e}")
+    logger.error(traceback.format_exc())
+    response = jsonify({"error": "An internal error occurred", "code": getattr(e, 'code', 500)})
+    response.status_code = getattr(e, 'code', 500)
     return response
 
 logger.info("Backend Municipal iniciando...")
@@ -68,9 +89,11 @@ connection_pool = None
 pool_lock = threading.RLock()
 
 # Sesiones
-active_sessions = {}
-sessions_lock = threading.Lock()
-SESSION_EXPIRY_HOURS = 1
+# active_sessions (JWT Stateless)
+
+
+SESSION_EXPIRY_HOURS = 24
+
 
 def cleanup():
     """Función de limpieza al cerrar el servidor"""
@@ -95,11 +118,14 @@ def init_connection_pool(max_retries=1):
                     connection_pool.closeall()
                     logger.info("Pool anterior cerrado correctamente")
                 except Exception as e:
+                    try:
+                        if 'conn' in locals() and conn: conn.rollback()
+                    except: pass
                     logger.warning(f"Error cerrando pool anterior: {e}")
             
             connection_pool = psycopg2.pool.ThreadedConnectionPool(
                 minconn=1,
-                maxconn=10,
+                maxconn=20, # max_overflow ajustado
                 dsn=DB_CONNECTION_STRING,
                 keepalives=1,
                 keepalives_idle=60,
@@ -119,6 +145,9 @@ def init_connection_pool(max_retries=1):
             return True
             
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en la inicialización del pool: {e}")
         connection_pool = None
         return False
@@ -133,8 +162,21 @@ def get_db_connection():
                 raise Exception("No se pudo inicializar el pool de conexiones")
         
         conn = connection_pool.getconn()
+        
+        # validation_query="SELECT 1" para descartar conexiones inactivas
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1")
+        except Exception:
+            logger.warning("Descartando conexion inactiva")
+            connection_pool.putconn(conn, close=True)
+            conn = connection_pool.getconn()
+
         return conn
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error obteniendo conexión: {e}")
         raise e
 
@@ -143,6 +185,9 @@ def release_db_connection(conn):
         if connection_pool and conn:
             connection_pool.putconn(conn)
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error al devolver la conexión al pool: {e}")
         try:
             conn.close()
@@ -175,53 +220,80 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# MEJORA #4: Funciones de gestión de sesiones con expiración
+# JWT: Gestión de sesiones firmadas
+
 def create_session(user_id):
     """Crea una nueva sesión con timestamp"""
-    token = secrets.token_hex(32)
-    now = datetime.now()
-    with sessions_lock:
-        active_sessions[token] = {
-            "user_id": user_id,
-            "created_at": now,
-            "last_activity": now
-        }
-    return token
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.utcnow() + timedelta(hours=SESSION_EXPIRY_HOURS),
+        "iat": datetime.utcnow()
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+
+
+
+
+
+
+
+
+
+
 
 def validate_session(token):
+
     """Valida sesión y actualiza last_activity. Retorna user_id o None"""
-    with sessions_lock:
-        session = active_sessions.get(token)
-        if not session:
-            return None
+
+    try:
+        # Decodificar y verificar firma
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+
+        return payload["user_id"]
+    except jwt.ExpiredSignatureError:
+        logger.warning("Token JWT expirado")
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+
+
+
         
-        # Verificar expiración
-        if datetime.now() - session["last_activity"] > timedelta(hours=SESSION_EXPIRY_HOURS):
-            del active_sessions[token]
-            return None
+
+
+
+
         
         # Actualizar actividad
-        session["last_activity"] = datetime.now()
-        return session["user_id"]
+
+
 
 def remove_session(token):
+    """JWT Stateless: No-op."""
+    pass
+
+
     """Elimina una sesión"""
-    with sessions_lock:
-        if token in active_sessions:
-            del active_sessions[token]
+
+
 
 def cleanup_expired_sessions():
+    pass
+
+
+
     """Limpia sesiones expiradas - llamar periódicamente"""
-    now = datetime.now()
-    with sessions_lock:
-        expired = [
-            t for t, s in active_sessions.items()
-            if now - s["last_activity"] > timedelta(hours=SESSION_EXPIRY_HOURS)
-        ]
-        for t in expired:
-            del active_sessions[t]
-        if expired:
-            logger.info(f"Limpiadas {len(expired)} sesiones expiradas")
+
+
+
+
+
+
+
+
+
+
 
 # Inicializar pool al inicio
 if not init_connection_pool():
@@ -273,6 +345,9 @@ def log_control(user_id, accion, modulo='proyectos',
             ))
         conn.commit()
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en log_control: {e}")
     finally:
         if conn:
@@ -300,6 +375,9 @@ def log_auditoria(user_id, accion, descripcion):
             )
         conn.commit()
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en auditoría legacy: {e}")
     finally:
         if conn:
@@ -364,11 +442,15 @@ def health_check():
                 db_status = "connected"
                 release_db_connection(conn)
         except Exception as e:
+            try:
+                if 'conn' in locals() and conn: conn.rollback()
+            except: pass
             logger.error(f"Error en health check de BD: {e}")
             db_status = f"error: {str(e)}"
         
         # Verificar sesiones activas
-        sessions_count = len(active_sessions)
+        sessions_count = "N/A (JWT Stateless)"
+
         
         # Determinar estado general
         if db_status == "connected" and pool_status["initialized"]:
@@ -386,11 +468,15 @@ def health_check():
                 "connection_string": DB_CONNECTION_STRING.split("@")[1] if "@" in DB_CONNECTION_STRING else "hidden"
             },
             "connection_pool": pool_status,
-            "active_sessions": sessions_count,
+            "auth_type": "JWT (Stateless)",
+
             "version": "2.0.0",
             "railway_optimized": True
         }), status_code
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en health check: {e}")
         return jsonify({
             "status": "unhealthy",
@@ -399,65 +485,6 @@ def health_check():
         }), 503
 
 # AUTH
-@app.route("/auth/login2", methods=["POST"])
-def login2():
-    conn = None
-    try:
-        data = request.get_json()
-        if not data or "email" not in data or "password" not in data:
-            return jsonify({"message": "Credenciales incompletas"}), 400
-
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({"message": "Error de conexión a la BD"}), 500
-
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT user_id, password_hash, nombre, nivel_acceso, activo
-                FROM users
-                WHERE email = %s
-            """, (data["email"],))
-            user = cur.fetchone()
-
-        if not user:
-            return jsonify({"message": "Usuario no encontrado"}), 404
-
-        user_id, stored_hash, nombre, nivel_acceso, activo = user
-
-        if not activo:
-            return jsonify({"message": "Usuario inactivo"}), 403
-
-        # almacenar hash como bytes si viene text
-        if isinstance(stored_hash, str):
-            stored_hash_b = stored_hash.encode()
-        else:
-            stored_hash_b = stored_hash
-
-        if not bcrypt.checkpw(data["password"].encode(), stored_hash_b):
-            return jsonify({"message": "Contraseña incorrecta"}), 401
-
-        # MEJORA #4: Usar create_session con timestamp
-        token = create_session(user_id)
-
-        log_auditoria(user_id, "login", f"Inicio de sesión desde {request.remote_addr}")
-
-        return jsonify({
-            "token": token,
-            "user": {
-                "id": user_id,
-                "nombre": nombre,
-                "nivel_acceso": nivel_acceso
-            }
-        })
-    except Exception as e:
-        logger.error(f"Error en login2: {e}")
-        traceback.print_exc()
-        return jsonify({"message": "Error interno", "detail": str(e)}), 500
-    finally:
-        if conn:
-            release_db_connection(conn)
-    
-
 @app.route("/auth/login", methods=["POST"])
 def login():
     conn = None
@@ -557,6 +584,9 @@ def login():
         })
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en login: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
@@ -584,6 +614,9 @@ def logout(current_user_id):
 
         return jsonify({"message": "Sesión cerrada"})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en logout: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
@@ -614,6 +647,9 @@ def get_users(current_user_id):
         return jsonify(rows)
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en get_users: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
@@ -658,6 +694,9 @@ def create_user(current_user_id):
 
         return jsonify({"message": "Usuario creado", "user_id": new_id}), 201
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en create_user: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error", "detail": str(e)}), 500
@@ -713,6 +752,9 @@ def update_user(current_user_id, user_id):
 
         return jsonify({"message": "Usuario actualizado"})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en update_user: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error", "detail": str(e)}), 500
@@ -741,6 +783,9 @@ def delete_user(current_user_id, user_id):
 
         return jsonify({"message": "Usuario eliminado"})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en delete_user: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error", "detail": str(e)}), 500
@@ -904,6 +949,9 @@ def get_divisiones(current_user_id):
             rows = cur.fetchall()
         return jsonify(rows)
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en get_divisiones: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error interno"}), 500
@@ -932,6 +980,9 @@ def create_division(current_user_id):
 
         return jsonify({"division_id": new_id}), 201
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en create_division: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error", "detail": str(e)}), 500
@@ -1295,6 +1346,9 @@ def create_proyecto(current_user_id):
         conn.commit()
         return jsonify({"message": "Proyecto creado", "id": new_id}), 201
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error create_proyecto: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
@@ -1324,6 +1378,9 @@ def create_licitacion_paso_maestro(current_user_id):
         conn.commit()
         return jsonify({"message": "Paso maestro creado", "id": new_id}), 201
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         return jsonify({"message": "Error", "detail": str(e)}), 500
     finally:
@@ -1340,6 +1397,9 @@ def get_licitacion_pasos_maestro(current_user_id):
             rows = cur.fetchall()
         return jsonify(rows)
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error get_licitacion_pasos_maestro: {e}")
         return jsonify({"message": "Error", "detail": str(e)}), 500
     finally:
@@ -1362,6 +1422,9 @@ def get_licitaciones(current_user_id):
             rows = cur.fetchall()
         return jsonify(rows)
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error get_licitaciones: {e}")
         return jsonify({"message": "Error", "detail": str(e)}), 500
     finally:
@@ -1386,6 +1449,9 @@ def update_licitacion_paso_maestro(current_user_id, paso_id):
         conn.commit()
         return jsonify({"message": "Paso maestro actualizado"}), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error update_paso_maestro: {e}")
         return jsonify({"message": "Error", "detail": str(e)}), 500
@@ -1440,6 +1506,9 @@ def create_licitacion(current_user_id):
         conn.commit()
         return jsonify({"message": "Licitación iniciada", "id": lic_id}), 201
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error create_licitacion: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
@@ -1488,6 +1557,9 @@ def get_licitacion_detalle(current_user_id, lid):
                 
         return jsonify(lic)
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error get_licitacion_detalle: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -1526,6 +1598,9 @@ def update_licitacion_workflow(current_user_id, wid):
         conn.commit()
         return jsonify({"message": "Paso actualizado"})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error update_licitacion_workflow: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
@@ -1563,6 +1638,9 @@ def upload_licitacion_doc(current_user_id):
             return jsonify({"message": "Documento subido", "url": url})
         return jsonify({"message": "Tipo de archivo no permitido"}), 400
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error upload_licitacion_doc: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
@@ -1605,6 +1683,9 @@ def upload_biblioteca_doc(current_user_id):
             return jsonify({"message": "Documento añadido a biblioteca", "url": url})
         return jsonify({"message": "Tipo de archivo no permitido"}), 400
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error upload_biblioteca_doc: {e}")
         return jsonify({"message": "Error", "detail": str(e)}), 500
@@ -1621,6 +1702,9 @@ def get_biblioteca_docs(current_user_id):
             cur.execute("SELECT * FROM licitaciones_biblioteca ORDER BY fecha_subida DESC")
             return jsonify(cur.fetchall())
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error get_biblioteca_docs: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
     finally:
@@ -1646,6 +1730,9 @@ def cerrar_licitacion(current_user_id, lid):
         conn.commit()
         return jsonify({"message": "Licitación cerrada exitosamente"})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error cerrar_licitacion: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
@@ -1687,6 +1774,9 @@ def reabrir_licitacion(current_user_id, lid):
         conn.commit()
         return jsonify({"message": "Licitación reabierta exitosamente"})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error reabrir_licitacion: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
@@ -1722,6 +1812,9 @@ def get_licitaciones_calendario(current_user_id):
             """)
             return jsonify(cur.fetchall())
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error get_licitaciones_calendario: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -1776,6 +1869,9 @@ def update_proyecto(current_user_id, pid):
         return jsonify({"message": "Proyecto actualizado"})
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error update_proyecto: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
@@ -1823,7 +1919,7 @@ def delete_proyecto(current_user_id, pid):
 def crud_simple(tabla, current_user_id):
     conn = get_db_connection()
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        cur.execute(f"SELECT * FROM {tabla}")
+        cur.execute("SELECT * FROM " + str(tabla))
         rows = cur.fetchall()
     release_db_connection(conn)
     return jsonify(rows)
@@ -1891,7 +1987,7 @@ def generic_delete(table_name, id):
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute(f"UPDATE {table_name} SET activo = FALSE WHERE id = %s", (id,))
+            cur.execute("UPDATE " + str(table_name) + " SET activo = FALSE WHERE id = %s", (id,))
         conn.commit()
     finally:
         release_db_connection(conn)
@@ -2155,6 +2251,9 @@ def add_doc(current_user_id, pid):
 
         return jsonify({"message": "Documento agregado", "doc_id": doc_id}), 201
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en add_doc: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error", "detail": str(e)}), 500
@@ -2191,6 +2290,9 @@ def get_mapas_by_role(current_user_id, role_id):
         })
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en get_mapas_by_role: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error interno"}), 500
@@ -2289,6 +2391,9 @@ def upload_documento(current_user_id, pid):
         }), 201
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn:
             conn.rollback()
         logger.error(f"Error en upload_documento: {e}")
@@ -2336,6 +2441,9 @@ def listar_documentos_proyecto(pid):
         })
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error listando documentos proyecto {pid}: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error interno"}), 500
@@ -2397,6 +2505,9 @@ def descargar_documentos_proyecto(current_user_id, pid):
         )
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error descargando documentos proyecto {pid}: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error interno"}), 500
@@ -2437,6 +2548,9 @@ def get_all_documentos(current_user_id):
         return jsonify(documentos)
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error listando todos los documentos: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -2472,6 +2586,9 @@ def get_documento_metadata(current_user_id, documento_id):
         return jsonify(doc)
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error get_documento_metadata: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -2529,6 +2646,9 @@ def view_documento(current_user_id, documento_id):
         )
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error view_documento: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -2574,6 +2694,9 @@ def get_texto_documentos_proyecto(proyecto_id):
         return "\n".join(textos)
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error leyendo documentos proyecto {proyecto_id}: {e}")
         return ""
 
@@ -2645,6 +2768,9 @@ def crear_geomapa(current_user_id, pid):
         }), 201
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn:
             conn.rollback()
         logger.error(f"Error crear_geomapa: {e}")
@@ -2684,6 +2810,9 @@ def listar_geomapas_proyecto(pid):
         })
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error listando geomapas proyecto {pid}: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error interno"}), 500
@@ -2717,6 +2846,9 @@ def get_geomapa_metadata(current_user_id, geomapa_id):
         return jsonify(geomapa)
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error get_geomapa_metadata: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -2751,6 +2883,9 @@ def view_geomapa_geojson(current_user_id, geomapa_id):
         return jsonify(result["geojson"])
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error view_geomapa_geojson: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -2843,6 +2978,9 @@ def get_hito_metadata(current_user_id, hito_id):
         return jsonify(hito)
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error get_hito_metadata: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -2880,6 +3018,9 @@ def view_hito_detalle(current_user_id, hito_id):
         return jsonify(hito)
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error view_hito_detalle: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -2937,6 +3078,9 @@ def crear_observacion(current_user_id, pid):
         }), 201
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn:
             conn.rollback()
         logger.error(f"Error crear_observacion: {e}")
@@ -2978,6 +3122,9 @@ def listar_observaciones_proyecto(pid):
         })
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error listando observaciones proyecto {pid}: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error interno"}), 500
@@ -3013,6 +3160,9 @@ def get_observacion_metadata(current_user_id, observacion_id):
         return jsonify(observacion)
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error get_observacion_metadata: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -3050,6 +3200,9 @@ def view_observacion_detalle(current_user_id, observacion_id):
         return jsonify(observacion)
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error view_observacion_detalle: {e}")
         return jsonify({"message": "Error interno"}), 500
     finally:
@@ -3095,6 +3248,9 @@ def listar_proximos_pasos(current_user_id, pid):
                     
         return jsonify({"proximos_pasos": pasos})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error listando proximos_pasos: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
     finally:
@@ -3134,6 +3290,9 @@ def crear_proximo_paso(current_user_id, pid):
         return jsonify({"message": "Próximo paso creado", "id": nuevo_id}), 201
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error creando proximo_paso: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
     finally:
@@ -3169,6 +3328,9 @@ def actualizar_proximo_paso(current_user_id, paso_id):
         log_control(current_user_id, "editar_proximo_paso", modulo="proyectos", entidad_tipo="proximo_paso", entidad_id=paso_id, exitoso=True)
         return jsonify({"message": "Próximo paso actualizado"})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error actualizando proximo_paso: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
     finally:
@@ -3192,6 +3354,9 @@ def eliminar_proximo_paso(current_user_id, paso_id):
         log_control(current_user_id, "eliminar_proximo_paso", modulo="proyectos", entidad_tipo="proximo_paso", entidad_id=paso_id, exitoso=True)
         return jsonify({"message": "Próximo paso eliminado"})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error eliminando proximo_paso: {e}")
         return jsonify({"message": "Error interno", "detail": str(e)}), 500
     finally:
@@ -3430,6 +3595,9 @@ def get_calendario_eventos_detalle(current_user_id):
         return jsonify(eventos), 200
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         return jsonify({"error": str(e)}), 500
 
     finally:
@@ -3458,6 +3626,9 @@ def get_auditoria(current_user_id):
             rows = cur.fetchall()
         return jsonify(rows)
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en get_auditoria: {e}")
         traceback.print_exc()
         return jsonify({"message": "Error interno"}), 500
@@ -3484,6 +3655,9 @@ def cleanup():
                 connection_pool.closeall()
                 logger.info("Pool de conexiones cerrado correctamente")
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error al cerrar el pool de conexiones: {e}")
 
 # ============================================
@@ -3587,6 +3761,9 @@ def registrar():
         return jsonify({"msg":"Registro exitoso", "user_id":user_id}), 201
         
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error registro: {e}")
         return jsonify({"msg":"Error al registrar"}), 500
@@ -3641,6 +3818,9 @@ def crear_funcionario(current_user_id):
             return jsonify({"msg":"Funcionario creado exitosamente", "user_id": new_user_id}), 201
             
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error crear funcionario: {e}")
         return jsonify({"msg":f"Error: {str(e)}"}), 500
@@ -3689,6 +3869,9 @@ def login_mobile():
             }
         }), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Login error: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -3707,6 +3890,9 @@ def get_divisiones_mobile():
             rows = cur.fetchall()
         return jsonify(rows), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error divisiones: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -3722,6 +3908,9 @@ def get_roles_mobile():
             rows = cur.fetchall()
         return jsonify(rows), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error roles: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -3737,6 +3926,9 @@ def get_estados_mobile():
             rows = cur.fetchall()
         return jsonify(rows), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error estados: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -3752,6 +3944,9 @@ def get_gravedades_mobile():
             rows = cur.fetchall()
         return jsonify(rows), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error gravedades: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -3785,6 +3980,9 @@ def get_perfil(current_user_id):
             
         return jsonify({"user": user, "stats": stats}), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error perfil: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -3822,6 +4020,9 @@ def update_perfil(current_user_id):
             
         return jsonify({"msg":"Perfil actualizado"}), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error update perfil: {e}")
         return jsonify({"msg":"Error"}), 500
@@ -3855,6 +4056,9 @@ def crear_reporte(current_user_id):
         conn.commit()
         return jsonify({"msg":"Creado","id":result['id'],"numero_folio":result['numero_folio']}), 201
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error crear reporte: {e}")
         return jsonify({"msg":"Error"}), 500
@@ -3889,6 +4093,9 @@ def get_reporte_detalle(current_user_id, rid):
             
         return jsonify(repo), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error detalle reporte: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -3918,6 +4125,9 @@ def get_todos_reportes():
             rows = c.fetchall()
         return jsonify(rows), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error mapa: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -3940,6 +4150,9 @@ def mis_reportes(current_user_id):
             reportes = c.fetchall()
         return jsonify(reportes), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error mis reportes: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -3958,6 +4171,9 @@ def get_categorias_mobile():
             rows = cur.fetchall()
         return jsonify(rows), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error categorias: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -3979,6 +4195,9 @@ def get_comentarios(rid):
             rows = c.fetchall()
         return jsonify(rows), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error comments get: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -4001,6 +4220,9 @@ def add_comentario(current_user_id, rid):
         conn.commit()
         return jsonify({"msg":"Comentario agregado","id":nid}), 201
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error comments post: {e}")
         return jsonify({"msg":"Error"}), 500
@@ -4060,6 +4282,9 @@ def actualizar_reporte(current_user_id, rid):
         conn.commit()
         return jsonify({"msg":"Reporte actualizado"}), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"Error actualizar reporte: {e}")
         return jsonify({"msg":"Error"}), 500
@@ -4086,6 +4311,9 @@ def ver_fotos_reporte(rid):
             fotos = c.fetchall()
         return jsonify(fotos), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error ver fotos: {e}")
         return jsonify({"msg":"Error"}), 500
     finally:
@@ -4136,6 +4364,9 @@ def subir_fotos(current_user_id, rid):
         logger.info(f"--- FIN SUBIDA: {len(guardadas)} guardadas ---")
         return jsonify({"msg":f"{len(guardadas)} fotos subidas","fotos":guardadas}), 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         if conn: conn.rollback()
         logger.error(f"FATAL ERROR EN SUBIDA: {e}", exc_info=True)
         return jsonify({"msg":f"Error interno: {str(e)}"}), 500
@@ -4173,6 +4404,9 @@ def control_registrar(current_user_id):
         )
         return jsonify({"ok": True}), 201
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en control_registrar: {e}")
         return jsonify({"error": str(e)}), 500
 
@@ -4285,6 +4519,9 @@ def control_actividad(current_user_id):
             "data": rows
         })
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en control_actividad: {e}")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -4320,6 +4557,9 @@ def control_actividad_proyecto(current_user_id, proyecto_id):
 
         return jsonify({"proyecto": proyecto, "actividad": rows})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en control_actividad_proyecto: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
@@ -4358,6 +4598,9 @@ def control_actividad_usuario(current_user_id, uid):
 
         return jsonify({"usuario": usuario, "actividad": actividad})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en control_actividad_usuario: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
@@ -4489,6 +4732,9 @@ def control_kpi(current_user_id):
             "por_hora": por_hora
         })
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en control_kpi: {e}")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -4525,6 +4771,9 @@ def control_resumen_usuarios(current_user_id):
             rows = cur.fetchall()
         return jsonify(rows)
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en control_resumen_usuarios: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
@@ -4567,6 +4816,9 @@ def control_refresh_stats(current_user_id):
                     detalle="Vistas materializadas refrescadas")
         return jsonify({"ok": True, "mensaje": "Estadísticas actualizadas"})
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en refresh_stats: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
@@ -4773,6 +5025,9 @@ def control_export_pdf(current_user_id):
             })
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en control_export_pdf: {e}")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -4826,6 +5081,9 @@ def auditoria_lanzar(current_user_id):
             if user_row:
                 ejecutor_nombre = user_row[0]
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.warning(f"Error obteniendo nombre de ejecutor: {e}")
     finally:
         if conn: release_db_connection(conn)
@@ -5007,6 +5265,9 @@ def auditoria_reportes(current_user_id):
             "catalogos": catalogos
         })
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error auditoria_reportes: {e}")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -5123,6 +5384,9 @@ def endpoint_enviar_auditoria(current_user_id, proyecto_id):
             return jsonify(resultado), 400
             
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en endpoint_enviar_auditoria: {e}")
         traceback.print_exc()
         return jsonify({"success": False, "message": f"Error interno: {str(e)}"}), 500
@@ -5213,6 +5477,9 @@ def endpoint_enviar_auditoria_lote(current_user_id):
         })
 
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en endpoint_enviar_auditoria_lote: {e}")
         return jsonify({"success": False, "message": f"Error interno: {str(e)}"}), 500
     finally:
@@ -5301,6 +5568,9 @@ def auditoria_dashboard(current_user_id):
             "catalogos"       : catalogos
         })
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error auditoria_dashboard: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
@@ -5396,6 +5666,9 @@ def volume_export():
             download_name=f"full_backup_admin_{datetime.now().strftime('%Y%m%d_%H%M')}.zip"
         )
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en exportación completa: {e}")
         return str(e), 500
 
@@ -5419,6 +5692,9 @@ def volume_import():
         
         return "Importación MULTI-CARPETA completada con éxito. Archivos fusionados.", 200
     except Exception as e:
+        try:
+            if 'conn' in locals() and conn: conn.rollback()
+        except: pass
         logger.error(f"Error en importación completa: {e}")
         return f"Error: {str(e)}", 500
 

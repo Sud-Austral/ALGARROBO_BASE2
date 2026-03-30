@@ -78,7 +78,7 @@
         <div>
             <h4
                 style="font-size: 0.9rem; font-weight: 800; color: #1e293b; margin-bottom: 1rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px;">
-                Alertas Críticas</h4>
+                Alertas Crï¿½ticas</h4>
             <div id="v24_critical_alerts" style="display: flex; flex-direction: column; gap: 10px;">
                 <!-- Filled by JS -->
             </div>
@@ -97,13 +97,13 @@
     <div
         style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #e2e8f0; padding-top: 2rem;">
         <div style="font-size: 0.75rem; color: #94a3b8;">
-            Generado automáticamente por el Sistema Integrado de Seguridad<br>
+            Generado automï¿½ticamente por el Sistema Integrado de Seguridad<br>
             Fuente: Carabineros de Chile (STOP) | Fecha Gen: <span id="v24_gen_date">--/--/--</span>
         </div>
         <div style="text-align: center;">
             <div style="width: 200px; border-bottom: 1px solid #1e293b; margin-bottom: 5px;"></div>
-            <div style="font-size: 0.85rem; font-weight: 800; color: #1e293b;">DIRECCIÓN DE SEGURIDAD</div>
-            <div style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Aprobación de
+            <div style="font-size: 0.85rem; font-weight: 800; color: #1e293b;">DIRECCIï¿½N DE SEGURIDAD</div>
+            <div style="font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Aprobaciï¿½n de
                 Mando</div>
         </div>
     </div>
@@ -111,12 +111,12 @@
 </div>
 
 
-<!-- Nota Metodológica -->
+<!-- Nota Metodolï¿½gica -->
 <div class="row" style="margin-top: 2rem;">
     <div
         style="background-color: #f8fafc; border-left: 4px solid #cbd5e1; padding: 1rem; border-radius: 4px; color: #64748b; font-size: 0.85rem; line-height: 1.5;">
-        <strong>Nota Metodológica:</strong> Esta vista presenta un análisis detallado de <strong>Reporte
-            Ejecutivo</strong>, permitiendo evaluar patrones y tendencias clave para la toma de decisiones estratégicas
+        <strong>Nota Metodolï¿½gica:</strong> Esta vista presenta un anï¿½lisis detallado de <strong>Reporte
+            Ejecutivo</strong>, permitiendo evaluar patrones y tendencias clave para la toma de decisiones estratï¿½gicas
         basadas en evidencia.
     </div>
 </div>
@@ -173,7 +173,7 @@
         const status = document.getElementById('v24_status_badge');
 
         if (delta > 15) {
-            status.textContent = 'STATUS: CRÍTICO';
+            status.textContent = 'STATUS: CRï¿½TICO';
             status.style.background = '#fef2f2';
             status.style.color = '#ef4444';
             status.style.border = '2px solid #ef4444';
@@ -199,23 +199,28 @@
         const findingsList = document.getElementById('v24_findings_list');
         const topCrimes = S.allDataHistory.filter(r => r[C.ID_SEMANA] === S.currentSemana).sort((a, b) => (b[C.CASOS_ACTUAL] || 0) - (a[C.CASOS_ACTUAL] || 0)).slice(0, 2);
 
-        findingsList.innerHTML = [
+        findingsList.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize([
             `El volumen total de delitos registra un comportamiento ${delta > 0 ? 'al alza' : 'a la baja'} respecto a la semana anterior.`,
-            `La tipología con mayor impacto esta semana es <strong>${topCrimes[0]?.[C.DELITO] || '--'}</strong> con ${topCrimes[0]?.[C.CASOS_ACTUAL] || 0} casos.`,
-            `La comuna ocupa la posición <strong>${rank}</strong> en el ranking regional proyectado anual.`
+            `La tipologï¿½a con mayor impacto esta semana es <strong>${topCrimes[0]?.[C.DELITO] || '--'}</strong> con ${topCrimes[0]?.[C.CASOS_ACTUAL] || 0} casos.`,
+            `La comuna ocupa la posiciï¿½n <strong>${rank}</strong> en el ranking regional proyectado anual.`
+        ].map(txt => `<div style="display: flex) : [
+            `El volumen total de delitos registra un comportamiento ${delta > 0 ? 'al alza' : 'a la baja'} respecto a la semana anterior.`,
+            `La tipologï¿½a con mayor impacto esta semana es <strong>${topCrimes[0]?.[C.DELITO] || '--'}</strong> con ${topCrimes[0]?.[C.CASOS_ACTUAL] || 0} casos.`,
+            `La comuna ocupa la posiciï¿½n <strong>${rank}</strong> en el ranking regional proyectado anual.`
         ].map(txt => `<div style="display: flex; gap: 10px; align-items: baseline; font-size: 1rem; color: #1e293b;"><i class="fa-solid fa-circle-check" style="color:#3b82f6; font-size:0.8rem;"></i> <span>${txt}</span></div>`).join('');
 
         // Alerts
         const alertsContainer = document.getElementById('v24_critical_alerts');
         const critical = S.allDataHistory.filter(r => r[C.ID_SEMANA] === S.currentSemana && (r[C.CASOS_ACTUAL] > r[C.CASOS_ANT] * 1.2)).slice(0, 2);
         if (critical.length > 0) {
-            alertsContainer.innerHTML = critical.map(a => `
+            alertsContainer.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(critical.map(a => `
+                <div style="background: #fef2f2) : critical.map(a => `
                 <div style="background: #fef2f2; padding: 10px; border-radius: 6px; border-left: 4px solid #ef4444; font-size: 0.85rem; font-weight: 700; color: #991b1b;">
                     ALZA EXPLOSIVA: ${a[C.DELITO]} (+${((a[C.CASOS_ACTUAL] - a[C.CASOS_ANT]) / a[C.CASOS_ANT] * 100).toFixed(0)}%)
                 </div>
             `).join('');
         } else {
-            alertsContainer.innerHTML = '<div style="font-size:0.85rem; color:#64748b;">No se detectan anomalías críticas específicas.</div>';
+            alertsContainer.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<div style="font-size:0.85rem) : '<div style="font-size:0.85rem; color:#64748b;">No se detectan anomalï¿½as crï¿½ticas especï¿½ficas.</div>';
         }
 
         // Mini Trend Chart
