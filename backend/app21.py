@@ -61,13 +61,11 @@ if allowed_origins_raw:
 else:
     # Fallback seguro para desarrollo local si la variable no existe
     allowed_origins = [
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "http://localhost:3000"
+        "*"
     ]
 
-# Aplicar políticas de CORS solo a rutas de API para mayor seguridad
-CORS(app, resources={r"/api/*": {"origins": allowed_origins}, r"/auth/*": {"origins": allowed_origins}}, supports_credentials=True)
+# Aplicar políticas de CORS a todas las rutas (las rutas de catálogo están en raíz: /areas, /proyectos, etc.)
+CORS(app, resources={r"/*": {"origins": allowed_origins}}, supports_credentials=True)
 
 # Logger middleware simplificado
 @app.before_request

@@ -421,9 +421,7 @@
                     </tr>`;
                 }).join('');
 
-                document.getElementById('tbl-body').innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(STATE.filtered.length ? html : `
-                    <tr>
-                        <td colspan="6" style="text-align:center) : STATE.filtered.length ? html : `
+                const emptyState = `
                     <tr>
                         <td colspan="6" style="text-align:center; padding: 4rem;">
                             <img src="https://illustrations.popsy.co/blue/searching.svg" style="width: 150px; margin: 0 auto 1.5rem; opacity: 0.8;">
@@ -431,6 +429,9 @@
                             <p style="color: #94a3b8; font-size: 0.9rem;">Pruebe con otros criterios de búsqueda o remueva los filtros.</p>
                         </td>
                     </tr>`;
+
+                const finalHtml = STATE.filtered.length ? html : emptyState;
+                document.getElementById('tbl-body').innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(finalHtml) : finalHtml;
 
                 // Update KPIs
                 document.getElementById('kpi-total').textContent = STATE.filtered.length;

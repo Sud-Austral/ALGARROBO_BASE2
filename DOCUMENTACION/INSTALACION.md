@@ -32,7 +32,7 @@ Se recomienda usar **Neon.tech** por su compatibilidad nativa con las herramient
 
 ```bash
 # Clonar el código fuente
-git clone https://github.com/Sud-Austral/ALGARROBO_BASE2.git
+git clone https://github.com/geoportalalgarrobo/ALGARROBO_BASE2.git
 cd ALGARROBO_BASE2
 
 # Crear un entorno virtual para aislar las dependencias del backend

@@ -1,1140 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-
-<head>
-    <script src="../../../script/router.js"></script>
-    <script src="../../../script/api.js"></script>
-    <script src="../../../script/utils.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geoportal Municipal - Algarrobo</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: '#6366f1',
-                        secondary: '#ec4899',
-                        accent: '#8b5cf6',
-                    }
-                }
-            }
-        }
-    </script>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <link rel="stylesheet" href="styles/admin-styles.css">
-
-    <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: #f8fafc;
-            background-image:
-                radial-gradient(at 0% 0%, hsla(253, 16%, 95%, 1) 0, transparent 50%),
-                radial-gradient(at 50% 0%, hsla(225, 39%, 95%, 1) 0, transparent 50%),
-                radial-gradient(at 100% 0%, hsla(339, 49%, 95%, 1) 0, transparent 50%);
-            color: #1e293b;
-            min-height: 100vh;
-        }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
-        }
-
-        .card-modern {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-            border: 1px solid rgba(241, 245, 249, 1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-modern::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .card-modern:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-modern:hover::after {
-            opacity: 1;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(8px);
-            z-index: 50;
-            opacity: 0;
-            transition: opacity 0.3s;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .modal-content {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 1.5rem;
-            width: 95%;
-            max-width: 1400px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1e293b;
-        }
-
-        .close-btn {
-            font-size: 1.5rem;
-            color: #94a3b8;
-            background: #f1f5f9;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            cursor: pointer;
-            border: none;
-        }
-
-        .close-btn:hover {
-            background: #fee2e2;
-            color: #ef4444;
-        }
-
-        input:not([type="checkbox"]),
-        textarea,
-        select {
-            border: 1px solid #e2e8f0;
-            border-radius: 0.75rem;
-            padding: 0.75rem 1rem;
-            width: 100%;
-            transition: all 0.2s;
-            background-color: #f8fafc;
-        }
-
-        input:not([type="checkbox"]):focus,
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: #6366f1;
-            background-color: white;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        fieldset {
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            background: #ffffff;
-        }
-
-        legend {
-            font-weight: 600;
-            color: #6366f1;
-            padding: 0 0.5rem;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            font-size: 0.875rem;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 0.875rem;
-            color: #334155;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        input[type="checkbox"] {
-            width: 1.25rem;
-            height: 1.25rem;
-            accent-color: #6366f1;
-            cursor: pointer;
-        }
-
-        .table-container {
-            border-radius: 1rem;
-            overflow: hidden;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-            background: white;
-            border: 1px solid #f1f5f9;
-        }
-
-        th {
-            background-color: #f8fafc;
-            color: #64748b;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            padding: 1rem 1.5rem;
-        }
-
-        td {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .status-badge {
-            padding: 0.35rem 0.85rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.025em;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: white;
-            padding: 1rem 1.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            transform: translateX(120%);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 2000;
-            border-left: 5px solid #6366f1;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast.success {
-            border-color: #10b981;
-        }
-
-        .toast.error {
-            border-color: #ef4444;
-        }
-
-        .toast.warning {
-            border-color: #f59e0b;
-        }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .loading {
-            width: 1.25rem;
-            height: 1.25rem;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        .toggle-column {
-            display: none;
-        }
-
-        .toggle-column-visible {
-            display: revert;
-        }
-
-        .details-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-        .details-table th,
-        .details-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .details-table th {
-            background-color: #f8fafc;
-            font-weight: 600;
-            color: #475569;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* 2026 Table styling */
-        .table-fixed {
-            table-layout: fixed;
-            width: 100%;
-        }
-
-        .col-ref {
-            width: 5%;
-        }
-
-        .col-main {
-            width: 25%;
-        }
-
-        .col-area {
-            width: 12%;
-        }
-
-        .col-finance {
-            width: 10%;
-        }
-
-        .col-amount {
-            width: 12%;
-        }
-
-        .col-status {
-            width: 12%;
-        }
-
-        .col-progress {
-            width: 14%;
-        }
-
-        .col-actions {
-            width: 10%;
-        }
-
-        @media (max-width: 1024px) {
-            .table-fixed {
-                table-layout: auto;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .responsive-table thead {
-                display: none;
-            }
-
-            .responsive-table tbody tr {
-                display: flex;
-                flex-direction: column;
-                padding: 1.5rem;
-                margin-bottom: 1rem;
-                border: 1px solid #f1f5f9;
-                border-radius: 1rem;
-                background: white;
-            }
-
-            .responsive-table td {
-                padding: 0.5rem 0 !important;
-                border-bottom: none !important;
-            }
-
-            .responsive-table td::before {
-                content: attr(data-label);
-                font-size: 10px;
-                font-weight: 800;
-                color: #94a3b8;
-                text-transform: uppercase;
-                display: block;
-                margin-bottom: 2px;
-            }
-
-            .responsive-table .col-actions {
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-        }
-
-        .stagger-item {
-            animation: fade-in-up 0.5s ease-out forwards;
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        @keyframes fade-in-up {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Highlight for Audit */
-        .audit-highlight {
-            border: 3px solid #f59e0b !important;
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4) !important;
-            animation: pulse-highlight 2s infinite !important;
-            background-color: #fffbeb !important;
-        }
-
-        @keyframes pulse-highlight {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-    </style>
-</head>
-
-<body class="bg-gray-50">
-
-    <div id="headerRender">
-    </div>
-
-    <div class="flex">
-        <div id="asideRender">
-        </div>
-
-        <main
-            class="flex-1 w-full max-w-[1700px] mx-auto p-4 md:p-8 transition-all duration-300 min-w-0 overflow-hidden">
-
-            <div id="projectsView" class="view-content">
-
-                <!-- Title Section -->
-                <header class="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-                    <div>
-                        <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Gestión
-                            Estratégica SECPLAC</h1>
-                        <p class="text-slate-500 font-medium mt-2 flex items-center gap-2">
-                            Cartera Algarrobo 2024-2026 <span class="text-slate-300">•</span>
-                            <span class="text-indigo-600 font-bold flex items-center gap-2">
-                                <i class="fas fa-sync-alt text-[10px] animate-spin-slow"></i>
-                                Sincronizado: <span id="lastUpdate">--/--/----</span>
-                            </span>
-                        </p>
-                    </div>
-                    <div class="flex flex-wrap gap-3">
-                        <button onclick="exportData()"
-                            class="px-5 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm">
-                            <i class="fas fa-file-excel mr-2 text-sm"></i> Reporte Excel
-                        </button>
-                        <button onclick="showAddProjectModal()"
-                            class="px-6 py-2.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-floating transform active:scale-95">
-                            <i class="fas fa-plus mr-2 text-sm"></i> Nuevo Proyecto
-                        </button>
-                    </div>
-                </header>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-
-                    <div class="card-modern p-6 relative">
-                        <div class="flex items-center justify-between z-10 relative">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Total Proyectos
-                                </p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="totalProjects">0</p>
-                            </div>
-                            <div
-                                class="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-lg shadow-blue-500/30 text-white">
-                                <i class="fas fa-folder text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-modern p-6 relative">
-                        <div class="flex items-center justify-between z-10 relative">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">En Ejecución</p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="executionProjects">0</p>
-                            </div>
-                            <div
-                                class="bg-gradient-to-br from-emerald-400 to-teal-500 p-3 rounded-xl shadow-lg shadow-emerald-500/30 text-white">
-                                <i class="fas fa-play-circle text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-modern p-6 relative">
-                        <div class="flex items-center justify-between z-10 relative">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Monto Total</p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="totalAmount">$0</p>
-                            </div>
-                            <div
-                                class="bg-gradient-to-br from-amber-400 to-orange-500 p-3 rounded-xl shadow-lg shadow-amber-500/30 text-white">
-                                <i class="fas fa-dollar-sign text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-modern p-6 relative">
-                        <div class="flex items-center justify-between z-10 relative">
-                            <div>
-                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Avance Promedio
-                                </p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="averageProgress">0%</p>
-                            </div>
-                            <div
-                                class="bg-gradient-to-br from-violet-500 to-purple-600 p-3 rounded-xl shadow-lg shadow-violet-500/30 text-white">
-                                <i class="fas fa-chart-line text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sticky Analytics/Search Toolbar -->
-                <div
-                    class="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-200 shadow-premium sticky top-4 z-40 mb-10 transition-shadow hover:shadow-floating">
-                    <div class="flex flex-col gap-6">
-                        <!-- Search & Secondary Actions -->
-                        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                            <div class="relative w-full lg:max-w-xl group">
-                                <i
-                                    class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors"></i>
-                                <input type="text" id="searchInput"
-                                    placeholder="Buscar por nombre, código, sector o profesional..."
-                                    class="w-full h-14 pl-14 pr-5 bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl text-base font-semibold outline-none transition-all">
-                            </div>
-                            <div class="flex items-center gap-4 w-full lg:w-auto">
-                                <button onclick="toggleColumns()" id="toggleColumnsBtn"
-                                    class="flex-1 lg:flex-none px-5 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-indigo-200 hover:text-indigo-600 transition-all shadow-sm">
-                                    <i class="fas fa-expand-arrows-alt mr-2"></i> Vista Expandida
-                                </button>
-                                <button onclick="limpiarFiltros()"
-                                    class="flex-1 lg:flex-none px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm">
-                                    <i class="fas fa-filter-circle-xmark mr-2"></i> Limpiar
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Filter Ribbon 2026 -->
-                        <div class="flex flex-wrap items-center gap-x-6 gap-y-4 mt-3" id="filterRibbon">
-                            <!-- Filters will be populated by JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-[2rem] border border-slate-200 shadow-premium overflow-hidden">
-                    <div class="px-8 py-6 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-                                <i class="fas fa-layer-group"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-slate-900">Listado Maestro de Proyectos</h3>
-                                <div class="flex items-center gap-2 mt-0.5">
-                                    <span id="proyectoCount"
-                                        class="text-[10px] font-black bg-indigo-100 text-indigo-700 px-2 rounded-md">...</span>
-                                    <span
-                                        class="text-[10px] text-slate-400 font-bold uppercase tracking-wider italic">Datos
-                                        auditados en tiempo real</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto custom-scrollbar">
-                        <table
-                            class="table-fixed responsive-table text-left border-separate border-spacing-0 min-w-full">
-                            <thead class="sticky-header">
-                                <tr class="bg-slate-50 border-b border-slate-200">
-                                    <th
-                                        class="col-ref toggle-column hidden px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center border-b">
-                                        N°</th>
-                                    <th
-                                        class="col-main px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">
-                                        Descripción General</th>
-                                    <th
-                                        class="col-area toggle-column hidden px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">
-                                        Área Responsable</th>
-                                    <th
-                                        class="col-finance toggle-column hidden px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b text-center">
-                                        Fuente</th>
-                                    <th
-                                        class="col-amount toggle-column hidden px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b text-right">
-                                        Monto Total</th>
-                                    <th
-                                        class="col-status px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b text-center">
-                                        Estado</th>
-                                    <th
-                                        class="col-progress px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">
-                                        Progreso</th>
-                                    <th
-                                        class="col-actions px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center border-b">
-                                        Gestión</th>
-                                </tr>
-                            </thead>
-                            <tbody id="projectsTableBody" class="divide-y divide-slate-100 bg-white">
-
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <div id="proyectoModal" class="modal">
-        <div class="modal-content" style="max-width: 1400px;">
-            <div class="modal-header"
-                style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%); color: white; border-radius: 1.5rem 1.5rem 0 0; padding: 2rem;">
-                <div>
-                    <h2 class="modal-title" id="modalTitle"
-                        style="color: white; font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="fas fa-folder-plus" id="modalIcon"></i>
-                        <span id="modalTitleText">Nuevo Proyecto</span>
-                    </h2>
-                    <p id="modalSubtitle" style="opacity: 0.9; font-size: 0.875rem;">Complete los campos para registrar
-                        un nuevo proyecto</p>
-                </div>
-                <button class="close-btn" onclick="closeModal()"
-                    style="color: white; font-size: 2rem; background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.3)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.2)'">&times;</button>
-            </div>
-            <div style="background: #fafbfc; padding: 2rem; max-height: 60vh; overflow-y: auto;">
-                <div id="quickActionsBar"
-                    class="hidden mb-6 bg-white p-4 rounded-xl shadow-sm border border-indigo-100 flex-wrap gap-3 items-center">
-                    <span class="text-sm font-bold text-indigo-900 mr-2"><i class="fas fa-bolt text-amber-500 mr-1"></i>
-                        Acciones Rápidas:</span>
-                    <button type="button"
-                        onclick="document.getElementById('hitosContainer').scrollIntoView({behavior:'smooth'})"
-                        class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-medium text-sm hover:bg-indigo-100 transition border border-indigo-100 shadow-sm"><i
-                            class="fas fa-flag mr-1"></i> Ver Hitos</button>
-                    <button type="button"
-                        onclick="document.getElementById('observacionesContainer').scrollIntoView({behavior:'smooth'})"
-                        class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium text-sm hover:bg-blue-100 transition border border-blue-100 shadow-sm"><i
-                            class="fas fa-comment-medical mr-1"></i> Ver Observaciones</button>
-                    <button type="button"
-                        onclick="document.getElementById('documentosContainer').scrollIntoView({behavior:'smooth'})"
-                        class="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-medium text-sm hover:bg-emerald-100 transition border border-emerald-100 shadow-sm"><i
-                            class="fas fa-file-upload mr-1"></i> Documentos</button>
-                    <button type="button" onclick="window.open('geomapas.html?pid=' + editingId, '_blank')"
-                        class="px-4 py-2 bg-amber-50 text-amber-700 rounded-lg font-medium text-sm hover:bg-amber-100 transition border border-amber-100 shadow-sm"><i
-                            class="fas fa-map-marked-alt mr-1"></i> Abrir Mapas</button>
-                </div>
-                <form id="proyectoForm">
-                    <fieldset>
-                        <legend>Información General</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="nombre">Nombre del Proyecto *</label>
-                                <input type="text" id="nombre" name="nombre" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="codigo">Código</label>
-                                <input type="text" id="codigo" name="codigo">
-                            </div>
-                            <div class="form-group" style="display: none;">
-                                <label for="n_registro">N° Registro</label>
-                                <input type="number" id="n_registro" name="n_registro">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="area_id">Área</label>
-                                <select id="area_id" name="area_id">
-                                    <option value="">Seleccione Área</option>
-                                </select>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Estado y Avance</legend>
-                        <div class="form-grid">
-
-                            <div class="form-group">
-                                <label for="estado_proyecto_id">Estado Proyecto</label>
-                                <select id="estado_proyecto_id" name="estado_proyecto_id">
-                                    <option value="">Seleccione Estado</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="etapa_proyecto_id">Etapa Proyecto</label>
-                                <select id="etapa_proyecto_id" name="etapa_proyecto_id">
-                                    <option value="">Seleccione Etapa</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="estado_postulacion_id">Estado Postulación</label>
-                                <select id="estado_postulacion_id" name="estado_postulacion_id">
-                                    <option value="">Seleccione Estado</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="avance_total_porcentaje">Avance Total (%)</label>
-                                <input type="number" id="avance_total_porcentaje" name="avance_total_porcentaje"
-                                    step="0.01" min="0" max="100">
-                            </div>
-                            <div class="form-group">
-                                <div class="checkbox-group">
-                                    <input type="checkbox" id="es_prioridad" name="es_prioridad" value="SI">
-                                    <label for="es_prioridad" style="margin-bottom: 0;">¿Es Prioridad?</label>
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Financiamiento</legend>
-                        <div class="form-grid">
-
-                            <div class="form-group">
-                                <label for="financiamiento_id">Financiamiento</label>
-                                <select id="financiamiento_id" name="financiamiento_id">
-                                    <option value="">Seleccione Financiamiento</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="monto">Monto ($) </label>
-                                <input type="number" id="monto" name="monto" step="1" min="0">
-                            </div>
-                            <div class="form-group">
-                                <div class="checkbox-group">
-                                    <input type="checkbox" id="financiamiento_municipal" name="financiamiento_municipal"
-                                        value="SI">
-                                    <label for="financiamiento_municipal" style="margin-bottom: 0;">¿Financiamiento
-                                        Municipal?</label>
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Fechas y Plazos</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="anno_elaboracion">Año Elaboración</label>
-                                <input type="number" id="anno_elaboracion" name="anno_elaboracion" min="2000"
-                                    max="2100">
-                            </div>
-                            <div class="form-group">
-                                <label for="anno_ejecucion">Año Ejecución</label>
-                                <input type="number" id="anno_ejecucion" name="anno_ejecucion" min="2000" max="2100">
-                            </div>
-                            <div class="form-group">
-                                <label for="fecha_postulacion">Fecha Postulación</label>
-                                <input type="date" id="fecha_postulacion" name="fecha_postulacion">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="fecha_actualizacion">Fecha Actualización</label>
-                                <input type="date" id="fecha_actualizacion" name="fecha_actualizacion">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Ubicación y Territorio</legend>
-                        <div class="form-grid">
-
-                            <div class="form-group">
-                                <label for="lineamiento_estrategico_id">Lineamiento Estratégico</label>
-                                <select id="lineamiento_estrategico_id" name="lineamiento_estrategico_id">
-                                    <option value="">Seleccione Lineamiento</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="sector_id">Sector</label>
-                                <select id="sector_id" name="sector_id">
-                                    <option value="">Seleccione Sector</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="unidad_vecinal">Unidad Vecinal</label>
-                                <input type="text" id="unidad_vecinal" name="unidad_vecinal">
-                            </div>
-                            <div class="form-group">
-                                <label for="latitud">Latitud</label>
-                                <input type="number" id="latitud" name="latitud" step="any">
-                            </div>
-                            <div class="form-group">
-                                <label for="longitud">Longitud</label>
-                                <input type="number" id="longitud" name="longitud" step="any">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Profesionales a Cargo</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="profesional_1">Profesional 1</label>
-                                <input type="text" id="profesional_1" name="profesional_1">
-                            </div>
-                            <div class="form-group">
-                                <label for="profesional_2">Profesional 2</label>
-                                <input type="text" id="profesional_2" name="profesional_2">
-                            </div>
-                            <div class="form-group">
-                                <label for="profesional_3">Profesional 3</label>
-                                <input type="text" id="profesional_3" name="profesional_3">
-                            </div>
-                            <div class="form-group">
-                                <label for="profesional_4">Profesional 4</label>
-                                <input type="text" id="profesional_4" name="profesional_4">
-                            </div>
-                            <div class="form-group">
-                                <label for="profesional_5">Profesional 5</label>
-                                <input type="text" id="profesional_5" name="profesional_5">
-                            </div>
-                            <div class="form-group">
-                                <label for="dupla_profesionales">Dupla Profesionales</label>
-                                <input type="text" id="dupla_profesionales" name="dupla_profesionales">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Documentación y Técnica</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="documentos">Documentos (Estado)</label>
-                                <input type="text" id="documentos" name="documentos">
-                            </div>
-                            <div class="form-group">
-                                <label for="planimetrias">Planimetrías (Estado)</label>
-                                <input type="text" id="planimetrias" name="planimetrias">
-                            </div>
-                            <div class="form-group">
-                                <label for="topografia">Topografía (Estado)</label>
-                                <input type="text" id="topografia" name="topografia">
-                            </div>
-                            <div class="form-group">
-                                <label for="ingenieria">Ingeniería</label>
-                                <input type="text" id="ingenieria" name="ingenieria">
-                            </div>
-                            <div class="form-group">
-                                <label for="perfil_tecnico_economico">Perfil Técnico Económico</label>
-                                <input type="text" id="perfil_tecnico_economico" name="perfil_tecnico_economico">
-                            </div>
-                            <div class="form-group">
-                                <label for="aprobacion_dom">Aprobación DOM</label>
-                                <input type="text" id="aprobacion_dom" name="aprobacion_dom">
-                            </div>
-                            <div class="form-group">
-                                <label for="aprobacion_serviu">Aprobación SERVIU</label>
-                                <input type="text" id="aprobacion_serviu" name="aprobacion_serviu">
-                            </div>
-                        </div>
-                    </fieldset>
-
-                    <fieldset style="display: none;">
-                        <legend>Observaciones</legend>
-                        <div class="form-group">
-                            <label for="observaciones">Observaciones Generales</label>
-                            <textarea id="observaciones" name="observaciones" rows="4"></textarea>
-                        </div>
-                    </fieldset>
-
-                </form>
-
-                <!-- Próximos Pasos (Solo en edición) -->
-                <div id="proximosPasosContainer" class="hidden mt-8 pt-6 border-t border-gray-200">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold text-gray-800"><i
-                                class="fas fa-forward text-indigo-500 mr-2"></i>Próximos Pasos</h3>
-                        <button type="button" onclick="showAddProximoPasoForm()"
-                            class="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100 transition shadow-sm border border-indigo-200 flex items-center gap-1">
-                            <i class="fas fa-plus"></i> Registrar Paso
-                        </button>
-                    </div>
-
-                    <form id="addProximoPasoForm"
-                        class="hidden bg-white p-5 rounded-xl border border-indigo-200 shadow-sm mb-4"
-                        onsubmit="saveProximoPaso(event)">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Comentario / Tarea *</label>
-                                <input type="text" id="pp_comentario" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Fecha Plazo *</label>
-                                <input type="date" id="pp_fecha_plazo" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Responsable (Opcional)</label>
-                                <input type="text" id="pp_responsable" placeholder="Ej: Dirección de Obras"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Prioridad</label>
-                                <select id="pp_prioridad"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                                    <option value="BAJA">Baja</option>
-                                    <option value="MEDIA" selected>Media</option>
-                                    <option value="ALTA">Alta</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="flex justify-end gap-2">
-                            <button type="button" onclick="hideAddProximoPasoForm()"
-                                class="px-3 py-1.5 text-xs font-bold text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                            <button type="submit"
-                                class="px-4 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow flex items-center gap-2"
-                                id="pp_submitBtn">
-                                <i class="fas fa-save"></i> Guardar Paso
-                            </button>
-                        </div>
-                    </form>
-
-                    <div id="proximosPasosList" class="space-y-3">
-                        <div class="text-center py-4 text-gray-400 text-sm italic">Cargando próximos pasos...</div>
-                    </div>
-                </div>
-
-                <!-- Hitos (Solo en edición) -->
-                <div id="hitosContainer" class="hidden mt-8 pt-6 border-t border-gray-200">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold text-gray-800"><i
-                                class="fas fa-flag text-emerald-500 mr-2"></i>Hitos del Proyecto</h3>
-                        <button type="button" onclick="showAddHitoForm()"
-                            class="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-bold hover:bg-emerald-100 transition shadow-sm border border-emerald-200 flex items-center gap-1">
-                            <i class="fas fa-plus"></i> Registrar Hito
-                        </button>
-                    </div>
-
-                    <form id="addHitoForm"
-                        class="hidden bg-white p-5 rounded-xl border border-emerald-200 shadow-sm mb-4"
-                        onsubmit="saveHito_edit(event)">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Categoría de Hito *</label>
-                                <select id="h_categoria" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"></select>
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Fecha *</label>
-                                <input type="date" id="h_fecha" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
-                            </div>
-                            <div class="form-group mb-0 md:col-span-2">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Observación</label>
-                                <textarea id="h_observacion" rows="2"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500"></textarea>
-                            </div>
-                        </div>
-                        <div class="flex justify-end gap-2">
-                            <button type="button" onclick="hideAddHitoForm()"
-                                class="px-3 py-1.5 text-xs font-bold text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                            <button type="submit"
-                                class="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow flex items-center gap-2"
-                                id="h_submitBtn">
-                                <i class="fas fa-save"></i> Guardar Hito
-                            </button>
-                        </div>
-                    </form>
-
-                    <div id="hitosList" class="space-y-3"></div>
-                </div>
-
-                <!-- Observaciones (Solo en edición) -->
-                <div id="observacionesContainer" class="hidden mt-8 pt-6 border-t border-gray-200">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold text-gray-800"><i
-                                class="fas fa-comment-medical text-blue-500 mr-2"></i>Observaciones</h3>
-                        <button type="button" onclick="showAddObservacionForm()"
-                            class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 transition shadow-sm border border-blue-200 flex items-center gap-1">
-                            <i class="fas fa-plus"></i> Nueva Observación
-                        </button>
-                    </div>
-
-                    <form id="addObservacionForm"
-                        class="hidden bg-white p-5 rounded-xl border border-blue-200 shadow-sm mb-4"
-                        onsubmit="saveObservacion_edit(event)">
-                        <div class="grid grid-cols-1 gap-4 mb-4">
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Fecha *</label>
-                                <input type="date" id="o_fecha" required
-                                    class="w-full xl:w-1/3 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="text-xs font-bold text-gray-600 uppercase">Detalle de la Observación
-                                    *</label>
-                                <textarea id="o_observacion" rows="3" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"></textarea>
-                            </div>
-                        </div>
-                        <div class="flex justify-end gap-2">
-                            <button type="button" onclick="hideAddObservacionForm()"
-                                class="px-3 py-1.5 text-xs font-bold text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200">Cancelar</button>
-                            <button type="submit"
-                                class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow flex items-center gap-2"
-                                id="o_submitBtn">
-                                <i class="fas fa-save"></i> Registrar
-                            </button>
-                        </div>
-                    </form>
-
-                    <div id="observacionesList" class="space-y-3"></div>
-                </div>
-
-                <!-- Documentos (Solo en edición) -->
-                <div id="documentosContainer" class="hidden mt-8 pt-6 border-t border-gray-200">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold text-gray-800"><i
-                                class="fas fa-folder-open text-amber-500 mr-2"></i>Documentos</h3>
-                        <label
-                            class="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-sm font-bold hover:bg-amber-100 transition shadow-sm border border-amber-200 flex items-center gap-1 cursor-pointer">
-                            <i class="fas fa-upload"></i> Subir Documento
-                            <input type="file" class="hidden" onchange="uploadDocumento_edit(event)"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
-                        </label>
-                    </div>
-                    <div id="documentosList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-                </div>
-
-            </div>
-            <div class="modal-footer"
-                style="background: #f8f9fa; border-radius: 0 0 1.5rem 1.5rem; padding: 1.5rem 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
-                <button type="button"
-                    class="px-6 py-3 rounded-xl bg-gradient-to-r from-slate-700 to-slate-900 text-white hover:from-slate-800 hover:to-slate-950 font-medium transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
-                    onclick="closeModal()">
-                    <i class="fas fa-times"></i>
-                    Cancelar
-                </button>
-                <button type="submit" form="proyectoForm"
-                    class="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 font-medium transition-all shadow-lg shadow-indigo-500/30 hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
-                    id="submitBtn">
-                    <i class="fas fa-save"></i>
-                    <span id="submitText">Guardar</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="viewProjectModal" class="modal">
-        <div class="modal-content" style="max-width: 1400px;">
-            <div class="modal-header flex items-center justify-between"
-                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 1.5rem 1.5rem 0 0; padding: 2rem;">
-                <div>
-                    <h2 class="modal-title"
-                        style="color: white; font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem;">Detalles
-                        del
-                        Proyecto</h2>
-                    <p style="opacity: 0.9; font-size: 0.875rem;">Información completa y detallada</p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <button type="button" id="btnDownloadReport"
-                        class="px-5 py-2.5 rounded-xl bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium transition-all flex items-center gap-2 border border-white border-opacity-30">
-                        <i class="fas fa-file-pdf"></i>
-                        Descargar Reporte
-                    </button>
-                    <button class="close-btn" onclick="closeViewModal()"
-                        style="color: white; font-size: 2rem; background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s;"
-                        onmouseover="this.style.background='rgba(255,255,255,0.3)'"
-                        onmouseout="this.style.background='rgba(255,255,255,0.2)'">&times;</button>
-                </div>
-            </div>
-            <div id="viewProjectDetails" class="p-6" style="background: #fafbfc;">
-
-            </div>
-            <div class="modal-footer"
-                style="background: #f8f9fa; border-radius: 0 0 1.5rem 1.5rem; padding: 1.5rem 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
-                <button type="button"
-                    class="px-6 py-3 rounded-xl bg-gradient-to-r from-slate-700 to-slate-900 text-white hover:from-slate-800 hover:to-slate-950 font-medium transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
-                    onclick="closeViewModal()">
-                    <i class="fas fa-times"></i>
-                    Cerrar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast" class="toast">
-        <span id="toastMessage"></span>
-    </div>
-
-    <script src="../../../script/layout.js"></script>
-    <script src="../../../script/help.js"></script>
-    <script src="../../../script/pdf.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', () => createHelpButton('proyecto'));</script>
-
-    <script>
-
-        let proyectos = [];
+﻿        let proyectos = [];
         let catalogData = {
             areas: [],
             financiamientos: [],
@@ -1149,7 +13,7 @@
 
         const currentFilters = { area: [], lineamiento: [], financiamiento: [], anno_elaboracion: [], anno_ejecucion: [], estado: [], etapa: [], estado_postulacion: [], profesional: [] };
         const mapFilters = { area: 'area_nombre', lineamiento: 'lineamiento_estrategico_nombre', financiamiento: 'financiamiento_nombre', anno_elaboracion: 'anno_elaboracion', anno_ejecucion: 'anno_ejecucion', estado: 'estado_nombre', etapa: 'etapa_nombre', estado_postulacion: 'estado_postulacion_nombre', profesional: 'profesional_1' };
-        const labelFilters = { area: 'Área', lineamiento: 'Línea', financiamiento: 'Fte.', anno_elaboracion: 'Elab.', anno_ejecucion: 'Ejec.', estado: 'Estado', etapa: 'Etapa', estado_postulacion: 'Post.', profesional: 'Prof.' };
+        const labelFilters = { area: 'Ãrea', lineamiento: 'LÃ­nea', financiamiento: 'Fte.', anno_elaboracion: 'Elab.', anno_ejecucion: 'Ejec.', estado: 'Estado', etapa: 'Etapa', estado_postulacion: 'Post.', profesional: 'Prof.' };
         let activeMenuKey = null;
 
         async function loadCatalogData() {
@@ -1173,13 +37,13 @@
                 populateFormSelects();
                 populateFilterSelects();
             } catch (error) {
-                console.error('Error cargando catálogos:', error);
+                console.error('Error cargando catÃ¡logos:', error);
                 showToast('Error al sincronizar datos', 'error');
             }
         }
 
         function populateFilterSelects() {
-            // Reemplazado por el nuevo manejo dinámico populateFilters() alv
+            // Reemplazado por el nuevo manejo dinÃ¡mico populateFilters() alv
         }
 
         function populateFormSelects() {
@@ -1200,11 +64,11 @@
                 if (currentVal) select.value = currentVal;
             };
 
-            fillSelect('area_id', catalogData.areas, 'Seleccione Área');
+            fillSelect('area_id', catalogData.areas, 'Seleccione Ãrea');
             fillSelect('financiamiento_id', catalogData.financiamientos, 'Seleccione Financiamiento', (i) => i.fuente || i.nombre);
             fillSelect('estado_proyecto_id', catalogData.estados_proyecto, 'Seleccione Estado');
             fillSelect('etapa_proyecto_id', catalogData.etapas_proyecto, 'Seleccione Etapa');
-            fillSelect('estado_postulacion_id', catalogData.estados_postulacion, 'Seleccione Estado Postulación');
+            fillSelect('estado_postulacion_id', catalogData.estados_postulacion, 'Seleccione Estado PostulaciÃ³n');
             fillSelect('sector_id', catalogData.sectores, 'Seleccione Sector');
             fillSelect('lineamiento_estrategico_id', catalogData.lineamientos_estrategicos, 'Seleccione Lineamiento');
         }
@@ -1249,7 +113,7 @@
             }
             document.getElementById('proyectoForm').addEventListener('submit', handleSubmit);
 
-            // Cerrar menú de filtros al hacer click fuera
+            // Cerrar menÃº de filtros al hacer click fuera
             window.onclick = (e) => {
                 const target = e.target;
                 if (!target.closest('.group') && !target.closest('.relative')) {
@@ -1457,7 +321,7 @@
                         <td colspan="8" class="text-center py-20 bg-slate-50/20">
                             <i class="fas fa-ghost text-4xl text-slate-200 mb-4 block"></i>
                             <p class="font-extrabold text-slate-400 uppercase tracking-widest text-[11px]">Cero coincidencias encontradas</p>
-                            <p class="text-sm text-gray-400 mt-2">Intenta ajustar los filtros de búsqueda</p>
+                            <p class="text-sm text-gray-400 mt-2">Intenta ajustar los filtros de bÃºsqueda</p>
                         </td>
                     </tr>
                 `) : `
@@ -1465,7 +329,7 @@
                         <td colspan="8" class="text-center py-20 bg-slate-50/20">
                             <i class="fas fa-ghost text-4xl text-slate-200 mb-4 block"></i>
                             <p class="font-extrabold text-slate-400 uppercase tracking-widest text-[11px]">Cero coincidencias encontradas</p>
-                            <p class="text-sm text-gray-400 mt-2">Intenta ajustar los filtros de búsqueda</p>
+                            <p class="text-sm text-gray-400 mt-2">Intenta ajustar los filtros de bÃºsqueda</p>
                         </td>
                     </tr>
                 `;
@@ -1492,16 +356,16 @@
                         <td class="toggle-column ${visibilityClass} px-6 py-5 text-center" data-label="ID">
                             <span class="font-mono text-[10px] font-black text-slate-400">#${proyecto.id || ''}</span>
                         </td>
-                        <td class="px-6 py-5" data-label="Descripción">
+                        <td class="px-6 py-5" data-label="DescripciÃ³n">
                             <div class="max-w-md">
-                                <h4 class="text-xs md:text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate" title="${proyecto.nombre || ''}">${proyecto.nombre || 'Proyecto sin denominación'}</h4>
+                                <h4 class="text-xs md:text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate" title="${proyecto.nombre || ''}">${proyecto.nombre || 'Proyecto sin denominaciÃ³n'}</h4>
                                 <div class="flex items-center gap-3 mt-1.5 overflow-hidden">
                                     <span class="shrink-0 text-[9px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded tracking-tighter">${proyecto.codigo || 'S/N'}</span>
                                     <span class="text-[10px] text-slate-400 font-bold truncate"><i class="fas fa-location-dot mr-1 opacity-40"></i> ${proyecto.sector_nombre || 'General Algarrobo'}</span>
                                 </div>
                             </div>
                         </td>
-                        <td class="toggle-column ${visibilityClass} px-6 py-5" data-label="Área">
+                        <td class="toggle-column ${visibilityClass} px-6 py-5" data-label="Ãrea">
                             <p class="text-[11px] font-black text-slate-700 uppercase leading-none">${proyecto.area_nombre || '-'}</p>
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight opacity-70">${proyecto.lineamiento_nombre || '-'}</span>
                         </td>
@@ -1525,10 +389,10 @@
                                 <span class="text-[10px] font-black text-slate-700 w-8 text-right">${displayProgress}%</span>
                             </div>
                         </td>
-                        <td class="px-6 py-5" data-label="Gestión">
+                        <td class="px-6 py-5" data-label="GestiÃ³n">
                             <div class="flex justify-center items-center gap-2">
                                 <button onclick="viewProject(${proyecto.id})" class="w-8 h-8 md:w-9 md:h-9 bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white rounded-xl transition-all shadow-sm tooltip" title="Ver detalles"><i class="fas fa-eye text-xs"></i></button>
-                                <button onclick="editProject(${proyecto.id})" class="w-8 h-8 md:w-9 md:h-9 bg-slate-50 text-slate-400 hover:bg-indigo-600 hover:text-white rounded-xl transition-all shadow-sm tooltip" title="Editar Parámetros"><i class="fas fa-pen text-xs"></i></button>
+                                <button onclick="editProject(${proyecto.id})" class="w-8 h-8 md:w-9 md:h-9 bg-slate-50 text-slate-400 hover:bg-indigo-600 hover:text-white rounded-xl transition-all shadow-sm tooltip" title="Editar ParÃ¡metros"><i class="fas fa-pen text-xs"></i></button>
                                 <button onclick="deleteProject(${proyecto.id})" class="w-8 h-8 md:w-9 md:h-9 bg-slate-50 text-slate-400 hover:bg-rose-500 hover:text-white rounded-xl transition-all shadow-sm tooltip" title="Eliminar"><i class="fas fa-trash-alt text-xs"></i></button>
                             </div>
                         </td>
@@ -1540,7 +404,7 @@
         function updateKPIs(proyectosData) {
             document.getElementById('totalProjects').textContent = proyectosData.length;
 
-            const executionCount = proyectosData.filter(p => p.estado_nombre === 'Ejecución').length;
+            const executionCount = proyectosData.filter(p => p.estado_nombre === 'EjecuciÃ³n').length;
             document.getElementById('executionProjects').textContent = executionCount;
             const totalAmount = proyectosData.reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0);
             document.getElementById('totalAmount').textContent = utils.formatCurrency(totalAmount);
@@ -1593,7 +457,7 @@
                 entidad_id: id,
                 entidad_nombre: proyecto.nombre || `Proyecto #${id}`,
                 exitoso: true
-            }).catch(() => { }); // silencioso — no interrumpe la UI
+            }).catch(() => { }); // silencioso â€” no interrumpe la UI
 
             let projectDocs = [];
             let proximosPasos = [];
@@ -1643,13 +507,13 @@
                             <i class="fas fa-project-diagram"></i>
                         </div>
                         <div class="flex-1 text-center md:text-left">
-                            <h3 class="text-2xl font-bold text-gray-900 mb-2">${proyecto.nombre || 'Sin denominación'}</h3>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">${proyecto.nombre || 'Sin denominaciÃ³n'}</h3>
                             <div class="flex flex-wrap items-center justify-center md:justify-start gap-3">
                                 <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-black bg-indigo-50 text-indigo-700 tracking-wider">
                                     <i class="fas fa-hashtag mr-1.5 opacity-50"></i> ${proyecto.codigo || 'N/A'}
                                 </span>
                                 <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-black bg-emerald-50 text-emerald-700 tracking-wider uppercase">
-                                    <i class="fas fa-layer-group mr-1.5 opacity-50"></i> ${proyecto.area_nombre || 'Sin Área'}
+                                    <i class="fas fa-layer-group mr-1.5 opacity-50"></i> ${proyecto.area_nombre || 'Sin Ãrea'}
                                 </span>
                                 <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-black bg-blue-50 text-blue-700 tracking-wider uppercase" style="${proyecto.estado_color ? `background-color: ${proyecto.estado_color}1a; color: ${proyecto.estado_color}; border: 1px solid ${proyecto.estado_color}33;` : ''}">
                                     <i class="fas fa-flag mr-1.5 opacity-50"></i> ${proyecto.estado_nombre || 'Sin Estado'}
@@ -1657,7 +521,7 @@
                             </div>
                         </div>
                         <div class="text-center md:text-right w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100">
-                            <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Monto Inversión</div>
+                            <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Monto InversiÃ³n</div>
                             <div class="text-2xl font-black text-indigo-600 font-mono tracking-tight">${utils.formatCurrency(proyecto.monto)}</div>
                         </div>
                     </div>
@@ -1674,7 +538,7 @@
                                     <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">
                                         <i class="fas fa-info-circle"></i>
                                     </div>
-                                    <h4 class="font-bold text-slate-800 text-sm">Información General</h4>
+                                    <h4 class="font-bold text-slate-800 text-sm">InformaciÃ³n General</h4>
                                 </div>
                                 <div class="p-5 space-y-3">
                                     <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
@@ -1686,11 +550,11 @@
                                         <span class="text-xs font-black text-slate-800">${proyecto.etapa_nombre || '-'}</span>
                                     </div>
                                     <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
-                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Postulación:</span>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">PostulaciÃ³n:</span>
                                         <span class="text-xs font-black text-slate-800">${proyecto.estado_postulacion_nombre || '-'}</span>
                                     </div>
                                     <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
-                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Avance Físico:</span>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Avance FÃ­sico:</span>
                                         <div class="flex items-center gap-2">
                                             <div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
                                                 <div class="h-full bg-indigo-500 rounded-full" style="width: ${parseFloat(proyecto.avance_total_porcentaje) > 1 ? parseFloat(proyecto.avance_total_porcentaje) : parseFloat(proyecto.avance_total_porcentaje || 0) * 100}%"></div>
@@ -1701,19 +565,19 @@
                                     <div class="flex justify-between items-center py-2">
                                         <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Prioridad:</span>
                                         <span class="text-xs font-black ${proyecto.es_prioridad === 'SI' ? 'text-red-600 bg-red-50 px-2.5 py-1.5 rounded-lg' : 'text-slate-700 bg-slate-50 px-2.5 py-1.5 rounded-lg'}">
-                                            ${proyecto.es_prioridad === 'SI' ? '<i class="fas fa-fire mr-1 text-red-500"></i> Crítico' : '<i class="fas fa-minus mr-1 opacity-50"></i> Normal'}
+                                            ${proyecto.es_prioridad === 'SI' ? '<i class="fas fa-fire mr-1 text-red-500"></i> CrÃ­tico' : '<i class="fas fa-minus mr-1 opacity-50"></i> Normal'}
                                         </span>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Documentación y Técnica -->
+                            <!-- DocumentaciÃ³n y TÃ©cnica -->
                             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                                 <div class="bg-slate-50 border-b border-slate-100 px-5 py-4 flex items-center gap-3">
                                     <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
                                         <i class="fas fa-file-contract"></i>
                                     </div>
-                                    <h4 class="font-bold text-slate-800 text-sm">Estado Documental y Técnico</h4>
+                                    <h4 class="font-bold text-slate-800 text-sm">Estado Documental y TÃ©cnico</h4>
                                 </div>
                                 <div class="p-5 space-y-3">
                                     <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
@@ -1721,15 +585,15 @@
                                         ${formatDocProgress(proyecto.documentos)}
                                     </div>
                                     <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
-                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Planimetrías:</span>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">PlanimetrÃ­as:</span>
                                         ${formatDocProgress(proyecto.planimetrias)}
                                     </div>
                                     <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
-                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Topografía:</span>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">TopografÃ­a:</span>
                                         ${formatDocProgress(proyecto.topografia)}
                                     </div>
                                     <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
-                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Ingeniería:</span>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">IngenierÃ­a:</span>
                                         ${formatDocProgress(proyecto.ingenieria)}
                                     </div>
                                     <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
@@ -1737,11 +601,11 @@
                                         ${formatDocProgress(proyecto.perfil_tecnico_economico)}
                                     </div>
                                     <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-200">
-                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Aprobación DOM:</span>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">AprobaciÃ³n DOM:</span>
                                         ${formatDocProgress(proyecto.aprobacion_dom)}
                                     </div>
                                     <div class="flex justify-between items-center py-2">
-                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Aprobación SERVIU:</span>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">AprobaciÃ³n SERVIU:</span>
                                         ${formatDocProgress(proyecto.aprobacion_serviu)}
                                     </div>
                                 </div>
@@ -1757,7 +621,7 @@
                                 </div>
                                 <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                                     <div class="flex flex-col">
-                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Fuente Inversión</span>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Fuente InversiÃ³n</span>
                                         <span class="text-sm font-black text-slate-800">${proyecto.financiamiento_nombre || '-'}</span>
                                     </div>
                                     <div class="flex flex-col">
@@ -1765,7 +629,7 @@
                                         <span class="text-sm font-black text-slate-800">${proyecto.financiamiento_municipal || '-'}</span>
                                     </div>
                                     <div class="flex flex-col">
-                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Asignación Territorial</span>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">AsignaciÃ³n Territorial</span>
                                         <span class="text-sm font-black text-slate-800"><i class="fas fa-map-marker-alt text-slate-400 mr-1.5"></i> ${proyecto.sector_nombre || '-'}</span>
                                     </div>
                                     <div class="col-span-1 md:col-span-2 flex flex-col pt-3 border-t border-dashed border-slate-100 mt-2">
@@ -1794,13 +658,13 @@
                                 </div>
                             </div>
                             
-                            <!-- Próximos Pasos -->
+                            <!-- PrÃ³ximos Pasos -->
                             <div class="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
                                 <div class="bg-indigo-50 border-b border-indigo-100 px-5 py-4 flex items-center gap-3">
                                     <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-sm shadow-md shadow-indigo-200">
                                         <i class="fas fa-forward"></i>
                                     </div>
-                                    <h4 class="font-bold text-indigo-900 text-sm">Responsabilidad Próximos Pasos</h4>
+                                    <h4 class="font-bold text-indigo-900 text-sm">Responsabilidad PrÃ³ximos Pasos</h4>
                                 </div>
                                 <div class="p-5">
                                     ${proximosPasos.length > 0 ? `
@@ -1902,7 +766,7 @@
                                                         <div class="bg-white rounded-lg p-3 mt-2">
                                                             <p class="text-sm text-gray-700 leading-relaxed">${h.observacion}</p>
                                                         </div>
-                                                    ` : '<p class="text-sm text-gray-500 italic">Sin observación</p>'}
+                                                    ` : '<p class="text-sm text-gray-500 italic">Sin observaciÃ³n</p>'}
                                                     ${(h.nombre_creador || h.creado_por) ? `
                                                         <div class="text-xs text-gray-500 mt-2 flex items-center gap-1">
                                                             <i class="fas fa-user"></i>
@@ -1930,7 +794,7 @@
                                     <i class="fas fa-comments"></i>
                                 </div>
                                 Observaciones del Proyecto
-                                <span class="ml-auto bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">${observaciones.length} observación${observaciones.length !== 1 ? 'es' : ''}</span>
+                                <span class="ml-auto bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">${observaciones.length} observaciÃ³n${observaciones.length !== 1 ? 'es' : ''}</span>
                             </h3>
                         </div>
                         <div class="p-6 space-y-4">
@@ -1956,7 +820,7 @@
                                                         ` : ''}
                                                     </div>
                                                     <div class="bg-white rounded-lg p-4">
-                                                        <p class="text-sm text-gray-800 leading-relaxed">${o.observacion || 'Sin observación'}</p>
+                                                        <p class="text-sm text-gray-800 leading-relaxed">${o.observacion || 'Sin observaciÃ³n'}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1973,7 +837,7 @@
                     <div class="bg-gradient-to-r from-gray-700 to-gray-900 rounded-2xl shadow-lg p-6 text-white">
                         <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
                             <i class="fas fa-shield-alt"></i>
-                            Auditoría del Sistema
+                            AuditorÃ­a del Sistema
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
                             <div class="bg-white bg-opacity-10 rounded-2xl p-4 backdrop-blur shadow-inner">
@@ -1985,18 +849,18 @@
                                 <div class="font-bold text-sm truncate" title="${proyecto.actualizado_por_nombre}">${proyecto.actualizado_por_nombre || 'Desconocido'}</div>
                             </div>
                             <div class="bg-white bg-opacity-10 rounded-2xl p-4 backdrop-blur shadow-inner">
-                                <div class="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">Última modificación</div>
+                                <div class="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">Ãšltima modificaciÃ³n</div>
                                 <div class="font-bold text-sm">${formatDisplayDate(proyecto.fecha_actualizacion).split(' ')[0] || 'Desconocido'}</div>
                             </div>
                             <div class="bg-white bg-opacity-10 rounded-2xl p-4 backdrop-blur shadow-inner">
-                                <div class="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">Auditoría Total</div>
+                                <div class="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-1">AuditorÃ­a Total</div>
                                 <div class="font-bold text-sm">${ultimosCambios.length} cambios recientes</div>
                             </div>
                         </div>
 
                         ${ultimosCambios.length > 0 ? `
                         <div class="mt-6">
-                            <h4 class="text-sm font-bold text-gray-300 mb-3 uppercase tracking-wider">Últimos 10 Cambios</h4>
+                            <h4 class="text-sm font-bold text-gray-300 mb-3 uppercase tracking-wider">Ãšltimos 10 Cambios</h4>
                             <div class="space-y-3">
                                 ${ultimosCambios.map(c => `
                                     <div class="bg-white bg-opacity-5 rounded-lg p-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
@@ -2041,7 +905,7 @@
         }
 
         async function deleteProject(id) {
-            if (!confirm('¿Está seguro de que desea eliminar este proyecto? Esta acción no se puede deshacer.')) return;
+            if (!confirm('Â¿EstÃ¡ seguro de que desea eliminar este proyecto? Esta acciÃ³n no se puede deshacer.')) return;
 
             try {
 
@@ -2060,7 +924,7 @@
         }
 
         function exportData() {
-            showToast('Función de exportación en desarrollo', 'warning');
+            showToast('FunciÃ³n de exportaciÃ³n en desarrollo', 'warning');
         }
 
 
@@ -2130,7 +994,7 @@
                     }
                 });
 
-                // Mostrar panel de enlaces rápidos y cargar datos asíncronos
+                // Mostrar panel de enlaces rÃ¡pidos y cargar datos asÃ­ncronos
                 const qab = document.getElementById('quickActionsBar');
                 if (qab) {
                     qab.classList.remove('hidden');
@@ -2143,7 +1007,7 @@
                     if (el) el.classList.remove('hidden');
                 });
 
-                // Disparar las llamadas asíncronas para inyectar la información en los paneles
+                // Disparar las llamadas asÃ­ncronas para inyectar la informaciÃ³n en los paneles
                 if (typeof loadProximosPasos === 'function') loadProximosPasos(proyecto.id);
                 if (typeof loadHitos_edit === 'function') loadHitos_edit(proyecto.id);
                 if (typeof loadObservaciones_edit === 'function') loadObservaciones_edit(proyecto.id);
@@ -2193,14 +1057,14 @@
             // Checkbox: financiamiento_municipal es VARCHAR(50) en DB
             data.financiamiento_municipal = document.getElementById('financiamiento_municipal').checked ? 'SI' : 'NO';
 
-            // FK IDs: parsear como enteros, eliminar si vacíos
+            // FK IDs: parsear como enteros, eliminar si vacÃ­os
             const fkFields = ['area_id', 'estado_proyecto_id', 'etapa_proyecto_id', 'estado_postulacion_id', 'financiamiento_id', 'lineamiento_estrategico_id', 'sector_id'];
             fkFields.forEach(f => {
                 if (data[f]) data[f] = parseInt(data[f], 10);
                 else delete data[f];
             });
 
-            // Campos numéricos: parsear o eliminar si vacíos
+            // Campos numÃ©ricos: parsear o eliminar si vacÃ­os
             if (data.monto) data.monto = parseFloat(data.monto); else delete data.monto;
             if (data.avance_total_porcentaje) {
                 // Convertir porcentaje (UI 0-100) a decimal (DB 0-1)
@@ -2219,7 +1083,7 @@
             delete data.codigo;
             delete data.es_prioridad;
 
-            // Eliminar strings vacíos para campos opcionales
+            // Eliminar strings vacÃ­os para campos opcionales
             Object.keys(data).forEach(k => {
                 if (data[k] === '') delete data[k];
             });
@@ -2333,7 +1197,7 @@
                 const pasos = res.proximos_pasos || [];
 
                 if (pasos.length === 0) {
-                    listContainer.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<div class="text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-sm font-medium border border-gray-100">No hay próximos pasos registrados.</div>') : '<div class="text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-sm font-medium border border-gray-100">No hay próximos pasos registrados.</div>';
+                    listContainer.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<div class="text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-sm font-medium border border-gray-100">No hay prÃ³ximos pasos registrados.</div>') : '<div class="text-center py-4 bg-gray-50 rounded-lg text-gray-400 text-sm font-medium border border-gray-100">No hay prÃ³ximos pasos registrados.</div>';
                     return;
                 }
 
@@ -2391,7 +1255,7 @@
                 };
 
                 await api.post(`/proyectos/${editingId}/proximos_pasos`, payload);
-                showToast('Próximo paso agregado correctamente', 'success');
+                showToast('PrÃ³ximo paso agregado correctamente', 'success');
                 hideAddProximoPasoForm();
                 loadProximosPasos(editingId);
             } catch (error) {
@@ -2411,7 +1275,7 @@
                 loadProximosPasos(editingId);
             } catch (error) {
                 console.error(error);
-                // Si la ruta incluyente no funciona, intentamos el fallback genérico
+                // Si la ruta incluyente no funciona, intentamos el fallback genÃ©rico
                 try {
                     const nuevoEstado = estadoActual === 'COMPLETADO' ? 'PENDIENTE' : 'COMPLETADO';
                     await api.put(`/proximos_pasos/${id}`, { estado: nuevoEstado });
@@ -2423,7 +1287,7 @@
         }
 
         async function deleteProximoPaso(id) {
-            if (!editingId || !confirm('¿Eliminar este próximo paso?')) return;
+            if (!editingId || !confirm('Â¿Eliminar este prÃ³ximo paso?')) return;
             try {
                 await api.delete(`/proyectos/${editingId}/proximos_pasos/${id}`);
                 loadProximosPasos(editingId);
@@ -2439,7 +1303,7 @@
         }
 
         // ==========================================
-        // FUNCIONES HITOS (Modal Edición)
+        // FUNCIONES HITOS (Modal EdiciÃ³n)
         // ==========================================
         let categoriasHitoCache = null;
 
@@ -2451,7 +1315,7 @@
 
                 const select = document.getElementById('h_categoria');
                 if (select) {
-                    select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<option value="" disabled selected>Selecciona una categoría...</option>') : '<option value="" disabled selected>Selecciona una categoría...</option>';
+                    select.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<option value="" disabled selected>Selecciona una categorÃ­a...</option>') : '<option value="" disabled selected>Selecciona una categorÃ­a...</option>';
                     categoriasHitoCache.forEach(cat => {
                         const option = document.createElement('option');
                         option.value = cat.id; option.textContent = cat.nombre;
@@ -2532,7 +1396,7 @@
         }
 
         // ==========================================
-        // FUNCIONES OBSERVACIONES (Modal Edición)
+        // FUNCIONES OBSERVACIONES (Modal EdiciÃ³n)
         // ==========================================
         function showAddObservacionForm() {
             document.getElementById('addObservacionForm').classList.remove('hidden');
@@ -2590,7 +1454,7 @@
                     observacion: document.getElementById('o_observacion').value
                 };
                 await api.post(`/proyectos/${editingId}/observaciones`, payload);
-                showToast('Observación agregada con éxito');
+                showToast('ObservaciÃ³n agregada con Ã©xito');
                 hideAddObservacionForm();
                 loadObservaciones_edit(editingId);
             } catch (error) {
@@ -2601,7 +1465,7 @@
         }
 
         // ==========================================
-        // FUNCIONES DOCUMENTOS (Modal Edición)
+        // FUNCIONES DOCUMENTOS (Modal EdiciÃ³n)
         // ==========================================
         async function loadDocumentos_edit(pid) {
             const container = document.getElementById('documentosList');
@@ -2673,7 +1537,7 @@
             }
         }
         // ==========================================
-        // GESTIÓN ASISTIDA (AUDITORÍA INTEG.: URL -> MODAL -> HIGHLIGHT)
+        // GESTIÃ“N ASISTIDA (AUDITORÃA INTEG.: URL -> MODAL -> HIGHLIGHT)
         // ==========================================
         function handleAuditParams() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -2682,19 +1546,19 @@
 
             if (!pid) return;
 
-            console.log(`[Audit] Detectada petición para Proyecto #${pid}, Campo: ${fieldId}`);
+            console.log(`[Audit] Detectada peticiÃ³n para Proyecto #${pid}, Campo: ${fieldId}`);
             
             // Buscar el proyecto en la lista actual
             const proyecto = proyectos.find(p => p.id === pid);
             if (!proyecto) {
-                showToast('Proyecto de auditoría no encontrado en el listado', 'warning');
+                showToast('Proyecto de auditorÃ­a no encontrado en el listado', 'warning');
                 return;
             }
 
-            // Abrir el modal de edición
+            // Abrir el modal de ediciÃ³n
             editProject(pid);
 
-            // Si hay un campo específico, resaltarlo después de que el modal esté listo
+            // Si hay un campo especÃ­fico, resaltarlo despuÃ©s de que el modal estÃ© listo
             if (fieldId) {
                 setTimeout(() => {
                     const target = document.getElementById(fieldId);
@@ -2705,7 +1569,7 @@
                         // Agregar un mensaje flotante cerca del campo
                         const helpText = document.createElement('div');
                         helpText.className = 'text-amber-600 text-xs font-bold mt-1 animate-bounce';
-                        helpText.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<i class="fas fa-exclamation-triangle mr-1"></i> Este campo requiere su atención según el reporte de auditoría.') : '<i class="fas fa-exclamation-triangle mr-1"></i> Este campo requiere su atención según el reporte de auditoría.';
+                        helpText.innerHTML = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize('<i class="fas fa-exclamation-triangle mr-1"></i> Este campo requiere su atenciÃ³n segÃºn el reporte de auditorÃ­a.') : '<i class="fas fa-exclamation-triangle mr-1"></i> Este campo requiere su atenciÃ³n segÃºn el reporte de auditorÃ­a.';
                         target.parentNode.appendChild(helpText);
 
                         // Remover highlight al enfocar o cambiar
@@ -2714,7 +1578,7 @@
                             helpText.remove();
                         }, { once: true });
 
-                        // Inyectar botón de retorno flotante (en caso de que se haya abierto en la misma pestaña)
+                        // Inyectar botÃ³n de retorno flotante (en caso de que se haya abierto en la misma pestaÃ±a)
                         const backBtn = document.createElement('button');
                         backBtn.id = 'auditBackBtn';
                         backBtn.className = 'fixed bottom-8 left-8 z-[100] px-6 py-4 bg-slate-900 text-white rounded-2xl shadow-2xl border-2 border-indigo-500 font-black text-sm uppercase tracking-widest animate-fade-in flex items-center gap-3 hover:bg-slate-800 transition-all transform hover:-translate-y-1';
@@ -2732,12 +1596,12 @@
             }
         }
 
-        // Limpieza de UI de auditoría al cerrar modal
+        // Limpieza de UI de auditorÃ­a al cerrar modal
         function clearAuditUI() {
             const btn = document.getElementById('auditBackBtn');
             if (btn) btn.remove();
             
-            // Limpiar parámetros de la URL sin recargar para no disparar de nuevo la lógica
+            // Limpiar parÃ¡metros de la URL sin recargar para no disparar de nuevo la lÃ³gica
             const url = new URL(window.location);
             url.searchParams.delete('pid');
             url.searchParams.delete('audit_field');
@@ -2751,7 +1615,3 @@
             originalCloseModal();
         };
 
-    </script>
-</body>
-
-</html>
