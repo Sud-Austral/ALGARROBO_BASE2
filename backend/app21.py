@@ -240,13 +240,23 @@ def create_session(user_id):
 
 
 def validate_session(token):
-
-    """Valida sesión y actualiza last_activity. Retorna user_id o None"""
-
+    """Valida sesión y revisa blocklist. Retorna user_id o None"""
     try:
-        # Decodificar y verificar firma
         payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS jwt_blocklist (
+                        token TEXT PRIMARY KEY,
+                        fecha TIMESTAMP DEFAULT NOW()
+                    )
+                """)
+                cur.execute("SELECT 1 FROM jwt_blocklist WHERE token = %s", (token,))
+                if cur.fetchone():
+                    return None
+        finally:
+            release_db_connection(conn)
         return payload["user_id"]
     except jwt.ExpiredSignatureError:
         logger.warning("Token JWT expirado")
@@ -268,11 +278,24 @@ def validate_session(token):
 
 
 def remove_session(token):
-    """JWT Stateless: No-op."""
-    pass
-
-
-    """Elimina una sesión"""
+    """Agrega un token a la blocklist."""
+    if not token: return
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS jwt_blocklist (
+                    token TEXT PRIMARY KEY,
+                    fecha TIMESTAMP DEFAULT NOW()
+                )
+            """)
+            cur.execute("INSERT INTO jwt_blocklist (token) VALUES (%s) ON CONFLICT DO NOTHING", (token,))
+        conn.commit()
+    except Exception as e:
+        if 'conn' in locals() and conn: conn.rollback()
+        logger.error(f"Error blocklist: {e}")
+    finally:
+        release_db_connection(conn)
 
 
 
@@ -516,21 +539,18 @@ def login():
 
             user = cur.fetchone()
 
-            if not user:
-                return jsonify({"message": "Usuario no encontrado"}), 404
-
-            if not user["activo"]:
-                return jsonify({"message": "Usuario inactivo"}), 403
+            if not user or not user["activo"]:
+                return jsonify({"message": "Credenciales inválidas"}), 401
 
             # ---------------------------------------
             # 2. VALIDAR CONTRASEÑA
             # ---------------------------------------
-            stored_hash = user["password_hash"]
+            stored_hash = user["password_hash"] if user else b""
             if isinstance(stored_hash, str):
                 stored_hash = stored_hash.encode()
 
-            if not bcrypt.checkpw(data["password"].encode(), stored_hash):
-                return jsonify({"message": "Contraseña incorrecta"}), 401
+            if not user or not bcrypt.checkpw(data["password"].encode(), stored_hash):
+                return jsonify({"message": "Credenciales inválidas"}), 401
 
             # ---------------------------------------
             # 3. OBTENER ROLES
@@ -567,7 +587,8 @@ def login():
         # ---------------------------------------
         # 6. RESPUESTA
         # ---------------------------------------
-        return jsonify({
+        from flask import make_response
+        response = make_response(jsonify({
             "token": token,
             "user": {
                 "id": user["user_id"],
@@ -579,7 +600,9 @@ def login():
                 },
                 "roles": roles
             }
-        })
+        }))
+        response.set_cookie('authToken', token, httponly=True, secure=True, samesite='Strict')
+        return response
 
     except Exception as e:
         try:
@@ -1319,8 +1342,8 @@ def create_proyecto(current_user_id):
         data = request.get_json()
 
         # Remove keys that shouldn't be set directly or are set automatically
-        forbidden = {"id", "user_id", "actualizado_por", "fecha_actualizacion", "fecha_creacion"}
-        clean_data = {k: v for k, v in data.items() if k not in forbidden and v != ""}
+        ALLOWED_FIELDS = {'nombre', 'monto', 'descripcion', 'estado_proyecto_id', 'division_id', 'foto_url', 'latitud', 'longitud', 'fecha_inicio', 'fecha_termino', 'presupuesto', 'rut_contratista', 'nombre_contratista', 'avance', 'codigo_bip', 'etapa_id'}
+        clean_data = {k: v for k, v in data.items() if k in ALLOWED_FIELDS and v != ""}
 
         clean_data["user_id"] = current_user_id
         clean_data["actualizado_por"] = current_user_id
@@ -1830,8 +1853,8 @@ def update_proyecto(current_user_id, pid):
     try:
         data = request.get_json()
 
-        forbidden = {"id", "user_id", "actualizado_por", "fecha_actualizacion"}
-        clean_data = {k: v for k, v in data.items() if k not in forbidden}
+        ALLOWED_FIELDS = {'nombre', 'monto', 'descripcion', 'estado_proyecto_id', 'division_id', 'foto_url', 'latitud', 'longitud', 'fecha_inicio', 'fecha_termino', 'presupuesto', 'rut_contratista', 'nombre_contratista', 'avance', 'codigo_bip', 'etapa_id'}
+        clean_data = {k: v for k, v in data.items() if k in ALLOWED_FIELDS}
 
         if not clean_data:
             return jsonify({"message": "No hay campos para actualizar"}), 400
@@ -2404,7 +2427,8 @@ def upload_documento(current_user_id, pid):
 @app.route("/proyectos/<int:pid>/documentos", methods=["GET"])
 #@session_required
 #def listar_documentos_proyecto(current_user_id, pid):
-def listar_documentos_proyecto(pid): 
+@session_required
+def listar_documentos_proyecto(current_user_id, pid):
     conn = None
     try:
         conn = get_db_connection()
@@ -5587,8 +5611,21 @@ import zipfile
 import io
 import shutil
 
+def check_admin(current_user_id):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT nivel_acceso FROM users WHERE user_id = %s", (current_user_id,))
+            res = cur.fetchone()
+            if res and res[0] >= 10: return True
+            return False
+    finally:
+        release_db_connection(conn)
+
 @app.route('/api/volume/gui', methods=['GET'])
-def volume_gui():
+@session_required
+def volume_gui(current_user_id):
+    if not check_admin(current_user_id): return "Acceso denegado", 403
     """Interfaz ultra-simple para gestionar el volumen persistente"""
     html = """
     <!DOCTYPE html>
@@ -5633,7 +5670,9 @@ def volume_gui():
     return html
 
 @app.route('/api/volume/export', methods=['GET'])
-def volume_export():
+@session_required
+def volume_export(current_user_id):
+    if not check_admin(current_user_id): return "Acceso denegado", 403
     """Exporta docs, auditoria_reportes y fotos_reportes como un único ZIP"""
     try:
         # Carpetas a respaldar (nombres relativos al archivo actual)
@@ -5671,7 +5710,9 @@ def volume_export():
         return str(e), 500
 
 @app.route('/api/volume/import', methods=['POST'])
-def volume_import():
+@session_required
+def volume_import(current_user_id):
+    if not check_admin(current_user_id): return "Acceso denegado", 403
     """Recibe un ZIP y extrae su contenido en sus respectivas carpetas dentro de la persistencia"""
     if 'file' not in request.files:
         return "No hay archivo", 400
