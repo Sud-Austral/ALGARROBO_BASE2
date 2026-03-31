@@ -27,7 +27,7 @@ except ImportError:
     def extract_text_from_file(path, ext):
         return ""
 
-documentos_bp = Blueprint('documentos', __name__)
+documentos_bp = Blueprint('api', __name__)
 
 
 # ─── DOCUMENTOS ────────────────────────────────────────────────

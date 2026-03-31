@@ -1937,6 +1937,45 @@
                 `;
             }
 
+            if (projectDocs.length > 0) {
+                html += `
+                <div class="mt-8">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-amber-500 to-yellow-500 p-5 font-black text-white">
+                            <h3 class="text-xl font-bold flex items-center gap-3">
+                                <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                                Documentación Asociada
+                                <span class="ml-auto bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-medium">${projectDocs.length} archivo${projectDocs.length !== 1 ? 's' : ''}</span>
+                            </h3>
+                        </div>
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${projectDocs.map(doc => `
+                                <div class="flex items-center p-4 border border-slate-100 rounded-2xl bg-white hover:bg-slate-50 transition-all group">
+                                    <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-amber-100 group-hover:text-amber-600 transition-colors mr-4">
+                                        <i class="fas fa-file-pdf fa-lg"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0 pr-4">
+                                        <p class="text-sm font-bold text-slate-800 truncate" title="${doc.nombre}">${doc.nombre}</p>
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">${doc.tipo_documento || 'Documento Proyecto'}</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="openDocViewer(${doc.documento_id}, '${(doc.nombre || '').replace(/'/g, "\\'")}')" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Ver online">
+                                            <i class="fas fa-eye text-xs"></i>
+                                        </button>
+                                        <a href="/api/documentos/${doc.documento_id}/view?token=${localStorage.getItem('token')}" target="_blank" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Descargar">
+                                            <i class="fas fa-download text-xs"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+
             html += `
                 <div class="mt-8">
                     <div class="bg-gradient-to-r from-gray-700 to-gray-900 rounded-2xl shadow-lg p-6 text-white">
@@ -2277,7 +2316,7 @@
         // PDF Viewer Modal Functions
         // PDF Viewer Modal Functions
         function openDocViewer(docId, docName) {
-            const url = `${API_CONFIG.BASE_URL.replace(/\/$/, '')}/documentos/${docId}/view?token=${API_CONFIG.token}`;
+            const url = `/api/documentos/${docId}/view?token=${localStorage.getItem('token')}`;
             window.open(url, '_blank');
         }
 
@@ -2598,10 +2637,10 @@
                             <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mt-0.5">${doc.tipo_documento || 'Archivo General'}</p>
                         </div>
                         <div class="absolute right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                            <button type="button" onclick="openDocViewer(${doc.id}, '${(doc.archivo_nombre || '').replace(/'/g, "\\'")}')" class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Ver Documento">
+                            <button type="button" onclick="openDocViewer(${doc.documento_id}, '${(doc.archivo_nombre || '').replace(/'/g, "\\'")}')" class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Ver Documento">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            ${doc.url ? `<a href="${doc.url}" target="_blank" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Descargar"><i class="fas fa-download"></i></a>` : ''}
+                            <a href="/api/documentos/${doc.documento_id}/view?token=${localStorage.getItem('token')}" target="_blank" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Descargar"><i class="fas fa-download"></i></a>
                         </div>
                     </div>`;
                 }).join('');

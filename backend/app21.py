@@ -84,15 +84,15 @@ def handle_exception(e):
 
 
 # ─── Registrar Blueprints (9 módulos) ─────────────────────────
-app.register_blueprint(auth_bp)          # /auth/*
-app.register_blueprint(users_bp)         # /users/*, /roles, /divisiones/*
-app.register_blueprint(proyectos_bp)     # /proyectos/*, catálogos
-app.register_blueprint(licitaciones_bp)  # /licitaciones/*
-app.register_blueprint(documentos_bp)    # /documentos/*, /geomapas/*, /hitos/*, /observaciones/*
-app.register_blueprint(calendario_bp)    # /calendario_eventos/*, /hitoscalendario/*
-app.register_blueprint(mobile_bp)        # /api/mobile/*, /api/admin/*, /api/volume/*
-app.register_blueprint(control_bp)       # /control/*
-app.register_blueprint(auditoria_bp)     # /auditoria/*
+app.register_blueprint(auth_bp, url_prefix='/api')
+app.register_blueprint(users_bp, url_prefix='/api')
+app.register_blueprint(proyectos_bp, url_prefix='/api')
+app.register_blueprint(licitaciones_bp, url_prefix='/api')
+app.register_blueprint(documentos_bp, url_prefix='/api')
+app.register_blueprint(calendario_bp, url_prefix='/api')
+app.register_blueprint(mobile_bp, url_prefix='/api')
+app.register_blueprint(control_bp, url_prefix='/api')
+app.register_blueprint(auditoria_bp, url_prefix='/api')
 
 
 # ─── Rutas base ────────────────────────────────────────────────
@@ -101,7 +101,7 @@ def home():
     return jsonify({"message": "API Municipal funcionando (Modular + Blueprints)"})
 
 
-@app.route("/docs/<path:filename>")
+@app.route("/api/docs/<path:filename>")
 def serve_docs(filename):
     """Servir archivos estáticos de documentos de proyectos."""
     return send_from_directory(DOCS_FOLDER, filename)
@@ -158,7 +158,6 @@ def health_check():
 @app.teardown_appcontext
 def close_connection(exception=None):
     pass  # Conexiones gestionadas manualmente con release_db_connection
-
 
 # ═══════════════════════════════════════════════════════════════
 # INICIALIZACIÓN

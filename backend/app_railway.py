@@ -86,15 +86,15 @@ def handle_exception(e):
     return response
 
 # ─── Registrar Blueprints (9 módulos) ─────────────────────────
-app.register_blueprint(auth_bp)
-app.register_blueprint(users_bp)
-app.register_blueprint(proyectos_bp)
-app.register_blueprint(licitaciones_bp)
-app.register_blueprint(documentos_bp)
-app.register_blueprint(calendario_bp)
-app.register_blueprint(mobile_bp)
-app.register_blueprint(control_bp)
-app.register_blueprint(auditoria_bp)
+app.register_blueprint(auth_bp, url_prefix='/api')
+app.register_blueprint(users_bp, url_prefix='/api')
+app.register_blueprint(proyectos_bp, url_prefix='/api')
+app.register_blueprint(licitaciones_bp, url_prefix='/api')
+app.register_blueprint(documentos_bp, url_prefix='/api')
+app.register_blueprint(calendario_bp, url_prefix='/api')
+app.register_blueprint(mobile_bp, url_prefix='/api')
+app.register_blueprint(control_bp, url_prefix='/api')
+app.register_blueprint(auditoria_bp, url_prefix='/api')
 
 # ─── Rutas de Servicio de Archivos desde Volumen ────────────────
 @app.route("/")
@@ -105,7 +105,7 @@ def home():
         "status": "online"
     })
 
-@app.route("/docs/<path:filename>")
+@app.route("/api/docs/<path:filename>")
 def serve_docs(filename):
     return send_from_directory(DOCS_ROOT, filename)
 
