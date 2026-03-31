@@ -95,6 +95,7 @@ app.register_blueprint(control_bp, url_prefix='/api')
 app.register_blueprint(auditoria_bp, url_prefix='/api')
 
 
+
 # ─── Rutas base ────────────────────────────────────────────────
 @app.route("/")
 def home():

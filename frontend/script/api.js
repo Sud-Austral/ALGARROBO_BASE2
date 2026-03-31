@@ -6,13 +6,18 @@ const API_CONFIG = {
     // o usar el host actual si estamos en el mismo servidor, de lo contrario fallback a IP conocida.
     BASE_URL: window.API_BASE_URL || "https://186.67.61.251:8000",
     get token() {
-        return localStorage.getItem('authToken');
+        return localStorage.getItem('authToken') || localStorage.getItem('token');
     }
 };
 
 const api = {
     async request(endpoint, options = {}, responseType = 'json') {
-        const url = endpoint.startsWith('http') ? endpoint : `${API_CONFIG.BASE_URL}${endpoint}`;
+        // Inteligencia de Rutas: Asegurar prefijo /api si no es una URL absoluta o ya contiene prefijo
+        let finalEndpoint = endpoint;
+        if (!endpoint.startsWith('http') && !endpoint.startsWith('/api') && !endpoint.startsWith('/auth')) {
+            finalEndpoint = endpoint.startsWith('/') ? `/api${endpoint}` : `/api/${endpoint}`;
+        }
+        const url = finalEndpoint.startsWith('http') ? finalEndpoint : `${API_CONFIG.BASE_URL}${finalEndpoint}`;
 
         const headers = {
             'Authorization': API_CONFIG.token ? `Bearer ${API_CONFIG.token}` : ''

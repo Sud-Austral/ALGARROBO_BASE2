@@ -612,7 +612,7 @@
 
         async function loadCategoriasHito() {
             try {
-                const data = await api.get('/hitoscalendario');
+                const data = await api.get('/api/hitoscalendario');
 
                 categoriasHito = data.filter(c => c.is_hito === true || c.is_hito === 'true' || c.is_hito === 1);
 
@@ -640,7 +640,7 @@
             select.disabled = true;
 
             try {
-                allProjects = await api.get('/proyectos');
+                allProjects = await api.get('/api/proyectos');
 
                 updateFilterOptions();
                 applyFilters();
@@ -757,7 +757,7 @@
             empty.classList.add('hidden');
 
             try {
-                const hitos = await api.get(`/proyectos/${pid}/hitos`);
+                const hitos = await api.get(`/api/proyectos/${pid}/hitos`);
 
                 loading.classList.add('hidden');
 
@@ -865,7 +865,7 @@
                 btn.disabled = true;
                 document.getElementById('btnCreateText').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...';
 
-                await api.post(`/proyectos/${pid}/hitos`, payload);
+                await api.post(`/api/proyectos/${pid}/hitos`, payload);
 
                 showToast("Hito registrado exitosamente");
                 addToLog(pid, categoriaNombre, "success");

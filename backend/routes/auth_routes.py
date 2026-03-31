@@ -16,7 +16,7 @@ from utils.audit_logger import log_auditoria
 auth_bp = Blueprint('auth', __name__)
 
 
-@auth_bp.route("/auth/login", methods=["POST"])
+@auth_bp.route("/login", methods=["POST"])
 def login():
     conn = None
     try:
@@ -112,7 +112,7 @@ def login():
             release_db_connection(conn)
 
 
-@auth_bp.route("/auth/logout", methods=["POST"])
+@auth_bp.route("/logout", methods=["POST"])
 @session_required
 def logout(current_user_id):
     try:

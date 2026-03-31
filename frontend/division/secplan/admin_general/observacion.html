@@ -578,7 +578,7 @@
             select.disabled = true;
 
             try {
-                allProjects = await api.get('/proyectos');
+                allProjects = await api.get('/api/proyectos');
 
                 updateFilterOptions();
                 applyFilters();
@@ -698,7 +698,7 @@
             empty.classList.add('hidden');
 
             try {
-                const data = await api.get(`/proyectos/${pid}/observaciones`);
+                const data = await api.get(`/api/proyectos/${pid}/observaciones`);
                 const observaciones = data.observaciones || [];
 
                 loading.classList.add('hidden');
@@ -790,7 +790,7 @@
             content.classList.add('hidden');
             modal.classList.add('active');
 
-            api.get(`/observaciones/${obsId}/detalle`)
+            api.get(`/api/observaciones/${obsId}/detalle`)
                 .then(data => {
 
                     document.getElementById('detailFecha').textContent = formatDisplayDate(data.fecha);
@@ -871,7 +871,7 @@
             document.getElementById('btnCreateText').innerHTML = '<span class="loading"></span> Guardando...';
 
             try {
-                const data = await api.post(`/proyectos/${pid}/observaciones`, payload);
+                const data = await api.post(`/api/proyectos/${pid}/observaciones`, payload);
 
                 showToast(data.message || "Observación registrada exitosamente", "success");
                 addToLog(pid, "Nueva Observación", "success");

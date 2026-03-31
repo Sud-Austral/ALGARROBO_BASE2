@@ -278,7 +278,7 @@
                 clearAlerts();
 
                 const apiBase = window.API_BASE_URL || "https://186.67.61.251:8000";
-                fetch(`${apiBase}/auth/login`, {
+                fetch(`${apiBase}/api/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: username, password: password })
@@ -353,7 +353,11 @@
             setTimeout(() => {
                 alertDiv.style.transition = 'opacity 0.5s ease';
                 alertDiv.style.opacity = '0';
-                setTimeout(() => alertContainer.removeChild(alertDiv), 500);
+                setTimeout(() => {
+                    if (alertDiv && alertDiv.parentNode === alertContainer) {
+                        alertContainer.removeChild(alertDiv);
+                    }
+                }, 500);
             }, 4000);
         }
 

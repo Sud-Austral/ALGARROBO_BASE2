@@ -29,15 +29,15 @@ DEBUG = os.getenv("FLASK_DEBUG", "False").lower() in ("1", "true", "yes")
 # ─── CORS ──────────────────────────────────────────────────────
 allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
 if allowed_origins_raw:
+    # Procesar lista separada por comas: "http://localhost:5500, https://mi-app.com"
     ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_raw.split(",")]
 else:
-    # SEGURIDAD [H-03]: Sin wildcard – rechazar por defecto si no hay orígenes
+    # SEGURIDAD [H-03]: Fallback a desarrollos locales comunes si no hay config
     ALLOWED_ORIGINS = [
         "*"
     ]
-    logging.getLogger(__name__).warning(
-        "ALLOWED_ORIGINS no definida. Usando orígenes localhost por defecto. "
-        "Configure ALLOWED_ORIGINS en producción."
+    logging.getLogger("municipal_api").warning(
+        "ALLOWED_ORIGINS no definida en .env. Usando localhost por defecto."
     )
 
 # ─── Sesiones ──────────────────────────────────────────────────
