@@ -32,10 +32,16 @@ function renderHeader(containerId = "headerRender") {
     const userDivision = user?.division?.nombre?.toLowerCase() || 'secplan';
     const userRoles = user?.roles || [];
     if (userRoles.length === 0 && !user?.nivel_acceso) {
+        alert("Usuario sin permisos vinculados");
         logout();
         return;
     }
-    const userRole = userRoles.length > 0 ? userRoles[0].nombre.toLowerCase() : (user?.nivel_acceso == 10 ? 'admin_general' : 'admin_proyectos');
+    const userRole = userRoles.length > 0 ? userRoles[0].nombre.toLowerCase() : (user?.nivel_acceso == 10 ? 'admin_general' : (user?.nivel_acceso == 11 ? 'admin_proyectos' : null));
+    if (!userRole) {
+        alert("Usuario sin permisos vinculados");
+        logout();
+        return;
+    }
     const isLicitacion = window.location.pathname.includes('/licitaciones/');
     let dashLink = `${BASE_PATH}/frontend/division/${userDivision}/${userRole}/dashboard.html`;
 
@@ -135,10 +141,16 @@ function renderSidebar(containerId = "sidebarContainer") {
     const userDivision = user?.division?.nombre?.toLowerCase() || 'secplan';
     const userRoles = user?.roles || [];
     if (userRoles.length === 0 && !user?.nivel_acceso) {
+        alert("Usuario sin permisos vinculados");
         logout();
         return;
     }
-    const userRole = userRoles.length > 0 ? userRoles[0].nombre.toLowerCase() : (user?.nivel_acceso == 10 ? 'admin_general' : 'admin_proyectos');
+    const userRole = userRoles.length > 0 ? userRoles[0].nombre.toLowerCase() : (user?.nivel_acceso == 10 ? 'admin_general' : (user?.nivel_acceso == 11 ? 'admin_proyectos' : null));
+    if (!userRole) {
+        alert("Usuario sin permisos vinculados");
+        logout();
+        return;
+    }
     const baseDir = `${BASE_PATH}/frontend/division/${userDivision}/${userRole}/`;
 
     const pages = {
