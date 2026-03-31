@@ -7,16 +7,6 @@
   "deploy": {
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
-  },
-  "env": {
-    "ALLOWED_ORIGINS": "*",
-    "TZ": "America/Santiago",
-    "JWT_SECRET_KEY": "9a15f0d2c0b4e3e3b3c3d3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z",
-    "DATABASE_URL": "postgresql://postgres:RPyLEhcXstDJBrMoVMMgzkpbMPyZLIHl@crossover.proxy.rlwy.net:55112/neondb",
-    "BREVO_SMTP_LOGIN": "a557fe001@smtp-brevo.com",
-    "BREVO_SMTP_KEY": "xsmtpsib-199ef8e8c370c3a54e984de59be18df17658798f92c878267bc07821e20c1ba7-MvkdFanHQ7EwOQr5",
-    "REMITENTE": "geoportal.algarrobo@gmail.com",
-    "REPLY_TO": "geoportal.algarrobo@gmail.com",
-    "AUDIT_OUT_DIR": "/data/auditoria_reportes"
   }
 }
+
