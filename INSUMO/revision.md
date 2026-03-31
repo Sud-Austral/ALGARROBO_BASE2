@@ -2,7 +2,7 @@
 
 ```
 Proyecto:              Geoportal Municipal – Municipalidad de Algarrobo
-Repositorio:           https://github.com/Sud-Austral/ALGARROBO_BASE2
+Repositorio:           https://github.com/geoportalalgarrobo/ALGARROBO_BASE2
 Lenguaje/Framework:    Python 3.11 / Flask 3.0 + Vanilla JS (Frontend estático)
 Base de datos:         PostgreSQL (Railway Cloud)
 Fecha de auditoría:    30 de marzo de 2026

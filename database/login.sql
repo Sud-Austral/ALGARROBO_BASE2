@@ -168,3 +168,27 @@ VALUES (
     'Usuario Juan Gonzales inició sesión en el sistema desde IP 192.168.10.24'
 );
 
+
+CREATE TABLE IF NOT EXISTS funcionarios (
+    id SERIAL PRIMARY KEY,
+    apellido VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL
+);
+
+INSERT INTO funcionarios (apellido, email) VALUES
+('Araya', 'saraya@munialgarrobo.cl'),
+('Arriola', 'carriola@munialgarrobo.cl'),
+('Barrera', 'gbarrera@munialgarrobo.cl'),
+('Barria', 'fbarria@munialgarrobo.cl'),
+('Catalán', 'fcatalan@munialgarrobo.cl'),
+('Galaz', 'igalaz@munialgarrobo.cl'),
+('Garrigó', 'vgarrigo@munialgarrobo.cl'),
+('Gómez', 'rgomez@munialgarrobo.cl'),
+('Hernández', 'nhernandez@munialgarrobo.cl'),
+('Medina', 'mmedina@munialgarrobo.cl'),
+('Quezada', 'dquezada@munialgarrobo.cl'),
+('Reyes', 'greyes@munialgarrobo.cl'),
+('Torres', 'atorres@munialgarrobo.cl'),
+('Viveros', 'gviveros@munialgarrobo.cl'),
+('Zambrano', 'mzambrano@munialgarrobo.cl');
+

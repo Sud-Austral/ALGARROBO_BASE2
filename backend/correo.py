@@ -43,50 +43,53 @@ def get_email_config():
         "reply_to": os.getenv("REPLY_TO", "geoportal.algarrobo@gmail.com").strip("'\"")
     }
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_CORREO_PATH = os.path.join(BASE_DIR, "config_correo.json")
-
 def obtener_correos_responsables(responsables_list):
     """
     Busca los correos electrónicos para una lista de nombres o apellidos
-    en el archivo config_correo.json usando normalización de acentos.
+    en la tabla 'funcionarios' de la base de datos usando normalización.
+    (Compatible con la arquitectura modular Flask Blueprints).
     """
     try:
-        if not os.path.exists(CONFIG_CORREO_PATH):
-            logger.error(f"No se encontró el archivo de configuración: {CONFIG_CORREO_PATH}")
+        from core.database import get_db_connection, release_db_connection
+        conn = get_db_connection()
+        if not conn:
+            logger.error("No se pudo conectar a la base de datos para buscar correos.")
             return []
 
-        with open(CONFIG_CORREO_PATH, "r", encoding="utf-8") as f:
-            mapping = json.load(f)
-
-        # Normalizar las llaves del JSON de configuración
-        norm_mapping = {normalize_text(k): v for k, v in mapping.items()}
-
         correos = []
-        for nombre in responsables_list:
-            if not nombre or str(nombre).strip() == "":
-                continue
-            
-            nombre_norm = normalize_text(nombre)
-            logger.info(f"Buscando correo para: {nombre} (normalizado: {nombre_norm})")
-            
-            encontrado = False
-            # Búsqueda por coincidencia
-            for key_norm, email_val in norm_mapping.items():
-                if key_norm in nombre_norm:
-                    correos.append(email_val)
-                    encontrado = True
-                    logger.info(f"¡Match encontrado! {key_norm} -> {email_val}")
-                    break 
-            
-            if not encontrado:
-                logger.warning(f"No se encontró correo para el responsable: {nombre}")
+        try:
+            with conn.cursor() as cur:
+                # Extraemos y mapeamos usando la normalización
+                cur.execute("SELECT apellido, email FROM funcionarios")
+                mapping = {normalize_text(row[0]): row[1] for row in cur.fetchall()}
 
-        # Eliminar duplicados
-        unique_emails = list(set(correos))
-        return unique_emails
+            for nombre in responsables_list:
+                if not nombre or str(nombre).strip() == "":
+                    continue
+                
+                nombre_norm = normalize_text(nombre)
+                logger.info(f"Buscando correo BD para: {nombre} (norm: {nombre_norm})")
+                
+                encontrado = False
+                # Búsqueda tolerante por coincidencia de apellido
+                for key_norm, email_val in mapping.items():
+                    if key_norm in nombre_norm:
+                        correos.append(email_val)
+                        encontrado = True
+                        logger.info(f"¡Match encontrado en BD! {key_norm} -> {email_val}")
+                        break 
+                
+                if not encontrado:
+                    logger.warning(f"No se encontró correo para responsable en BD: {nombre}")
+
+            # Eliminar duplicados
+            unique_emails = list(set(correos))
+            return unique_emails
+        finally:
+            release_db_connection(conn)
+            
     except Exception as e:
-        logger.error(f"Error cargando correos responsables: {e}")
+        logger.error(f"Error fatal cargando correos responsables desde BD: {e}")
         return []
 
 def construir_mensaje(destinatarios_list, ruta_pdf, proyecto_id, proyecto_nombre=""):

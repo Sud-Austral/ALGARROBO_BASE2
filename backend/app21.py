@@ -169,6 +169,8 @@ if not init_connection_pool():
     logger.error("No se pudo inicializar el pool de conexiones al inicio")
 
 
+
+
 # ═══════════════════════════════════════════════════════════════
 # START
 # ═══════════════════════════════════════════════════════════════
