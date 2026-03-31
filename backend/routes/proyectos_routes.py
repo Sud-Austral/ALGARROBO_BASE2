@@ -339,7 +339,14 @@ def create_proyecto(current_user_id):
             'nombre', 'monto', 'descripcion', 'estado_proyecto_id', 'division_id',
             'foto_url', 'latitud', 'longitud', 'fecha_inicio', 'fecha_termino',
             'presupuesto', 'rut_contratista', 'nombre_contratista', 'avance',
-            'codigo_bip', 'etapa_id'
+            'codigo_bip', 'etapa_proyecto_id', 'area_id', 'lineamiento_estrategico_id',
+            'financiamiento_id', 'financiamiento_municipal', 'anno_elaboracion',
+            'anno_ejecucion', 'topografia', 'planimetrias', 'ingenieria',
+            'perfil_tecnico_economico', 'documentos', 'avance_total_porcentaje',
+            'estado_postulacion_id', 'dupla_profesionales', 'profesional_1',
+            'profesional_2', 'profesional_3', 'profesional_4', 'profesional_5',
+            'fecha_postulacion', 'observaciones', 'unidad_vecinal', 'sector_id',
+            'aprobacion_dom', 'aprobacion_serviu'
         }
         clean_data = {k: v for k, v in data.items() if k in ALLOWED_FIELDS and v != ""}
 
@@ -383,7 +390,14 @@ def update_proyecto(current_user_id, pid):
             'nombre', 'monto', 'descripcion', 'estado_proyecto_id', 'division_id',
             'foto_url', 'latitud', 'longitud', 'fecha_inicio', 'fecha_termino',
             'presupuesto', 'rut_contratista', 'nombre_contratista', 'avance',
-            'codigo_bip', 'etapa_id'
+            'codigo_bip', 'etapa_proyecto_id', 'area_id', 'lineamiento_estrategico_id',
+            'financiamiento_id', 'financiamiento_municipal', 'anno_elaboracion',
+            'anno_ejecucion', 'topografia', 'planimetrias', 'ingenieria',
+            'perfil_tecnico_economico', 'documentos', 'avance_total_porcentaje',
+            'estado_postulacion_id', 'dupla_profesionales', 'profesional_1',
+            'profesional_2', 'profesional_3', 'profesional_4', 'profesional_5',
+            'fecha_postulacion', 'observaciones', 'unidad_vecival', 'sector_id',
+            'aprobacion_dom', 'aprobacion_serviu'
         }
         clean_data = {k: v for k, v in data.items() if k in ALLOWED_FIELDS}
 
