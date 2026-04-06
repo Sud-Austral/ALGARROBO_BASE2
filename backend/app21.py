@@ -50,6 +50,7 @@ from routes.calendario_routes import calendario_bp
 from routes.mobile_routes import mobile_bp
 from routes.control_routes import control_bp
 from routes.auditoria_routes import auditoria_bp
+from programacion_auditoria import iniciar_programador
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -167,6 +168,10 @@ logger.info("Backend Municipal (Modular) iniciando...")
 logger.info("Registrados 9 Blueprints")
 if not init_connection_pool():
     logger.error("No se pudo inicializar el pool de conexiones al inicio")
+
+# ─── Iniciar Programador de Auditoría ─────────────────────────
+logger.info("Iniciando programador de auditoría programada...")
+iniciar_programador()
 
 
 

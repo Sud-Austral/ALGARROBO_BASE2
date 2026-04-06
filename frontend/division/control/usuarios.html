@@ -201,7 +201,7 @@
                 </div>
                 <div class="flex items-center justify-between">
                     <h1 class="text-2xl font-bold">Auditoría Individual de Funcionarios</h1>
-                    <button onclick="descargarTodo()"
+                    <button onclick="descargarTodo(event)"
                         class="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm"
                         style="background:rgba(255,255,255,0.18);color:white;border:1px solid rgba(255,255,255,0.3);">
                         <i class="fas fa-file-pdf"></i> Descargar Todo
@@ -426,7 +426,8 @@
             }
 
             if (returnBlob) return doc.output('blob');
-            doc.save(`auditoria_usuario_${usuario.user_id || 'x'}.pdf`);
+            const nombreArchivo = (usuario.nombre || usuario.nombre_usuario || String(usuario.user_id || 'x')).replace(/\s+/g, '_');
+            doc.save(`${nombreArchivo}.pdf`);
         }
 
         async function descargarUsuarioPDF(uid) {
@@ -440,11 +441,11 @@
             }
         }
 
-        async function descargarTodo() {
+        async function descargarTodo(e) {
             if (!todosUsuarios.length) return alert('No hay usuarios cargados.');
-            const btn = event.currentTarget;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando ZIP...';
+            const btn = e?.currentTarget || event.target;
+            if (btn) btn.disabled = true;
+            if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando ZIP...';
 
             const zip = new JSZip();
             let ok = 0;
@@ -453,8 +454,9 @@
                 try {
                     const res = await api.get(`/control/actividad/usuario/${u.user_id}`);
                     const usuario = res.usuario || { ...u, user_id: u.user_id };
-                    const blob = generarPDFUsuario(usuario, res.actividad || [], true);
-                    zip.file(`${u.user_id}.pdf`, blob);
+                    const pdfBlob = generarPDFUsuario(usuario, res.actividad || [], true);
+                    const nombreArchivo = (u.nombre_usuario || String(u.user_id)).replace(/\s+/g, '_');
+                    zip.file(`${nombreArchivo}.pdf`, pdfBlob);
                     ok++;
                 } catch (e) { console.error(`Error usuario ${u.user_id}:`, e); }
             }
@@ -470,8 +472,10 @@
                 URL.revokeObjectURL(a.href);
             }
 
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-file-pdf"></i> Descargar Todo';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-file-pdf"></i> Descargar Todo';
+            }
         }
     </script>
 </body>
