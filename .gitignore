@@ -16,8 +16,8 @@ venv/
 .venv/
 env/
 # ─── Variables de entorno y secretos ──────────────────────────
-# .env (PERMITIDO TEMPORALMENTE SEGÚN SOLICITUD DEL USUARIO)
-!.env
+.env
+.env.*
 !.env.example
 *.pem
 *.key

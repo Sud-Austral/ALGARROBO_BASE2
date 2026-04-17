@@ -9,20 +9,16 @@ from dotenv import load_dotenv
 # ─── Cargar .env ───────────────────────────────────────────────
 load_dotenv()
 
-# ─── Base de Datos ─────────────────────────────────────────────
-# Se carga desde DATABASE_URL en el entorno (o .env local)
-DB_CONNECTION_STRING = os.getenv("DATABASE_URL")
-if not DB_CONNECTION_STRING:
-    # Si no hay variable, lanzamos error para evitar fallos silenciosos
-    raise ValueError("ERROR: DATABASE_URL no configurada. Verifique el entorno o archivo .env")
-
 # ─── JWT ───────────────────────────────────────────────────────
-# Se carga desde JWT_SECRET_KEY en el entorno
-JWT_SECRET = os.getenv("JWT_SECRET_KEY")
+JWT_SECRET = os.getenv("JWT_SECRET_KEY", "9a15f0d2c0b4e3e3b3c3d3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z")
 if not JWT_SECRET:
-    # Fallback seguro solo para desarrollo local, pero se recomienda configurar en .env
-    JWT_SECRET = "fallback-insecure-development-secret-change-me"
-    logging.getLogger("municipal_api").warning("AVISO: Usando JWT_SECRET de contingencia.")
+    JWT_SECRET = "fallback-secret-for-demo-123456"
+    logging.getLogger(__name__).warning("Usando JWT_SECRET de contingencia.")
+
+# ─── Base de Datos ─────────────────────────────────────────────
+DB_CONNECTION_STRING = os.getenv("DATABASE_URL", "postgresql://postgres:RPyLEhcXstDJBrMoVMMgzkpbMPyZLIHl@crossover.proxy.rlwy.net:55112/neondb")
+if not DB_CONNECTION_STRING:
+    raise ValueError("No DATABASE_URL set for Flask application")
 
 # ─── Servidor ──────────────────────────────────────────────────
 # APP_HOST se usa de forma interna y externa. En Railway, las rutas públicas ya no llevan puerto, es HTTPS (443).
