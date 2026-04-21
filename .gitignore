@@ -28,17 +28,10 @@ config_correo.json
 logs/
 municipal_api.log
 
-# ─── Base de datos y dumps ────────────────────────────────────
-*.sql
-*.dump
-*.sqlite
-*.db
 
-# ─── Archivos generados en runtime ────────────────────────────
-backend/docs/
-backend/fotos_reportes/
-backend/auditoria_reportes/
-/data/
+
+
+
 
 # ─── Herramientas de desarrollo ───────────────────────────────
 .pytest_cache/

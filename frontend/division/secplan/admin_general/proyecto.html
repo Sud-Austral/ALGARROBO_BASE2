@@ -1155,9 +1155,9 @@
         let editingId = null;
         let columnsVisible = false;
 
-        const currentFilters = { area: [], lineamiento: [], financiamiento: [], anno_elaboracion: [], anno_ejecucion: [], estado: [], etapa: [], estado_postulacion: [], profesional: [] };
-        const mapFilters = { area: 'area_nombre', lineamiento: 'lineamiento_estrategico_nombre', financiamiento: 'financiamiento_nombre', anno_elaboracion: 'anno_elaboracion', anno_ejecucion: 'anno_ejecucion', estado: 'estado_nombre', etapa: 'etapa_nombre', estado_postulacion: 'estado_postulacion_nombre', profesional: 'profesional_1' };
-        const labelFilters = { area: 'Área', lineamiento: 'Línea', financiamiento: 'Fte.', anno_elaboracion: 'Elab.', anno_ejecucion: 'Ejec.', estado: 'Estado', etapa: 'Etapa', estado_postulacion: 'Post.', profesional: 'Prof.' };
+        const currentFilters = { area: [], lineamiento: [], fuente: [], anyo_financiamiento: [], anno_elaboracion: [], anno_ejecucion: [], estado: [], etapa: [], estado_postulacion: [], profesional: [] };
+        const mapFilters = { area: 'area_nombre', lineamiento: 'lineamiento_estrategico_nombre', fuente: 'financiamiento_fuente', anyo_financiamiento: 'financiamiento_anyo', anno_elaboracion: 'anno_elaboracion', anno_ejecucion: 'anno_ejecucion', estado: 'estado_nombre', etapa: 'etapa_nombre', estado_postulacion: 'estado_postulacion_nombre', profesional: 'profesional_1' };
+        const labelFilters = { area: 'Área', lineamiento: 'Línea', fuente: 'Fuente', anyo_financiamiento: 'Año Finan.', anno_elaboracion: 'Elab.', anno_ejecucion: 'Ejec.', estado: 'Estado', etapa: 'Etapa', estado_postulacion: 'Post.', profesional: 'Prof.' };
         let activeMenuKey = null;
 
         async function loadCatalogData() {
@@ -1219,20 +1219,34 @@
 
         function formatDateForInput(dateString) {
             if (!dateString) return '';
-            if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-                return dateString;
+            // Extraer la parte de la fecha directamente del string ISO
+            // evitando que new Date() haga conversión timezone y reste un día
+            if (typeof dateString === 'string') {
+                const isoDate = dateString.split('T')[0]; // 'YYYY-MM-DD'
+                if (/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return isoDate;
             }
+            // Fallback por si viene en otro formato
             const dateObj = new Date(dateString);
             if (isNaN(dateObj.getTime())) return dateString;
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
+            const year = dateObj.getUTCFullYear();
+            const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getUTCDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
 
         function formatDisplayDate(dateString) {
             if (!dateString) return '-';
             try {
+                // Usar la parte de fecha del ISO directamente para evitar cambio de día por timezone
+                const datePart = typeof dateString === 'string' ? dateString.split('T')[0] : null;
+                const timePart = typeof dateString === 'string' && dateString.includes('T') ? dateString.split('T')[1] : null;
+                if (datePart && /^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+                    const [y, m, d] = datePart.split('-');
+                    const timeStr = timePart ? timePart.replace('Z', '').substring(0, 5) : '';
+                    const dateLabel = `${d}/${m}/${y}`;
+                    return timeStr ? `${dateLabel} ${timeStr}` : dateLabel;
+                }
+                // Fallback genérico
                 const date = new Date(dateString);
                 return date.toLocaleDateString('es-CL', {
                     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
