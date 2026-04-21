@@ -301,10 +301,11 @@ def get_texto_documentos_proyecto(proyecto_id):
         proyecto_dir = os.path.join(DOCS_FOLDER, str(proyecto_id))
         for doc in documentos:
             ext = doc["archivo_extension"].lower()
-            if ext not in ALLOWED_EXTENSIONS:
-                continue
             file_path = os.path.join(proyecto_dir, doc["archivo_nombre"])
             if not os.path.exists(file_path):
+                continue
+            # Solo extraer texto de formatos que soporten OCR/parse
+            if ext not in ALLOWED_EXTENSIONS:
                 continue
             texto = extract_text_from_file(file_path, ext)
             if texto.strip():

@@ -92,6 +92,5 @@ def log_auditoria(user_id, accion, descripcion):
 
 
 def allowed_file(filename):
-    """Verifica si la extensión del archivo está permitida."""
-    from core.config import ALLOWED_EXTENSIONS
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    """Verifica que el archivo tenga extensión. Acepta cualquier tipo de archivo."""
+    return "." in filename and len(filename.rsplit(".", 1)[1]) > 0

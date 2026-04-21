@@ -73,7 +73,9 @@ FOTOS_DIR = FOTOS_OUT_DIR  # Alias para compatibilidad con rutas móviles
 os.makedirs(FOTOS_OUT_DIR, exist_ok=True)
 os.makedirs(FOTOS_DIR, exist_ok=True)
 
-# ─── Extensiones de archivo permitidas ─────────────────────────
+# ─── Extensiones de archivo para extracción de texto (OCR/parse) ─
+# Solo se usa para decidir si se intenta extraer texto del documento.
+# La subida de archivos no está restringida por extensión.
 ALLOWED_EXTENSIONS = {
     "pdf", "doc", "docx", "xls", "xlsx",
     "png", "jpg", "jpeg",
