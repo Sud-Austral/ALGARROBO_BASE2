@@ -119,6 +119,10 @@ function toggleNotifications() {
 
 const [token, userData] = checkLoginStatus();
 
+if (userData && !verificarRutaPermitida(userData)) {
+    window.location.href = `${BASE}/frontend/index.html`;
+}
+
 document.addEventListener('click', function (event) {
     const userMenu = document.getElementById('userMenu');
     const userButton = event.target.closest('button[onclick="toggleUserMenu()"]');

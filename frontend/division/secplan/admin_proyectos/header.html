@@ -5,15 +5,21 @@
         // Función para verificar el estado de login
         function checkLoginStatus() {
             const isLoggedIn = localStorage.getItem('isLoggedIn');
-            console.log(isLoggedIn)
-            
             if (!isLoggedIn || isLoggedIn !== 'true') {
-                // Redirigir a la página de login si no está logueado
+                window.location.href = '../../index.html';
+                return;
+            }
+            try {
+                const raw = localStorage.getItem('userData') || localStorage.getItem('user_data') || '{}';
+                const user = JSON.parse(raw);
+                if (parseInt(user.nivel_acceso) !== 11) {
+                    window.location.href = '../../index.html';
+                }
+            } catch(e) {
                 window.location.href = '../../index.html';
             }
-            
         }
-        checkLoginStatus() 
+        checkLoginStatus();
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

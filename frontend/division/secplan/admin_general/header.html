@@ -2,18 +2,24 @@
 <html lang="es">
 <head>
     <script>
-        // Función para verificar el estado de login
+        // Funciï¿½n para verificar el estado de login
         function checkLoginStatus() {
             const isLoggedIn = localStorage.getItem('isLoggedIn');
-            console.log(isLoggedIn)
-            
             if (!isLoggedIn || isLoggedIn !== 'true') {
-                // Redirigir a la página de login si no está logueado
+                window.location.href = '../../index.html';
+                return;
+            }
+            try {
+                const raw = localStorage.getItem('userData') || localStorage.getItem('user_data') || '{}';
+                const user = JSON.parse(raw);
+                if (![10, 11].includes(parseInt(user.nivel_acceso))) {
+                    window.location.href = '../../index.html';
+                }
+            } catch(e) {
                 window.location.href = '../../index.html';
             }
-            
         }
-        checkLoginStatus() 
+        checkLoginStatus();
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -71,11 +77,11 @@
                                 <i class="fas fa-users mr-2"></i> SECPLAC
                             </a>
                             <a href="#" onclick="changeRole('public')" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">
-                                <i class="fas fa-eye mr-2"></i> Vista Pública
+                                <i class="fas fa-eye mr-2"></i> Vista Pï¿½blica
                             </a>
                             <hr class="my-1">
                             <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">
-                                <i class="fas fa-cog mr-2"></i> Configuración
+                                <i class="fas fa-cog mr-2"></i> Configuraciï¿½n
                             </a>
                             <a href="#" onclick="logout()" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">
                                 <i class="fas fa-sign-out-alt mr-2"></i> Salir
@@ -94,7 +100,7 @@
     
     
     <script>
-        // Verificar si el usuario está logueado al cargar la página
+        // Verificar si el usuario estï¿½ logueado al cargar la pï¿½gina
         document.addEventListener('DOMContentLoaded', function() {
             checkLoginStatus();
             initializeCharts();
@@ -102,13 +108,13 @@
 
         
 
-        // Función para logout
+        // Funciï¿½n para logout
         function logout() {
-            // Eliminar la sesión del usuario
+            // Eliminar la sesiï¿½n del usuario
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userRole');
             
-            // Redirigir a la página de login
+            // Redirigir a la pï¿½gina de login
             window.location.href = '../../index.html';
         }
 
@@ -120,7 +126,7 @@
                 new Chart(areaCtx, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Vialidad', 'Espacios Públicos', 'Saneamiento', 'Educación', 'Salud'],
+                        labels: ['Vialidad', 'Espacios Pï¿½blicos', 'Saneamiento', 'Educaciï¿½n', 'Salud'],
                         datasets: [{
                             data: [33, 38, 8, 8, 5],
                             backgroundColor: [
@@ -149,7 +155,7 @@
                 new Chart(statusCtx, {
                     type: 'bar',
                     data: {
-                        labels: ['Diseño', 'Ejecución', 'Licitación', 'En preparación', 'Aprobado'],
+                        labels: ['Diseï¿½o', 'Ejecuciï¿½n', 'Licitaciï¿½n', 'En preparaciï¿½n', 'Aprobado'],
                         datasets: [{
                             label: 'Proyectos',
                             data: [25, 12, 8, 30, 17],
@@ -170,8 +176,8 @@
 
         // View management
         function showView(viewName) {
-            // En esta versión simplificada, solo tenemos el dashboard
-            // Esta función se mantiene para futuras expansiones
+            // En esta versiï¿½n simplificada, solo tenemos el dashboard
+            // Esta funciï¿½n se mantiene para futuras expansiones
             console.log('Mostrando vista:', viewName);
         }
 
@@ -188,7 +194,7 @@
                 'admin': 'Administrador',
                 'alcalde': 'Alcalde',
                 'secplac': 'SECPLAC',
-                'public': 'Vista Pública'
+                'public': 'Vista Pï¿½blica'
             };
             document.getElementById('currentRole').textContent = roleNames[role];
             document.getElementById('userMenu').classList.add('hidden');
@@ -196,9 +202,9 @@
             // Guardar el rol en localStorage
             localStorage.setItem('userRole', role);
             
-            // Aquí se implementaría la lógica para cambiar la vista según el rol
+            // Aquï¿½ se implementarï¿½a la lï¿½gica para cambiar la vista segï¿½n el rol
             if (role === 'public') {
-                alert('Modo público activado - Se ocultará información sensible');
+                alert('Modo pï¿½blico activado - Se ocultarï¿½ informaciï¿½n sensible');
             }
         }
 
