@@ -427,7 +427,7 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                             <button onclick="exportConversation()"
-                                class="text-gray-400 hover:text-indigo-600 transition" title="Exportar conversaci�n">
+                                class="text-gray-400 hover:text-indigo-600 transition" title="Exportar conversación">
                                 <i class="fas fa-download"></i>
                             </button>
                         </div>
@@ -439,10 +439,10 @@
                             <div class="avatar"><i class="fas fa-robot"></i></div>
                             <div class="flex-1">
                                 <div class="message-content markdown-body">
-                                    <p><strong>�Hola! Soy tu asistente.</strong></p>
+                                    <p><strong>¡Hola! Soy tu asistente.</strong></p>
                                     <p>Puedes preguntarme sobre la <strong>lista de proyectos filtrada</strong> actual
-                                        (ej: "�Cu�ntos proyectos hay?").</p>
-                                    <p>O bien, <strong>selecciona un proyecto</strong> espec�fico para que analice el
+                                        (ej: "¿Cuántos proyectos hay?").</p>
+                                    <p>O bien, <strong>selecciona un proyecto</strong> específico para que analice el
                                         texto completo de sus documentos y responda dudas detalladas.</p>
                                 </div>
                                 <div class="message-meta text-gray-500" id="initial-timestamp">Hoy, --:--</div>
@@ -469,7 +469,7 @@
                             <div class="flex-1 relative">
                                 <input type="text" id="chatInput"
                                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-3 pr-12"
-                                    placeholder="Escribe tu pregunta aqu�..." autocomplete="off">
+                                    placeholder="Escribe tu pregunta aquí..." autocomplete="off">
                                 <div id="charCounter" class="absolute bottom-2 right-3 text-[10px] text-gray-400">0/500
                                 </div>
                             </div>
@@ -489,10 +489,7 @@
 
     <script>
 
-        //const API_KEY = "1dbcda64e67c4d31a7e9e5565efc5cae.M5ZIv5sFPbdOwgKw";
-        const API_KEY = getKey("gfhrsdfsdfseweretfghtddfdf");
-        const API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
-        //const MODEL_NAME = "GLM-4.6V-Flash";
+        const API_URL = "/api/chat/completions";
         const MODEL_NAME = "GLM-4.5-Flash";
 
         const CHAT_CONFIG = {
@@ -505,9 +502,8 @@
             MAX_PROJECTS_SUMMARY: 500
         };
 
-        const API_BASE = 'https://algarrobobase2-production-4ab9.up.railway.app';
-
-        const ENDPOINT_PROJECT_TEXT = (projectId) => `${API_BASE}/proyectos/${projectId}/documentos/texto`;
+        // Configuración de Endpoints
+        const ENDPOINT_PROJECT_TEXT = (projectId) => `/proyectos/${projectId}/documentos/texto`;
 
         const AppState = {
             allProjects: [],
@@ -541,20 +537,13 @@
             selectedCountMsg: document.getElementById('selectedCountMsg')
         };
 
-        function getAuthHeaders() {
-            const token = localStorage.getItem('authToken');
-            return {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            };
-        }
 
         async function loadCatalogs() {
             try {
                 const [areas, estados, financiamientos] = await Promise.all([
-                    fetch(`${API_BASE}/areas`, { headers: getAuthHeaders() }).then(r => r.json()).catch(() => []),
-                    fetch(`${API_BASE}/estados_proyecto`, { headers: getAuthHeaders() }).then(r => r.json()).catch(() => []),
-                    fetch(`${API_BASE}/financiamientos`, { headers: getAuthHeaders() }).then(r => r.json()).catch(() => [])
+                    api.get('/areas').catch(() => []),
+                    api.get('/estados_proyecto').catch(() => []),
+                    api.get('/financiamientos').catch(() => [])
                 ]);
 
                 AppState.catalogs = {
@@ -573,13 +562,7 @@
             try {
                 DOM.projectsLoading.classList.remove('hidden');
 
-                const pProjects = fetch(`${API_BASE}/proyectos`, {
-                    method: 'GET',
-                    headers: getAuthHeaders()
-                }).then(r => {
-                    if (!r.ok) throw new Error(`Error API: ${r.status}`);
-                    return r.json();
-                });
+                const pProjects = api.get('/proyectos').catch(() => []);
 
                 if (!AppState.catalogs) await loadCatalogs();
 
@@ -611,7 +594,7 @@
         function populateDropdowns() {
             if (!AppState.catalogs) return;
 
-            fillSelect(DOM.filterArea, AppState.catalogs.areas.map(a => a.nombre), "Todas las �reas");
+            fillSelect(DOM.filterArea, AppState.catalogs.areas.map(a => a.nombre), "Todas las áreas");
             fillSelect(DOM.filterStatus, AppState.catalogs.estados.map(e => e.nombre), "Todos los estados");
             fillSelect(DOM.filterFinancing, AppState.catalogs.financiamientos.map(f => f.nombre), "Todo el financiamiento");
         }
@@ -710,10 +693,10 @@
         }
 
         function getStatusBadgeColor(status) {
-            if (status === 'Ejecuci�n') return 'bg-green-100 text-green-700';
+            if (status === 'Ejecución') return 'bg-green-100 text-green-700';
             if (status === 'Terminado') return 'bg-gray-100 text-gray-700';
-            if (status === 'Licitaci�n') return 'bg-yellow-100 text-yellow-700';
-            if (status === 'Dise�o') return 'bg-blue-100 text-blue-700';
+            if (status === 'Licitación') return 'bg-yellow-100 text-yellow-700';
+            if (status === 'Diseño') return 'bg-blue-100 text-blue-700';
             return 'bg-gray-100 text-gray-600';
         }
 
@@ -796,7 +779,7 @@
         function resetVoiceButton() {
             DOM.voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
             DOM.voiceButton.classList.remove('text-red-500', 'animate-pulse');
-            DOM.chatInput.placeholder = "Escribe tu pregunta aqu�...";
+            DOM.chatInput.placeholder = "Escribe tu pregunta aquí...";
         }
 
         function toggleVoiceRecognition() {
@@ -817,26 +800,24 @@
             }
 
             try {
-                const response = await fetch(ENDPOINT_PROJECT_TEXT(projectId), {
-                    method: 'GET',
-                    headers: getAuthHeaders()
-                });
+                const data = await api.get(ENDPOINT_PROJECT_TEXT(projectId));
+                /* */
 
-                if (!response.ok) {
-                    console.warn(`API de texto fall� para proyecto ${projectId}: ${response.status}`);
+                if (false) {
+                    console.warn(`API de texto falló para proyecto ${projectId}: ${response.status}`);
                     return "No se pudo cargar el contenido de los documentos.";
                 }
 
-                const data = await response.json();
+                // data ya viene del api.get
                 let rawText = "";
 
                 if (data && data.texto) {
                     rawText = data.texto;
                     AppState.textCharsCount = data.chars || rawText.length;
                 } else {
-                    console.warn("La API no devolvi� texto v�lido.");
+                    console.warn("La API no devolvió texto válido.");
                     AppState.textCharsCount = 0;
-                    rawText = "El proyecto no tiene documentos procesados o el contenido est� vac�o.";
+                    rawText = "El proyecto no tiene documentos procesados o el contenido está vacío.";
                 }
 
                 AppState.projectRawText = rawText;
@@ -847,7 +828,7 @@
             } catch (error) {
                 console.error('Error fetching document text:', error);
                 AppState.projectRawText = null;
-                return "Ocurri� un error al intentar leer los documentos del proyecto.";
+                return "Ocurrió un error al intentar leer los documentos del proyecto.";
             }
         }
 
@@ -919,55 +900,55 @@
                 let textToInject = context.documentText || "No hay contenido de documentos.";
 
                 if (textToInject.length > CHAT_CONFIG.MAX_TEXT_PAYLOAD_LENGTH) {
-                    textToInject = textToInject.substring(0, CHAT_CONFIG.MAX_TEXT_PAYLOAD_LENGTH) + "\n\n[... Contenido truncado por l�mite de tokens ...]";
+                    textToInject = textToInject.substring(0, CHAT_CONFIG.MAX_TEXT_PAYLOAD_LENGTH) + "\n\n[... Contenido truncado por límite de tokens ...]";
                 }
 
                 const p = context.projectData;
                 const projectSummary = `
 - ID: ${p.id}
 - Nombre: ${p.nombre || 'Sin nombre'}
-- C�digo: ${p.codigo || 'N/A'}
-- �rea: ${p.area_nombre || p.area || 'Sin �rea'}
+- Código: ${p.codigo || 'N/A'}
+- Área: ${p.area_nombre || p.area || 'Sin área'}
 - Estado: ${p.estado_nombre || p.estado_proyecto || 'Sin estado'}
 - Monto: $${(p.monto || 0).toLocaleString('es-CL')} CLP
 - Financiamiento: ${p.financiamiento_nombre || p.financiamiento || 'No especificado'} (Mun: ${p.financiamiento_municipal || 'NO'})
 - Es Prioridad: ${p.es_prioridad || 'No'}
-- Avance F�sico: ${p.avance_total_porcentaje || 0}%
-- A�o Elaboraci�n: ${p.anno_elaboracion || 'N/A'} | A�o Ejecuci�n: ${p.anno_ejecucion || 'N/A'}
+- Avance Físico: ${p.avance_total_porcentaje || 0}%
+- Año Elaboración: ${p.anno_elaboracion || 'N/A'} | Año Ejecución: ${p.anno_ejecucion || 'N/A'}
 - Sector: ${p.sector_nombre || 'N/A'} (Lat: ${p.latitud || '?'}, Lon: ${p.longitud || '?'})
 - Lineamiento: ${p.lineamiento_nombre || 'N/A'}
 - Etapa: ${p.etapa_nombre || 'N/A'}
-- Postulaci�n: ${p.estado_postulacion_nombre || 'N/A'}
+- Postulación: ${p.estado_postulacion_nombre || 'N/A'}
 - Profesionales: ${[p.profesional_1, p.profesional_2, p.profesional_3, p.profesional_4, p.profesional_5].filter(Boolean).join(', ') || 'No asignados'}
 - Aprobaciones: DOM (${p.aprobacion_dom || 'N/A'}) | SERVIU (${p.aprobacion_serviu || 'N/A'})
-- Docs T�cnicos: Topograf�a (${p.topografia === '1' ? 'SI' : 'NO'}), Ingenier�a (${p.ingenieria === '1' ? 'SI' : 'NO'}), Planimetr�as (${p.planimetrias === '1' ? 'SI' : 'NO'}), Perfil (${p.perfil_tecnico_economico === '1' ? 'SI' : 'NO'})
+- Docs Técnicos: Topografía (${p.topografia === '1' ? 'SI' : 'NO'}), Ingeniería (${p.ingenieria === '1' ? 'SI' : 'NO'}), Planimetrías (${p.planimetrias === '1' ? 'SI' : 'NO'}), Perfil (${p.perfil_tecnico_economico === '1' ? 'SI' : 'NO'})
 - Observaciones: ${p.observaciones || 'Sin observaciones'}
-- Actualizaci�n: ${p.actualizado_por_nombre || 'Sistema'} (${p.fecha_actualizacion || 'N/A'})`;
+- Actualización: ${p.actualizado_por_nombre || 'Sistema'} (${p.fecha_actualizacion || 'N/A'})`;
 
-                systemPrompt = `Eres un Auditor Municipal experto en Control de Gesti�n (SECPLAN).
-                Est�s realizando una AUDITOR�A DETALLADA de un proyecto espec�fico.
+                systemPrompt = `Eres un Auditor Municipal experto en Control de Gestión (SECPLAN).
+                Estás realizando una AUDITORÍA DETALLADA de un proyecto específico.
 
                 REGLAS DE TONO:
-                1. Manten un Tono T�cnico y Profesional. Evita saludos excesivos.
+                1. Manten un Tono Técnico y Profesional. Evita saludos excesivos.
                 2. Basa tus respuestas ESTRICTAMENTE en los documentos proporcionados.
-                3. Si la informaci�n no est� en los documentos, indica: "No consta en la documentaci�n adjunta".
+                3. Si la información no está en los documentos, indica: "No consta en la documentación adjunta".
 
                 CONTEXTO: Analizando proyecto ID ${context.projectData.id}.
                 
                 ## DATOS ESTRUCTURADOS (Ficha):
                 ${projectSummary}
 
-                ## EVIDENCIA DOCUMENTAL (Texto extra�do):
+                ## EVIDENCIA DOCUMENTAL (Texto extraído):
                 ${textToInject}
 
                 ## INSTRUCCIONES:
                 1. Responde la duda del usuario citando evidencia del texto cuando sea posible.
-                2. Si detectas fechas vencidas o montos inconsistentes, se��lalo como "Observaci�n".
+                2. Si detectas fechas vencidas o montos inconsistentes, señálalo como "Observación".
                 3. Formato de Moneda: $1.000.000 (Pesos Chilenos).
 
                 ## FORMATO DE RESPUESTA:
                 [RESPUESTA]
-                (Tu an�lisis de auditor�a aqu�)
+                (Tu análisis de auditoría aquí)
                 [/RESPUESTA]
                 [PREGUNTAS]
                 1. (Pregunta sobre contratos o plazos)
@@ -980,7 +961,7 @@
                 const projects = context.filteredProjects || [];
                 const totalProyectos = projects.length;
 
-                // 1. Matriz de Datos Ultra-Densa (Optimizaci�n de Atenci�n)
+                // 1. Matriz de Datos Ultra-Densa (Optimización de Atención)
                 const projectsMatrix = projects
                     .sort((a, b) => a.id - b.id)
                     .slice(0, CHAT_CONFIG.MAX_PROJECTS_SUMMARY)
@@ -988,17 +969,17 @@
 
                 // 2. System Prompt: Estructura DATA -> INSTRUCTIONS (Recency Bias)
                 systemPrompt = `Eres el Auditor de Datos SECPLAN. 
-                Tu �nica fuente de verdad es la BASE DE DATOS a continuaci�n.
+                Tu única fuente de verdad es la BASE DE DATOS a continuación.
                 
                 ### BASE DE DATOS PROYECTOS (${projects.length} registros):
                 ${projectsMatrix}
                 ---------------------------------------------------
                 
-                ### REGLAS CR�TICAS DE AUDITOR�A (LEER �LTIMO - ALTA PRIORIDAD):
-                1. **EXHAUSTIVIDAD:** Escanea CADA l�nea de la BASE DE DATOS. No te detengas al encontrar los primeros.
-                2. **NO ALUCINAR:** Si el usuario incluye nombres en su pregunta, IGN�RALOS para el conteo. Usa SOLO la BASE DE DATOS arriba.
-                3. **VERIFICACI�N POR ID:** Por cada registro que encuentres, anota su ID.
-                4. **CUMPLIMIENTO DE FILTRO:** Si preguntan por una palabra (ej: "Escuela"), el nombre debe contenerla. Recuerda que "Escuela El Yeco" != "Escuela San Jos�".
+                ### REGLAS CRÍTICAS DE AUDITORÍA (LEER ÚLTIMO - ALTA PRIORIDAD):
+                1. **EXHAUSTIVIDAD:** Escanea CADA línea de la BASE DE DATOS. No te detengas al encontrar los primeros.
+                2. **NO ALUCINAR:** Si el usuario incluye nombres en su pregunta, IGNÓRALOS para el conteo. Usa SOLO la BASE DE DATOS arriba.
+                3. **VERIFICACIÓN POR ID:** Por cada registro que encuentres, anota su ID.
+                4. **CUMPLIMIENTO DE FILTRO:** Si preguntan por una palabra (ej: "Escuela"), el nombre debe contenerla. Recuerda que "Escuela El Yeco" != "Escuela San José".
 
                 ESTRUCTURA DE RESPUESTA:
                 [RESPUESTA]
@@ -1008,7 +989,7 @@
                 [/RESPUESTA]
 
                 [PREGUNTAS]
-                (3 preguntas estrat�gicas)
+                (3 preguntas estratégicas)
                 [/PREGUNTAS]`;
             }
 
@@ -1026,7 +1007,7 @@
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${API_KEY}`,
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(requestBody)
@@ -1057,7 +1038,7 @@
                 });
             }
 
-            if (preguntasFinal.length === 0) preguntasFinal = ["�Qu� m�s puedo ayudarte?", "�Necesitas m�s detalles?", "�C�mo proceder?"];
+            if (preguntasFinal.length === 0) preguntasFinal = ["¿Qué más puedo ayudarte?", "¿Necesitas más detalles?", "¿Cómo proceder?"];
 
             AppState.chatHistory.push({ role: "assistant", content: respuestaFinal });
 
@@ -1140,13 +1121,13 @@
         }
 
         function clearChat() {
-            if (!confirm("�Est�s seguro de que quieres borrar todo el historial del chat?")) return;
+            if (!confirm("¿Estás seguro de que quieres borrar todo el historial del chat?")) return;
             DOM.messagesArea.innerHTML = `
                 <div class="message-wrapper bot">
                     <div class="avatar"><i class="fas fa-robot"></i></div>
                     <div class="flex-1">
                         <div class="message-content markdown-body">
-                            <p><strong>�Hola! Soy tu asistente.</strong></p>
+                            <p><strong>¡Hola! Soy tu asistente.</strong></p>
                             <p>El chat ha sido reiniciado. Puedes preguntar sobre la lista filtrada o seleccionar un proyecto para detalles.</p>
                         </div>
                         <div class="message-meta text-gray-500">Hoy, ${new Date().toLocaleTimeString()}</div>
@@ -1156,10 +1137,10 @@
         }
 
         function exportConversation() {
-            let txt = "Conversaci�n Exportada - Asistente Geoportal\n\n";
+            let txt = "Conversación Exportada - Asistente Geoportal\n\n";
             DOM.messagesArea.querySelectorAll('.message-wrapper').forEach(wrapper => {
                 const isBot = wrapper.classList.contains('bot');
-                const role = isBot ? "IA:" : "T�:";
+                const role = isBot ? "IA:" : "Tú:";
                 const content = wrapper.querySelector('.message-content').innerText;
                 txt += `${role} \n${content} \n\n`;
             });

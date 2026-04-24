@@ -11,7 +11,7 @@ Optimización:
 import os
 import traceback
 from datetime import datetime
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 
 # ─── Módulos Core ──────────────────────────────────────────────
@@ -34,6 +34,7 @@ from routes.calendario_routes import calendario_bp
 from routes.mobile_routes import mobile_bp
 from routes.control_routes import control_bp
 from routes.auditoria_routes import auditoria_bp
+from routes.chat_routes import chat_bp
 
 # ═══════════════════════════════════════════════════════════════
 # GESTIÓN DE RAMPAS DE DATOS (VOLUMEN RAILWAY)
@@ -95,6 +96,29 @@ app.register_blueprint(calendario_bp, url_prefix='/api')
 app.register_blueprint(mobile_bp, url_prefix='/api')
 app.register_blueprint(control_bp, url_prefix='/api')
 app.register_blueprint(auditoria_bp, url_prefix='/api')
+app.register_blueprint(chat_bp, url_prefix='/api')
+
+# ─── COMPATIBILIDAD LEGACY ──────────────────────────────────────
+@app.errorhandler(404)
+def handle_404_legacy_sync(e):
+    """
+    Sincronización perfecta: Si una ruta no existe, verifica si existe bajo /api.
+    Esto permite que el frontend legacy siga funcionando mientras se migra.
+    """
+    path = request.path
+    if not path.startswith('/api/'):
+        # Intentar ver si existe en el blueprint de proyectos (que tiene la mayoría de rutas)
+        # o en otros blueprints. 
+        # NOTA: Esto es una red de seguridad para la sincronización.
+        api_path = f"/api{path}"
+        logger.info(f"404 Detectado en {path}. Intentando redirección legacy a {api_path}")
+        
+        # Opcionalmente, podrías usar redirect(api_path) 
+        # pero para peticiones AJAX fetch, es mejor avisar o proxear.
+        # Por simplicidad y efectividad con CORS, redirigimos.
+        return redirect(api_path), 307 # 307 preserva el método (POST, PUT, etc)
+
+    return jsonify({"message": "Ruta no encontrada", "path": path}), 404
 
 # ─── Rutas de Servicio de Archivos desde Volumen ────────────────
 @app.route("/")

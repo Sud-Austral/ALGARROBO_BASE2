@@ -25,6 +25,7 @@ const diccionarioRutas = {
         `${BASE}/frontend/division/secplan/admin_proyectos/mapa.html`,
         `${BASE}/frontend/division/secplan/admin_proyectos/informe.html`,
         `${BASE}/frontend/division/secplan/admin_proyectos/calendario.html`,
+        `${BASE}/frontend/division/secplan/admin_general/`,
         `${BASE}/frontend/administracion/index.html`
     ],
     12: [
@@ -39,8 +40,11 @@ const diccionarioRutas = {
 
 function verificarRutaPermitida(user) {
     if (!user) return false;
-    const nivelAcceso = user.nivel_acceso;
+    const nivelAcceso = parseInt(user.nivel_acceso);
     const path = window.location.pathname;
+
+    // Admin General (10) tiene acceso total a todas las rutas del sistema
+    if (nivelAcceso === 10) return true;
 
     const rutasPermitidas = diccionarioRutas[nivelAcceso] || [];
     const pathNormalizado = path.replace(/\/+$/, "");
@@ -75,7 +79,7 @@ function checkLoginStatus() {
     }
 
     // Role verification (Control de Acceso)
-    const validRoles = [10, 11]; // admin_general (10), admin_proyectos (11)
+    const validRoles = [10, 11, 12]; // admin_general (10), admin_proyectos (11), director_obras (12)
     let userRole = null;
     
     if (userData.roles && userData.roles.length > 0) {

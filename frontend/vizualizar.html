@@ -17,7 +17,7 @@
         const documentoId = 1; // dinámico
         const token = localStorage.getItem("authToken");
         console.log(token)
-        fetch(`https://algarrobobase2-production-4ab9.up.railway.app/documentos/${documentoId}/view`, {
+        fetch(`/api/documentos/${documentoId}/view`, {
             headers: {
                 "Authorization": "Bearer " + token
             }

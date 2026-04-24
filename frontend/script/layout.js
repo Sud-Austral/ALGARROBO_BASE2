@@ -466,11 +466,31 @@ function renderSidebar(containerId = "sidebarContainer") {
                     </a>
                 </li>
                 <li>
+                    <a href="${pages.informe}" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses(pages.informe)}">
+                        <i class="fas fa-chart-line w-5 text-center"></i>
+                        <span class="font-medium">Informes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="${pages.geomapas}" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses(pages.geomapas)}">
+                        <i class="fas fa-layer-group w-5 text-center"></i>
+                        <span class="font-medium">GeoMapas</span>
+                    </a>
+                </li>
+                 <li>
+                    <a href="${BASE_PATH}/frontend/division/${userDivision}/${userRole}/dashboard.html" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses('dashboard.html')}">
+                        <i class="fas fa-gauge-high w-5 text-center"></i>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                </li>
+                <li>
                      <a href="${BASE_PATH}/frontend/geoportal/index.html" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900">
                          <i class="fas fa-globe-americas w-5 text-center"></i>
                          <span class="font-medium">Geoportal</span>
                      </a>
                 </li>
+
+                 
 
                 <li class="pt-4">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-3">Herramientas</p>

@@ -31,16 +31,24 @@ DEBUG = os.getenv("FLASK_DEBUG", "False").lower() in ("1", "true", "yes")
 # ─── CORS ──────────────────────────────────────────────────────
 allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
 if allowed_origins_raw:
-    # Procesar lista separada por comas: "http://localhost:5500, https://mi-app.com"
+    # Procesar lista separada por comas
     ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_raw.split(",")]
 else:
-    # SEGURIDAD [H-03]: Fallback a desarrollos locales comunes si no hay config
-    # SEGURIDAD [H-03]: Permitir todos en desarrollo si no hay config
-    # Nota: Flask-CORS con supports_credentials=True requiere orígenes explícitos.
-    # Usaremos "*" para permitir todo, pero Flask-CORS lo manejará.
-    ALLOWED_ORIGINS = ["*"]
-    logging.getLogger("municipal_api").warning(
-        "ALLOWED_ORIGINS no definida en .env. Usando '*' (Modo permisivo)."
+    # SEGURIDAD [H-03]: Fallback robusto para desarrollo y producción
+    ALLOWED_ORIGINS = [
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:5501",
+        "http://127.0.0.1:5501",
+        "http://localhost:5505",
+        "http://127.0.0.1:5505",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "https://algarrobobase2-production-4ab9.up.railway.app",
+        "https://algarrobobase2.up.railway.app"
+    ]
+    logging.getLogger("municipal_api").info(
+        f"ALLOWED_ORIGINS usando lista blanca por defecto: {ALLOWED_ORIGINS}"
     )
 
 # ─── Sesiones ──────────────────────────────────────────────────
