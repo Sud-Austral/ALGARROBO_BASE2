@@ -702,20 +702,16 @@
 
                 // Fetch all data in parallel
                 const [reportsRes, categoriasRes, estadosRes, gravedadesRes] = await Promise.all([
-                    fetch(`${BASE_URL}/api/mobile/reportes/todos`),
-                    fetch(`${BASE_URL}/api/mobile/categorias`),
-                    fetch(`${BASE_URL}/api/mobile/estados`),
-                    fetch(`${BASE_URL}/api/mobile/gravedades`)
+                    api.get('/mobile/reportes/todos'),
+                    api.get('/mobile/categorias'),
+                    api.get('/mobile/estados'),
+                    api.get('/mobile/gravedades')
                 ]);
 
-                if (!reportsRes.ok) {
-                    throw new Error(`Error HTTP: ${reportsRes.status}`);
-                }
-
-                allReports = await reportsRes.json();
-                categorias = await categoriasRes.json();
-                estados = await estadosRes.json();
-                gravedades = await gravedadesRes.json();
+                allReports = reportsRes;
+                categorias = categoriasRes;
+                estados = estadosRes;
+                gravedades = gravedadesRes;
 
                 console.log("Reportes cargados:", allReports.length);
                 console.log("Categorías:", categorias);
@@ -1211,16 +1207,10 @@
             };
 
             try {
-                const token = localStorage.getItem('authToken');
-
-                const response = await fetch(`${BASE_URL}/api/mobile/reportes/${reportId}/actualizar`, {
+                const response = await api.request(`/mobile/reportes/${reportId}/actualizar`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': token ? `Bearer ${token}` : ''
-                    },
                     body: JSON.stringify(data)
-                });
+                }, 'raw');
 
                 if (!response.ok) {
                     const error = await response.json();

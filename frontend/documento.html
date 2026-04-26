@@ -46,7 +46,7 @@
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
-            const res = await fetch(`${BASE_URL}/auth/login`, {
+            const res = await fetch(`${BASE_URL}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password })
@@ -67,7 +67,7 @@
         async function cargarProyectos() {
             if (!TOKEN) return log("Debes loguearte primero");
 
-            const res = await fetch(`${BASE_URL}/proyectos`, {
+            const res = await fetch(`${BASE_URL}/api/proyectos`, {
                 headers: {
                     "Authorization": "Bearer " + TOKEN
                 }

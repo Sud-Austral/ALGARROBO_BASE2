@@ -220,7 +220,7 @@
                 const token = localStorage.getItem('authToken');
 
                 // Realizar la petición a la API
-                const response = await fetch(`${BASE_URL}/proyectos`, {
+                const response = await fetch(`${BASE_URL}/api/proyectos`, {
                     method: 'GET',
                     headers: {
                         'Authorization': token,

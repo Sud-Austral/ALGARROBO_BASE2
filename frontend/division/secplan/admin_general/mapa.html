@@ -321,30 +321,7 @@
 
         async function fetchProjects() {
             try {
-
-                const token = localStorage.getItem('authToken');
-
-                if (!token) {
-                    throw new Error('Token de autenticación no encontrado. Por favor, inicie sesión nuevamente.');
-                }
-
-                const response = await fetch(`${BASE_URL}/proyectos`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': token,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-
-                    if (response.status === 401 || response.status === 403) {
-                        throw new Error('No autorizado. Su sesión ha expirado o el token es inválido.');
-                    }
-                    throw new Error(`Error HTTP: ${response.status}`);
-                }
-
-                allProjects = await response.json();
+                allProjects = await api.get('/proyectos');
                 console.log("Proyectos cargados:", allProjects);
                 initializeApp();
             } catch (error) {
@@ -355,8 +332,7 @@
                     mapContainer.innerHTML = `<div class="flex justify-center items-center h-full text-center p-4"><p class="text-red-500 font-semibold">Error al cargar los proyectos.</p><p class="text-gray-600">${error.message}</p></div>`;
                 }
 
-                if (error.message.includes('No autorizado') || error.message.includes('Token de autenticación no encontrado')) {
-
+                if (error.message.includes('No autorizado') || error.message.includes('401')) {
                     localStorage.removeItem('isLoggedIn');
                     localStorage.removeItem('authToken');
                     window.location.href = '../../index.html';

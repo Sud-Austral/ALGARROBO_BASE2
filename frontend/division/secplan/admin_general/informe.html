@@ -819,10 +819,8 @@
     <script src="../../../script/help.js"></script>
     <script>document.addEventListener('DOMContentLoaded', () => createHelpButton('informe'));</script>
     <script>
-        // Configuración de IA para Resumen Ejecutivo
-        const API_KEY = getKey("gfhrsdfsdfseweretfghtddfdf");
-        const API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
-        const MODEL_NAME = "GLM-4-Flash";
+        const API_URL = "/api/chat/completions";
+        const MODEL_NAME = "GLM-4.5-Flash";
 
         async function fetchAIExecutiveSummary(projects, title) {
             // Calcular totales
@@ -901,12 +899,8 @@ Analiza los datos y genera un objeto JSON (SIN MARKDOWN, SOLO JSON) con la sigui
 Asegúrate de que el JSON sea válido. Usa un tono formal y técnico.`;
 
             try {
-                const response = await fetch(API_URL, {
+                const response = await api.request(API_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${API_KEY}`
-                    },
                     body: JSON.stringify({
                         model: MODEL_NAME,
                         messages: [
@@ -915,7 +909,7 @@ Asegúrate de que el JSON sea válido. Usa un tono formal y técnico.`;
                         ],
                         temperature: 0.7
                     })
-                });
+                }, 'raw');
 
                 if (!response.ok) throw new Error("Error en API IA");
                 const data = await response.json();

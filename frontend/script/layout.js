@@ -43,7 +43,10 @@ function renderHeader(containerId = "headerRender") {
         return;
     }
     const isLicitacion = window.location.pathname.includes('/licitaciones/');
-    let dashLink = `${BASE_PATH}/frontend/division/${userDivision}/${userRole}/dashboard.html`;
+    let effectiveRole = userRole;
+    if (userDivision === 'secplan') effectiveRole = 'admin_general';
+
+    let dashLink = `${BASE_PATH}/frontend/division/${userDivision}/${effectiveRole}/dashboard.html`;
 
     if (user?.nivel_acceso == 10) dashLink = `${BASE_PATH}/frontend/administracion/index2.html`;
     else if (user?.nivel_acceso == 11) dashLink = `${BASE_PATH}/frontend/administracion/index.html`;
@@ -151,7 +154,10 @@ function renderSidebar(containerId = "sidebarContainer") {
         logout();
         return;
     }
-    const baseDir = `${BASE_PATH}/frontend/division/${userDivision}/${userRole}/`;
+    let effectiveRole = userRole;
+    if (userDivision === 'secplan') effectiveRole = 'admin_general';
+    
+    const baseDir = `${BASE_PATH}/frontend/division/${userDivision}/${effectiveRole}/`;
 
     const pages = {
         dashboard: baseDir + "dashboard.html",
@@ -478,7 +484,7 @@ function renderSidebar(containerId = "sidebarContainer") {
                     </a>
                 </li>
                  <li>
-                    <a href="${BASE_PATH}/frontend/division/${userDivision}/${userRole}/dashboard.html" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses('dashboard.html')}">
+                    <a href="${pages.dashboard}" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses('dashboard.html')}">
                         <i class="fas fa-gauge-high w-5 text-center"></i>
                         <span class="font-medium">Dashboard</span>
                     </a>

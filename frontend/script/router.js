@@ -20,21 +20,16 @@ const diccionarioRutas = {
         `${BASE}/frontend/administracion/`
     ],
     11: [
-        `${BASE}/frontend/division/secplan/admin_proyectos/dashboard.html`,
-        `${BASE}/frontend/division/secplan/admin_proyectos/proyecto.html`,
-        `${BASE}/frontend/division/secplan/admin_proyectos/mapa.html`,
-        `${BASE}/frontend/division/secplan/admin_proyectos/informe.html`,
-        `${BASE}/frontend/division/secplan/admin_proyectos/calendario.html`,
+        `${BASE}/frontend/division/secplan/admin_proyectos/`,
         `${BASE}/frontend/division/secplan/admin_general/`,
-        `${BASE}/frontend/administracion/index.html`
+        `${BASE}/frontend/administracion/index.html`,
+        `${BASE}/frontend/geoportal/`
     ],
     12: [
-        `${BASE}/frontend/division/secplan/director_obras/dashboard.html`,
-        `${BASE}/frontend/division/secplan/director_obras/proyecto.html`,
-        `${BASE}/frontend/division/secplan/director_obras/mapa.html`,
-        `${BASE}/frontend/division/secplan/director_obras/informe.html`,
-        `${BASE}/frontend/division/secplan/director_obras/calendario.html`,
-        `${BASE}/frontend/administracion/index.html`
+        `${BASE}/frontend/division/secplan/director_obras/`,
+        `${BASE}/frontend/division/secplan/admin_general/`,
+        `${BASE}/frontend/administracion/index.html`,
+        `${BASE}/frontend/geoportal/`
     ]
 };
 
