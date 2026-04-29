@@ -2,9 +2,9 @@
 <html lang="es">
 
 <head>
-    <script src="../../../script/router.js?v=260423_1"></script>
-    <script src="../../../script/api.js"></script>
-    <script src="../../../script/utils.js"></script>
+    <script src="../../../script/router.js?v=290426_1"></script>
+    <script src="../../../script/api.js?v=290426_1"></script>
+    <script src="../../../script/utils.js?v=290426_1"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Informes - Geoportal Municipal</title>
@@ -815,7 +815,7 @@
         <span id="toastMessage"></span>
     </div>
 
-    <script src="../../../script/layout.js"></script>
+    <script src="../../../script/layout.js?v=290426_1"></script>
     <script src="../../../script/help.js"></script>
     <script>document.addEventListener('DOMContentLoaded', () => createHelpButton('informe'));</script>
     <script>
@@ -2125,7 +2125,7 @@ Asegúrate de que el JSON sea válido. Usa un tono formal y técnico.`;
             XLSX.writeFile(wb, `informe_${type}_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
 
-        // Se utiliza la función de utils.js para evitar conflictos de declaración
+        // Se utiliza la función de utils.js?v=290426_1 para evitar conflictos de declaración
 
         function formatCurrencyShort(value) {
             if (!value && value !== 0) return '$0';
@@ -2157,3 +2157,4 @@ Asegúrate de que el JSON sea válido. Usa un tono formal y técnico.`;
 </body>
 
 </html>
+

@@ -2,9 +2,9 @@
 <html lang="es">
 
 <head>
-    <script src="../../../script/router.js?v=260423_1"></script>
-    <script src="../../../script/api.js"></script>
-    <script src="../../../script/utils.js"></script>
+    <script src="../../../script/router.js?v=290426_1"></script>
+    <script src="../../../script/api.js?v=290426_1"></script>
+    <script src="../../../script/utils.js?v=290426_1"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de Sectores - Geoportal Municipal</title>
@@ -213,7 +213,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="../../../script/layout.js"></script>
+    <script src="../../../script/layout.js?v=290426_1"></script>
 
     <script>
         // [A2-6.2] URL centralizada — no hardcodeada
@@ -257,7 +257,7 @@
 
         async function fetchProjects() {
             try {
-                // api.js ya gestiona la baseURL y el token de autenticaci�n
+                // api.js?v=290426_1 ya gestiona la baseURL y el token de autenticaci�n
                 allProjects = await api.get('/proyectos');
                 filteredProjects = [...allProjects];
             } catch (error) {
@@ -419,3 +419,4 @@
 </body>
 
 </html>
+

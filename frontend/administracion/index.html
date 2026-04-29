@@ -12,7 +12,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Tailwind (requerido por layout.js / renderHeader) -->
+    <!-- Tailwind (requerido por layout.js?v=290426_1 / renderHeader) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Estilos propios del portal -->
@@ -22,7 +22,7 @@
 <body>
 
     <!-- ═══════════════════════════════════════════════
-         HEADER — inyectado por layout.js (user desde localStorage['userData'])
+         HEADER — inyectado por layout.js?v=290426_1 (user desde localStorage['userData'])
     ═══════════════════════════════════════════════ -->
     <div id="headerRender"></div>
 
@@ -139,13 +139,14 @@
 
     <!-- ═══════════════════════════════════════════════
          SCRIPTS
-         layout.js: inyecta el header con el user info
+         layout.js?v=290426_1: inyecta el header con el user info
          portal.js: auth guard + saludo + animaciones
     ═══════════════════════════════════════════════ -->
-    <script src="../script/router.js?v=260423_1"></script>
-    <script src="../script/layout.js"></script>
+    <script src="../script/router.js?v=290426_1"></script>
+    <script src="../script/layout.js?v=290426_1"></script>
     <script src="js/portal.js"></script>
 
 </body>
 
 </html>
+

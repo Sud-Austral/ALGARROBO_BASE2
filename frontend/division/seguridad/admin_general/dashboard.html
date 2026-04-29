@@ -144,7 +144,7 @@
     </div>
 
     <!-- Script de layout global -->
-    <script src="../../../script/layout.js"></script>
+    <script src="../../../script/layout.js?v=290426_1"></script>
 
     <!-- Libraries (crossorigin for SRI-readiness) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer crossorigin="anonymous"></script>
@@ -300,7 +300,7 @@
                 updateGlobalUI(window.DataManager.state.meta.comuna);
             }
 
-            // Block standard asideRender from layout.js
+            // Block standard asideRender from layout.js?v=290426_1
             const originalAside = document.getElementById("asideRender");
             if (originalAside) originalAside.style.display = 'none';
 
@@ -324,3 +324,4 @@
 </body>
 
 </html>
+
