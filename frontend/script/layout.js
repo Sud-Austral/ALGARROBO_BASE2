@@ -27,16 +27,24 @@ function renderHeader(containerId = "headerRender") {
     }
 
     const userName = user?.nombre || user?.nombre_completo || user?.username || "Usuario";
-    const roleName = user?.roles?.[0]?.nombre || user?.role || user?.nivel_acceso || "Invitado";
+    let roleName = user?.roles?.[0]?.nombre || user?.role || user?.nivel_acceso || "Invitado";
+
+    const userRoles = user?.roles || [];
+    const nivelAcceso = user?.nivel_acceso;
+
+    // Forzar nombres de rol para visualización
+    if (nivelAcceso == 10) roleName = "admin_general";
+    if (nivelAcceso == 11) roleName = "admin_proyecto";
+
     const avatarInitial = (userName.charAt(0) || "U").toUpperCase();
     const userDivision = user?.division?.nombre?.toLowerCase() || 'secplan';
-    const userRoles = user?.roles || [];
-    if (userRoles.length === 0 && !user?.nivel_acceso) {
+
+    if (userRoles.length === 0 && !nivelAcceso) {
         alert("Usuario sin permisos vinculados");
         logout();
         return;
     }
-    const userRole = userRoles.length > 0 ? userRoles[0].nombre.toLowerCase() : (user?.nivel_acceso == 10 ? 'admin_general' : (user?.nivel_acceso == 11 ? 'admin_proyectos' : null));
+    const userRole = userRoles.length > 0 ? userRoles[0].nombre.toLowerCase() : (nivelAcceso == 10 ? 'admin_general' : (nivelAcceso == 11 ? 'admin_proyectos' : null));
     if (!userRole) {
         alert("Usuario sin permisos vinculados");
         logout();
@@ -44,12 +52,12 @@ function renderHeader(containerId = "headerRender") {
     }
     const isLicitacion = window.location.pathname.includes('/licitaciones/');
     let effectiveRole = userRole;
-    if (userDivision === 'secplan') effectiveRole = 'admin_general';
+    if (userDivision === 'secplan' && nivelAcceso != 11) effectiveRole = 'admin_general';
 
     let dashLink = `${BASE_PATH}/frontend/division/${userDivision}/${effectiveRole}/dashboard.html`;
 
-    if (user?.nivel_acceso == 10) dashLink = `${BASE_PATH}/frontend/administracion/index2.html`;
-    else if (user?.nivel_acceso == 11) dashLink = `${BASE_PATH}/frontend/administracion/index.html`;
+    if (nivelAcceso == 10) dashLink = `${BASE_PATH}/frontend/administracion/index2.html`;
+    else if (nivelAcceso == 11) dashLink = `${BASE_PATH}/frontend/administracion/index.html`;
 
 
     container.innerHTML = `
@@ -143,19 +151,19 @@ function renderSidebar(containerId = "sidebarContainer") {
     const currentPath = window.location.pathname.split("/").pop();
     const userDivision = user?.division?.nombre?.toLowerCase() || 'secplan';
     const userRoles = user?.roles || [];
-    if (userRoles.length === 0 && !user?.nivel_acceso) {
+    if (userRoles.length === 0 && !nivelAcceso) {
         alert("Usuario sin permisos vinculados");
         logout();
         return;
     }
-    const userRole = userRoles.length > 0 ? userRoles[0].nombre.toLowerCase() : (user?.nivel_acceso == 10 ? 'admin_general' : (user?.nivel_acceso == 11 ? 'admin_proyectos' : null));
+    const userRole = userRoles.length > 0 ? userRoles[0].nombre.toLowerCase() : (nivelAcceso == 10 ? 'admin_general' : (nivelAcceso == 11 ? 'admin_proyectos' : null));
     if (!userRole) {
         alert("Usuario sin permisos vinculados");
         logout();
         return;
     }
     let effectiveRole = userRole;
-    if (userDivision === 'secplan') effectiveRole = 'admin_general';
+    if (userDivision === 'secplan' && nivelAcceso != 11) effectiveRole = 'admin_general';
     
     const baseDir = `${BASE_PATH}/frontend/division/${userDivision}/${effectiveRole}/`;
 
@@ -174,7 +182,7 @@ function renderSidebar(containerId = "sidebarContainer") {
         informe_dinamico: baseDir + "informe_dinamico.html",
         informe_dinamico2: baseDir + "informe_dinamico2.html",
         mapa2: baseDir + "mapa2.html",
-        licitaciones: `${BASE_PATH}/frontend/division/licitaciones/admin_proyectos/dashboard.html`
+        licitaciones: `${BASE_PATH}/frontend/division/licitaciones/${effectiveRole}/dashboard.html`
     };
 
     const linkClasses = (file) => {
@@ -487,6 +495,12 @@ function renderSidebar(containerId = "sidebarContainer") {
                     <a href="${pages.dashboard}" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses('dashboard.html')}">
                         <i class="fas fa-gauge-high w-5 text-center"></i>
                         <span class="font-medium">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="${pages.licitaciones}" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${window.location.pathname.includes('/licitaciones/') ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 hover:bg-gray-100'}">
+                        <i class="fas fa-file-invoice-dollar w-5 text-center"></i>
+                        <span class="font-medium">Licitaciones</span>
                     </a>
                 </li>
                 <li>

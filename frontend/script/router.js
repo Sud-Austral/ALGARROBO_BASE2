@@ -22,6 +22,7 @@ const diccionarioRutas = {
     11: [
         `${BASE}/frontend/division/secplan/admin_proyectos/`,
         `${BASE}/frontend/division/secplan/admin_general/`,
+        `${BASE}/frontend/division/licitaciones/`,
         `${BASE}/frontend/administracion/index.html`,
         `${BASE}/frontend/geoportal/`
     ],
