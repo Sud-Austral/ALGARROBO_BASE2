@@ -50,19 +50,13 @@ if IS_RAILWAY_VOL:
     DOCS_ROOT = os.path.join(PERSISTENT_DATA, "docs")
     FOTOS_ROOT = os.path.join(PERSISTENT_DATA, "fotos_reportes")
     REPORTS_ROOT = os.path.join(PERSISTENT_DATA, "auditoria_reportes")
-elif _FLASK_ENV == "production":
-    raise RuntimeError(
-        "STORAGE ERROR: El volumen persistente /data no está montado. "
-        "Configure el volumen en Railway antes de iniciar en producción. "
-        "Los documentos NO deben almacenarse en el contenedor efímero."
-    )
 else:
-    # Solo para desarrollo local — no usar en producción
+    # Solo para desarrollo local o si el volumen no se montó — no recomendado en producción real pero evita el crash
     BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
     DOCS_ROOT = os.path.join(BACKEND_DIR, "docs")
     FOTOS_ROOT = os.path.join(BACKEND_DIR, "fotos_reportes")
     REPORTS_ROOT = os.path.join(BACKEND_DIR, "auditoria_reportes")
-    logger.warning("STORAGE: Usando almacenamiento local (solo desarrollo). Configure /data en producción.")
+    logger.warning("STORAGE WARNING: Usando almacenamiento local. Configure /data en Railway para persistencia real.")
 
 # Crear estructuras si no existen
 for folder in [DOCS_ROOT, FOTOS_ROOT, REPORTS_ROOT]:

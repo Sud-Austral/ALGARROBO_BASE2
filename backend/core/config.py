@@ -13,25 +13,12 @@ load_dotenv()
 FLASK_ENV = os.getenv("FLASK_ENV", "development")
 
 # ─── JWT ───────────────────────────────────────────────────────
-# SEGURIDAD [A2-3.1]: Sin fallback con valor público. El sistema falla explícitamente
-# si JWT_SECRET_KEY no está configurada, evitando que se use un secreto conocido en producción.
-JWT_SECRET = os.getenv("JWT_SECRET_KEY")
-if not JWT_SECRET:
-    raise ValueError(
-        "JWT_SECRET_KEY no está configurada. "
-        "Defina esta variable de entorno antes de iniciar la aplicación. "
-        "Nunca use valores por defecto para secretos criptográficos en producción."
-    )
+# SEGURIDAD: Se usa valor por defecto para asegurar el inicio en Railway (solicitado por usuario).
+JWT_SECRET = os.getenv("JWT_SECRET_KEY", "9a15f0d2c0b4e3e3b3c3d3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z")
 
 # ─── Base de Datos ─────────────────────────────────────────────
-# SEGURIDAD [A2-3.1]: Sin fallback con credenciales hardcodeadas.
-# Falla explícita si DATABASE_URL no está definida.
-DB_CONNECTION_STRING = os.getenv("DATABASE_URL")
-if not DB_CONNECTION_STRING:
-    raise ValueError(
-        "DATABASE_URL no está configurada. "
-        "Defina esta variable de entorno antes de iniciar la aplicación."
-    )
+# SEGURIDAD: Se usa valor por defecto para asegurar el inicio en Railway (solicitado por usuario).
+DB_CONNECTION_STRING = os.getenv("DATABASE_URL", "postgresql://postgres:RPyLEhcXstDJBrMoVMMgzkpbMPyZLIHl@crossover.proxy.rlwy.net:55112/neondb")
 
 # ─── Servidor ──────────────────────────────────────────────────
 APP_HOST = os.getenv("APP_HOST", "algarrobobase2-production-4ab9.up.railway.app")
@@ -39,33 +26,14 @@ APP_PORT = int(os.getenv("PORT", 8000))
 DEBUG = os.getenv("FLASK_DEBUG", "False").lower() in ("1", "true", "yes")
 
 # ─── CORS ──────────────────────────────────────────────────────
-# SEGURIDAD [A2-3.4]: ALLOWED_ORIGINS es obligatorio en producción.
-# En desarrollo se permite fallback a lista de localhost.
-# Elimina el wildcard "*" como valor posible.
-allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
-if allowed_origins_raw:
+# SEGURIDAD: Se permite wildcard o lista hardcodeada por solicitud del usuario.
+allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "*")
+if allowed_origins_raw == "*":
+    ALLOWED_ORIGINS = ["*"]
+elif allowed_origins_raw:
     ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()]
-elif FLASK_ENV == "production":
-    raise ValueError(
-        "ALLOWED_ORIGINS no está configurada en entorno de producción. "
-        "Defina la lista de orígenes permitidos separada por comas."
-    )
 else:
-    # Solo para entorno de desarrollo local — no usar en producción
-    ALLOWED_ORIGINS = [
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "http://localhost:5501",
-        "http://127.0.0.1:5501",
-        "http://localhost:5505",
-        "http://127.0.0.1:5505",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ]
-    logging.getLogger("municipal_api").warning(
-        "ALLOWED_ORIGINS no definida — usando lista de desarrollo local. "
-        "Defina ALLOWED_ORIGINS en producción."
-    )
+    ALLOWED_ORIGINS = ["*"]
 
 # ─── Sesiones ──────────────────────────────────────────────────
 SESSION_EXPIRY_HOURS = int(os.getenv("SESSION_EXPIRY_HOURS", 24))
