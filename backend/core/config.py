@@ -9,32 +9,49 @@ from dotenv import load_dotenv
 # ─── Cargar .env ───────────────────────────────────────────────
 load_dotenv()
 
+# ─── Entorno ───────────────────────────────────────────────────
+FLASK_ENV = os.getenv("FLASK_ENV", "development")
+
 # ─── JWT ───────────────────────────────────────────────────────
-JWT_SECRET = os.getenv("JWT_SECRET_KEY", "9a15f0d2c0b4e3e3b3c3d3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z")
+# SEGURIDAD [A2-3.1]: Sin fallback con valor público. El sistema falla explícitamente
+# si JWT_SECRET_KEY no está configurada, evitando que se use un secreto conocido en producción.
+JWT_SECRET = os.getenv("JWT_SECRET_KEY")
 if not JWT_SECRET:
-    JWT_SECRET = "fallback-secret-for-demo-123456"
-    logging.getLogger(__name__).warning("Usando JWT_SECRET de contingencia.")
+    raise ValueError(
+        "JWT_SECRET_KEY no está configurada. "
+        "Defina esta variable de entorno antes de iniciar la aplicación. "
+        "Nunca use valores por defecto para secretos criptográficos en producción."
+    )
 
 # ─── Base de Datos ─────────────────────────────────────────────
-DB_CONNECTION_STRING = os.getenv("DATABASE_URL", "postgresql://postgres:RPyLEhcXstDJBrMoVMMgzkpbMPyZLIHl@crossover.proxy.rlwy.net:55112/neondb")
+# SEGURIDAD [A2-3.1]: Sin fallback con credenciales hardcodeadas.
+# Falla explícita si DATABASE_URL no está definida.
+DB_CONNECTION_STRING = os.getenv("DATABASE_URL")
 if not DB_CONNECTION_STRING:
-    raise ValueError("No DATABASE_URL set for Flask application")
+    raise ValueError(
+        "DATABASE_URL no está configurada. "
+        "Defina esta variable de entorno antes de iniciar la aplicación."
+    )
 
 # ─── Servidor ──────────────────────────────────────────────────
-# APP_HOST se usa de forma interna y externa. En Railway, las rutas públicas ya no llevan puerto, es HTTPS (443).
 APP_HOST = os.getenv("APP_HOST", "algarrobobase2-production-4ab9.up.railway.app")
-# En tu backend, este puerto será solo interno. Gunicorn se enlazará usando os.getenv("PORT")
 APP_PORT = int(os.getenv("PORT", 8000))
-# SEGURIDAD [H-06]: Debug OFF por defecto en producción
 DEBUG = os.getenv("FLASK_DEBUG", "False").lower() in ("1", "true", "yes")
 
 # ─── CORS ──────────────────────────────────────────────────────
+# SEGURIDAD [A2-3.4]: ALLOWED_ORIGINS es obligatorio en producción.
+# En desarrollo se permite fallback a lista de localhost.
+# Elimina el wildcard "*" como valor posible.
 allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
 if allowed_origins_raw:
-    # Procesar lista separada por comas
-    ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_raw.split(",")]
+    ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_raw.split(",") if origin.strip()]
+elif FLASK_ENV == "production":
+    raise ValueError(
+        "ALLOWED_ORIGINS no está configurada en entorno de producción. "
+        "Defina la lista de orígenes permitidos separada por comas."
+    )
 else:
-    # SEGURIDAD [H-03]: Fallback robusto para desarrollo y producción
+    # Solo para entorno de desarrollo local — no usar en producción
     ALLOWED_ORIGINS = [
         "http://localhost:5500",
         "http://127.0.0.1:5500",
@@ -44,11 +61,10 @@ else:
         "http://127.0.0.1:5505",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
-        "https://algarrobobase2-production-4ab9.up.railway.app",
-        "https://algarrobobase2.up.railway.app"
     ]
-    logging.getLogger("municipal_api").info(
-        f"ALLOWED_ORIGINS usando lista blanca por defecto: {ALLOWED_ORIGINS}"
+    logging.getLogger("municipal_api").warning(
+        "ALLOWED_ORIGINS no definida — usando lista de desarrollo local. "
+        "Defina ALLOWED_ORIGINS en producción."
     )
 
 # ─── Sesiones ──────────────────────────────────────────────────
@@ -56,7 +72,6 @@ SESSION_EXPIRY_HOURS = int(os.getenv("SESSION_EXPIRY_HOURS", 24))
 
 # ─── Archivos ─────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Esto apunta a backend/ ya que config.py está en backend/core/
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.dirname(BACKEND_DIR)  # subimos de core/ a backend/
 
@@ -82,8 +97,6 @@ os.makedirs(FOTOS_OUT_DIR, exist_ok=True)
 os.makedirs(FOTOS_DIR, exist_ok=True)
 
 # ─── Extensiones de archivo para extracción de texto (OCR/parse) ─
-# Solo se usa para decidir si se intenta extraer texto del documento.
-# La subida de archivos no está restringida por extensión.
 ALLOWED_EXTENSIONS = {
     "pdf", "doc", "docx", "xls", "xlsx",
     "png", "jpg", "jpeg",

@@ -11,7 +11,7 @@ from flask import Blueprint, request, jsonify
 
 from core.config import logger, ALLOWED_TABLES_READ
 from core.database import get_db_connection, release_db_connection
-from utils.decorators import session_required
+from utils.decorators import session_required, role_required
 from utils.audit_logger import log_auditoria, log_control
 
 proyectos_bp = Blueprint('proyectos', __name__)
@@ -352,7 +352,7 @@ def get_proyectos_actividad_reciente(current_user_id):
 
 
 @proyectos_bp.route("/proyectos", methods=["POST"])
-@session_required
+@role_required(10, 11)
 def create_proyecto(current_user_id):
     conn = None
     try:
@@ -403,7 +403,7 @@ def create_proyecto(current_user_id):
 
 
 @proyectos_bp.route("/proyectos/<int:pid>", methods=["PUT"])
-@session_required
+@role_required(10, 11)
 def update_proyecto(current_user_id, pid):
     conn = None
     try:
@@ -457,7 +457,7 @@ def update_proyecto(current_user_id, pid):
 
 
 @proyectos_bp.route("/proyectos/<int:pid>", methods=["DELETE"])
-@session_required
+@role_required(10, 11)
 def delete_proyecto(current_user_id, pid):
     conn = None
     try:

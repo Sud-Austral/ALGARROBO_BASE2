@@ -404,8 +404,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // Definir la URL base de la API
-        const BASE_URL = 'https://algarrobobase2-production-4ab9.up.railway.app';
+        // [A2-6.2] URL centralizada — no hardcodeada
+        const BASE_URL = (typeof API_CONFIG !== 'undefined' && API_CONFIG.BASE_URL) || window.API_BASE_URL || 'https://algarrobobase2-production-4ab9.up.railway.app';
 
         // Variables globales para el mapa y los datos
         let map;

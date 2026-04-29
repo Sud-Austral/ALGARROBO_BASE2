@@ -75,7 +75,8 @@ def upload_documento(current_user_id, pid):
         file = request.files["file"]
         if file.filename == "":
             return jsonify({"message": "Nombre de archivo vacío"}), 400
-        if not allowed_file(file.filename):
+        # SEGURIDAD [A2-3.5]: Valida extensión en lista blanca + magic bytes del contenido
+        if not allowed_file(file.filename, file.stream):
             return jsonify({"message": "Tipo de archivo no permitido"}), 400
 
         tipo_documento = request.form.get("tipo_documento")

@@ -154,21 +154,33 @@ def update_user(current_user_id, user_id):
 @users_bp.route("/users/<int:user_id>", methods=["DELETE"])
 @admin_required
 def delete_user(current_user_id, user_id):
+    """
+    SEGURIDAD [A2-6.3]: Borrado lógico (activo=FALSE) en lugar de DELETE físico.
+    Elimina el error 500 causado por violaciones de integridad referencial cuando
+    el usuario tiene proyectos o registros de auditoría asociados.
+    Preserva trazabilidad histórica y coherencia de datos.
+    """
     conn = None
     try:
+        if user_id == current_user_id:
+            return jsonify({"message": "No puede desactivar su propia cuenta"}), 400
+
         conn = get_db_connection()
         if not conn:
             return jsonify({"message": "Error de conexión a BD"}), 500
         with conn.cursor() as cur:
-            cur.execute("DELETE FROM users WHERE user_id = %s RETURNING user_id", (user_id,))
-            deleted = cur.fetchone()
+            cur.execute(
+                "UPDATE users SET activo = FALSE WHERE user_id = %s AND activo = TRUE RETURNING user_id",
+                (user_id,)
+            )
+            updated = cur.fetchone()
         conn.commit()
 
-        if not deleted:
-            return jsonify({"message": "Usuario no encontrado"}), 404
+        if not updated:
+            return jsonify({"message": "Usuario no encontrado o ya inactivo"}), 404
 
-        log_auditoria(current_user_id, "delete_user", f"Borró user_id={user_id}")
-        return jsonify({"message": "Usuario eliminado"})
+        log_auditoria(current_user_id, "delete_user", f"Desactivó user_id={user_id} (borrado lógico)")
+        return jsonify({"message": "Usuario desactivado correctamente"})
     except Exception as e:
         if conn:
             try:

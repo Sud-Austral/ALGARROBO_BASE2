@@ -37,23 +37,32 @@ from routes.auditoria_routes import auditoria_bp
 from routes.chat_routes import chat_bp
 
 # ═══════════════════════════════════════════════════════════════
-# GESTIÓN DE RAMPAS DE DATOS (VOLUMEN RAILWAY)
+# GESTIÓN DE ALMACENAMIENTO PERSISTENTE
 # ═══════════════════════════════════════════════════════════════
-# Si estamos en Railway con un volumen montado en /data
+# SEGURIDAD [A2-6.1]: En producción el volumen /data es obligatorio.
+# El sistema falla explícitamente si no está montado, evitando que los
+# documentos queden en el contenedor efímero y se pierdan al reiniciar.
 PERSISTENT_DATA = "/data"
 IS_RAILWAY_VOL = os.path.isdir(PERSISTENT_DATA)
+_FLASK_ENV = os.getenv("FLASK_ENV", "development")
 
-# Definición dinámica de rutas de almacenamiento
 if IS_RAILWAY_VOL:
     DOCS_ROOT = os.path.join(PERSISTENT_DATA, "docs")
     FOTOS_ROOT = os.path.join(PERSISTENT_DATA, "fotos_reportes")
     REPORTS_ROOT = os.path.join(PERSISTENT_DATA, "auditoria_reportes")
+elif _FLASK_ENV == "production":
+    raise RuntimeError(
+        "STORAGE ERROR: El volumen persistente /data no está montado. "
+        "Configure el volumen en Railway antes de iniciar en producción. "
+        "Los documentos NO deben almacenarse en el contenedor efímero."
+    )
 else:
-    # Fallback local (dentro de la carpeta backend)
+    # Solo para desarrollo local — no usar en producción
     BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
     DOCS_ROOT = os.path.join(BACKEND_DIR, "docs")
     FOTOS_ROOT = os.path.join(BACKEND_DIR, "fotos_reportes")
     REPORTS_ROOT = os.path.join(BACKEND_DIR, "auditoria_reportes")
+    logger.warning("STORAGE: Usando almacenamiento local (solo desarrollo). Configure /data en producción.")
 
 # Crear estructuras si no existen
 for folder in [DOCS_ROOT, FOTOS_ROOT, REPORTS_ROOT]:
@@ -63,7 +72,10 @@ for folder in [DOCS_ROOT, FOTOS_ROOT, REPORTS_ROOT]:
 # CREAR APP
 # ═══════════════════════════════════════════════════════════════
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 1000 * 1024 * 1024  # 1GB para migración ZIP
+# SEGURIDAD [A2-3.5]: Límite de subida parametrizado por entorno.
+# Producción: 50 MB por defecto. Se puede aumentar vía MAX_UPLOAD_MB para migraciones puntuales.
+_max_upload_mb = int(os.getenv("MAX_UPLOAD_MB", "50" if _FLASK_ENV == "production" else "1000"))
+app.config['MAX_CONTENT_LENGTH'] = _max_upload_mb * 1024 * 1024
 
 # CORS dinámico
 CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}}, supports_credentials=True)

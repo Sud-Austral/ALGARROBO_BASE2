@@ -1,38 +1,46 @@
 """
-🚀 CHAT_ROUTES: Servicio de IA Seguro para Algarrobo
---------------------------------------------------
-Este módulo centraliza las llamadas a la IA (ZhipuAI/GLM)
-protegiendo la API_KEY y permitiendo auditoría de consultas.
+CHAT_ROUTES: Proxy seguro de IA para el Geoportal Municipal
+------------------------------------------------------------
+Centraliza las llamadas al proveedor de IA (ZhipuAI/GLM) en el backend,
+protegiendo la API_KEY de exposición al cliente.
 """
 import os
 import httpx
 from flask import Blueprint, request, jsonify
 from core.config import logger
+from utils.decorators import session_required
 
 chat_bp = Blueprint('chat', __name__)
 
-# Configuración de IA (Mover a variables de entorno en producción)
-ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "1fdd53bb96924d78b1d799919a7c21e4.PgBhpSwp9Uvpi48a")
+# SEGURIDAD [A2-4.3]: Sin fallback con clave pública hardcodeada.
+# Si ZHIPU_API_KEY no está definida, el endpoint responde con 503 controlado
+# en lugar de exponer una clave en el código fuente.
+ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY")
 ZHIPU_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 
+
 @chat_bp.route('/chat/completions', methods=['POST'])
-def chat_completions():
+@session_required
+def chat_completions(current_user_id):
     """
     Proxy seguro para la API de ZhipuAI.
+    SEGURIDAD [A2-4.3]: Requiere sesión válida (@session_required) para
+    evitar uso no autorizado del servicio de IA y proteger la API_KEY
+    del proveedor de exposición al cliente.
     """
+    if not ZHIPU_API_KEY:
+        logger.error("ZHIPU_API_KEY no configurada — servicio de IA no disponible")
+        return jsonify({"error": "Servicio de IA no configurado"}), 503
+
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
 
-        # Opcional: Validar token de sesión del usuario aquí para mayor seguridad
-        
-        # Extraer parámetros del request frontend
         model = data.get("model", "GLM-4.5-Flash")
         messages = data.get("messages", [])
         temperature = data.get("temperature", 0.1)
 
-        # Preparar request para ZhipuAI
         payload = {
             "model": model,
             "messages": messages,
@@ -44,10 +52,9 @@ def chat_completions():
             "Content-Type": "application/json"
         }
 
-        # Realizar la llamada real (Backend a Backend)
         with httpx.Client(timeout=60.0) as client:
             response = client.post(ZHIPU_API_URL, json=payload, headers=headers)
-            
+
         if response.status_code != 200:
             logger.error(f"Error de IA ({response.status_code}): {response.text}")
             return jsonify({
