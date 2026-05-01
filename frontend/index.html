@@ -311,10 +311,8 @@
                             const nivel = parseInt(data.user.nivel_acceso);
                             let ruta = `administracion/index.html`;
 
-                            if (nivel === 10) {
+                            if ([10, 11, 12, 13].includes(nivel)) {
                                 ruta = `administracion/index2.html`;
-                            } else if (nivel === 11) {
-                                ruta = `administracion/index.html`;
                             }
 
 

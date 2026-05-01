@@ -34,7 +34,9 @@ function renderHeader(containerId = "headerRender") {
 
     // Forzar nombres de rol para visualización
     if (nivelAcceso == 10) roleName = "admin_general";
-    if (nivelAcceso == 11) roleName = "admin_proyecto";
+    if (nivelAcceso == 11) roleName = "admin_proyectos";
+    if (nivelAcceso == 12) roleName = "admin_licitacion";
+    if (nivelAcceso == 13) roleName = "admin_full";
 
     const avatarInitial = (userName.charAt(0) || "U").toUpperCase();
     const userDivision = user?.division?.nombre?.toLowerCase() || 'secplan';
@@ -57,6 +59,7 @@ function renderHeader(containerId = "headerRender") {
     let dashLink = `${BASE_PATH}/frontend/division/${userDivision}/${effectiveRole}/dashboard.html`;
 
     if (nivelAcceso == 10) dashLink = `${BASE_PATH}/frontend/administracion/index2.html`;
+    else if ([11, 12, 13].includes(parseInt(nivelAcceso))) dashLink = `${BASE_PATH}/frontend/administracion/index2.html`;
     else if (nivelAcceso == 11) dashLink = `${BASE_PATH}/frontend/administracion/index.html`;
 
 

@@ -12,7 +12,7 @@
             try {
                 const raw = localStorage.getItem('userData') || localStorage.getItem('user_data') || '{}';
                 const user = JSON.parse(raw);
-                if (parseInt(user.nivel_acceso) !== 11) {
+                if (![10, 11, 13].includes(parseInt(user.nivel_acceso))) {
                     window.location.href = '../../index.html';
                 }
             } catch(e) {

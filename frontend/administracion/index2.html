@@ -342,13 +342,37 @@
                 try {
                     const user = JSON.parse(userDataStr);
                     const nivel = parseInt(user.nivel_acceso);
-                    // Si es admin_proyectos (11), mandarlo a index.html
-                    if (nivel === 11 && window.location.pathname.includes('index2.html')) {
-                        window.location.href = base + '/frontend/administracion/index.html';
-                        return;
-                    }
+                    
+                    // Visibility Logic
+                    const is10 = nivel === 10;
+                    const is11 = nivel === 11;
+                    const is12 = nivel === 12;
+                    const is13 = nivel === 13;
+
+                    // Quick access
+                    const qaUsuarios = document.getElementById('qaUsuarios');
+                    const qaSecplan = document.getElementById('qaSecplan');
+                    const qaLicitaciones = document.getElementById('qaLicitaciones');
+                    const qaControl = document.getElementById('qaControl');
+
+                    if (qaUsuarios) qaUsuarios.style.display = is10 ? 'inline-flex' : 'none';
+                    if (qaSecplan) qaSecplan.style.display = (is10 || is11 || is13) ? 'inline-flex' : 'none';
+                    if (qaLicitaciones) qaLicitaciones.style.display = (is10 || is12 || is13) ? 'inline-flex' : 'none';
+                    if (qaControl) qaControl.style.display = is10 ? 'inline-flex' : 'none';
+
+                    // Cards
+                    const cardMantenedores = document.querySelector('.card[data-type="Mantenedores"]');
+                    const cardSecplan = document.querySelector('.card[data-type="SECPLAC"]');
+                    const cardLicitaciones = document.querySelector('.card[data-type="Licitaciones"]');
+                    const cardControl = document.querySelector('.card[data-type="Control"]');
+
+                    if (cardMantenedores) cardMantenedores.style.display = is10 ? 'flex' : 'none';
+                    if (cardSecplan) cardSecplan.style.display = (is10 || is11 || is13) ? 'flex' : 'none';
+                    if (cardLicitaciones) cardLicitaciones.style.display = (is10 || is12 || is13) ? 'flex' : 'none';
+                    if (cardControl) cardControl.style.display = is10 ? 'flex' : 'none';
+
                 } catch (e) {
-                    console.error("Error en la redirección por rol:", e);
+                    console.error("Error en la lógica de permisos:", e);
                 }
             }
         });
@@ -370,19 +394,19 @@
         <a href="../geoportal/index.html" class="btn-cta">
             <i class="fa-solid fa-map-location-dot"></i> Geoportal General
         </a>
-        <a href="usuario.html" class="btn-cta secondary">
+        <a id="qaUsuarios" href="usuario.html" class="btn-cta secondary">
             <i class="fa-solid fa-users"></i> Usuarios
         </a>
-        <a href="../division/secplan/admin_general/dashboard.html" class="btn-cta secondary">
+        <a id="qaSecplan" href="../division/secplan/admin_general/dashboard.html" class="btn-cta secondary">
             <i class="fa-solid fa-chart-line"></i> SECPLAC
         </a>
         
        
-        <a href="../division/licitaciones/admin_proyectos/dashboard.html" class="btn-cta secondary">
+        <a id="qaLicitaciones" href="../division/licitaciones/admin_proyectos/dashboard.html" class="btn-cta secondary">
             <i class="fa-solid fa-file-invoice-dollar"></i> Licitaciones
         </a>
         
-        <a href="../division/control/dashboard.html" class="btn-cta"
+        <a id="qaControl" href="../division/control/dashboard.html" class="btn-cta"
             style="background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 100%);">
             <i class="fa-solid fa-shield-halved"></i> Control y Auditoría
         </a>
@@ -452,24 +476,8 @@
                     <i class="fa-solid fa-city"></i>
                 </div>
                 <div class="card-body">
-                    <!--
-                    <a href="../division/secplan/admin_general/dashboard.html" class="card-link"><i
-                            class="fa-solid fa-chart-pie"></i> Dashboard</a>
-                    -->
                     <a href="../division/secplan/admin_general/proyecto.html" class="card-link"><i
                             class="fa-solid fa-database"></i> Proyecto</a>
-                    <!--
-                    <a href="../division/secplan/admin_general/mapa.html" class="card-link"><i
-                            class="fa-solid fa-map"></i> Mapas</a>
-                    <a href="../division/secplan/admin_general/informe.html" class="card-link"><i
-                            class="fa-solid fa-file-invoice"></i> Informes</a>
-                    <a href="../division/secplan/admin_general/calendario.html" class="card-link"><i
-                            class="fa-solid fa-calendar-days"></i> Calendario</a>
-
-                    <div style="height: 1px; background: #f1f5f9; margin: 8px 0;"></div>
-                    <a href="../division/secplan/admin_general/chat.html" class="card-link"><i
-                            class="fa-solid fa-robot"></i> Asistente Virtual</a>
-                    -->
                 </div>
             </article>
 
@@ -502,18 +510,6 @@
                     </a>
                 </div>
             </article>
-
-            
-
-            
-
-            
-
-           
-
-            
-
-           
 
             <!-- Módulo de Control Transversal -->
             <article class="card" data-type="Control">

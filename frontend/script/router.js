@@ -12,24 +12,25 @@ const BASE = (() => {
 
 const diccionarioRutas = {
     10: [
-        `${BASE}/frontend/division/secplan/admin_general/dashboard.html`,
-        `${BASE}/frontend/division/secplan/admin_general/proyecto.html`,
-        `${BASE}/frontend/division/secplan/admin_general/mapa.html`,
-        `${BASE}/frontend/division/secplan/admin_general/informe.html`,
-        `${BASE}/frontend/division/secplan/admin_general/calendario.html`,
+        `${BASE}/frontend/division/secplan/admin_general/`,
+        `${BASE}/frontend/division/licitaciones/admin_general/`,
+        `${BASE}/frontend/division/control/`,
         `${BASE}/frontend/administracion/`
     ],
     11: [
-        `${BASE}/frontend/division/secplan/admin_proyectos/`,
-        `${BASE}/frontend/division/secplan/admin_general/`,
-        `${BASE}/frontend/division/licitaciones/`,
-        `${BASE}/frontend/administracion/index.html`,
+        `${BASE}/frontend/division/secplan/`,
+        `${BASE}/frontend/administracion/index2.html`,
         `${BASE}/frontend/geoportal/`
     ],
     12: [
-        `${BASE}/frontend/division/secplan/director_obras/`,
-        `${BASE}/frontend/division/secplan/admin_general/`,
-        `${BASE}/frontend/administracion/index.html`,
+        `${BASE}/frontend/division/licitaciones/`,
+        `${BASE}/frontend/administracion/index2.html`,
+        `${BASE}/frontend/geoportal/`
+    ],
+    13: [
+        `${BASE}/frontend/division/secplan/`,
+        `${BASE}/frontend/division/licitaciones/`,
+        `${BASE}/frontend/administracion/index2.html`,
         `${BASE}/frontend/geoportal/`
     ]
 };
@@ -75,7 +76,7 @@ function checkLoginStatus() {
     }
 
     // Role verification (Control de Acceso)
-    const validRoles = [10, 11, 12]; // admin_general (10), admin_proyectos (11), director_obras (12)
+    const validRoles = [10, 11, 12, 13]; // admin_general (10), admin_proyectos (11), admin_licitacion (12), admin_full (13)
     let userRole = null;
     
     if (userData.roles && userData.roles.length > 0) {
