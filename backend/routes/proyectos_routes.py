@@ -351,6 +351,11 @@ def get_proyectos_actividad_reciente(current_user_id):
             release_db_connection(conn)
 
 
+def _pg_col(name):
+    """Envuelve en comillas dobles los identificadores con mayúsculas (ej. isTopografia)."""
+    return f'"{name}"' if name != name.lower() else name
+
+
 @proyectos_bp.route("/proyectos", methods=["POST"])
 @role_required(10, 11)
 def create_proyecto(current_user_id):
@@ -379,7 +384,7 @@ def create_proyecto(current_user_id):
         clean_data["actualizado_por"] = current_user_id
         clean_data["fecha_actualizacion"] = datetime.now()
 
-        cols = ", ".join(clean_data.keys())
+        cols = ", ".join(_pg_col(k) for k in clean_data.keys())
         placeholders = ", ".join(["%s"] * len(clean_data))
 
         sql = f"INSERT INTO proyectos ({cols}) VALUES ({placeholders}) RETURNING id"
@@ -431,7 +436,7 @@ def update_proyecto(current_user_id, pid):
         values = []
 
         for k, v in clean_data.items():
-            fields.append(f"{k} = %s")
+            fields.append(f"{_pg_col(k)} = %s")
             values.append(v)
 
         fields.append("fecha_actualizacion = NOW()")
