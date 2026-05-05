@@ -684,3 +684,121 @@ def update_estado_proyecto(current_user_id, id):
 def delete_estado_proyecto(current_user_id, id):
     generic_delete("estados_proyecto", id)
     return jsonify({"message": "Estado desactivado"})
+
+
+# ─── Funcionarios ──────────────────────────────────────────────
+
+_funcionarios_schema_ok = False
+
+def _ensure_funcionarios_activo():
+    """Añade columna activo a funcionarios si no existe (migración en caliente)."""
+    global _funcionarios_schema_ok
+    if _funcionarios_schema_ok:
+        return
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute(
+                "ALTER TABLE funcionarios "
+                "ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT TRUE"
+            )
+        conn.commit()
+        release_db_connection(conn)
+        _funcionarios_schema_ok = True
+    except Exception as e:
+        logger.warning(f"Migración funcionarios.activo: {e}")
+
+
+@proyectos_bp.route("/funcionarios", methods=["GET"])
+@session_required
+def get_funcionarios(current_user_id):
+    _ensure_funcionarios_activo()
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT id, apellido, email, COALESCE(activo, TRUE) AS activo "
+                "FROM funcionarios "
+                "WHERE COALESCE(activo, TRUE) = TRUE "
+                "ORDER BY apellido ASC"
+            )
+            rows = cur.fetchall()
+        return jsonify(list(rows))
+    finally:
+        release_db_connection(conn)
+
+
+@proyectos_bp.route("/funcionarios/todos", methods=["GET"])
+@session_required
+def get_funcionarios_todos(current_user_id):
+    """Retorna todos los funcionarios (activos e inactivos) para el mantenedor."""
+    _ensure_funcionarios_activo()
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT id, apellido, email, COALESCE(activo, TRUE) AS activo "
+                "FROM funcionarios ORDER BY apellido ASC"
+            )
+            rows = cur.fetchall()
+        return jsonify(list(rows))
+    finally:
+        release_db_connection(conn)
+
+
+@proyectos_bp.route("/funcionarios", methods=["POST"])
+@session_required
+def create_funcionario(current_user_id):
+    _ensure_funcionarios_activo()
+    data = request.get_json()
+    apellido = (data.get("apellido") or "").strip()
+    email = (data.get("email") or "").strip()
+    if not apellido:
+        return jsonify({"message": "El campo apellido es obligatorio"}), 400
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO funcionarios (apellido, email, activo) "
+                "VALUES (%s, %s, TRUE) RETURNING id",
+                (apellido, email)
+            )
+            new_id = cur.fetchone()[0]
+        conn.commit()
+        return jsonify({"id": new_id}), 201
+    finally:
+        release_db_connection(conn)
+
+
+@proyectos_bp.route("/funcionarios/<int:id>", methods=["PUT"])
+@session_required
+def update_funcionario(current_user_id, id):
+    data = request.get_json()
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE funcionarios "
+                "SET apellido = %s, email = %s, activo = %s "
+                "WHERE id = %s",
+                (data.get("apellido"), data.get("email"), data.get("activo", True), id)
+            )
+        conn.commit()
+        return jsonify({"message": "Actualizado"})
+    finally:
+        release_db_connection(conn)
+
+
+@proyectos_bp.route("/funcionarios/<int:id>", methods=["DELETE"])
+@session_required
+def delete_funcionario(current_user_id, id):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE funcionarios SET activo = FALSE WHERE id = %s", (id,)
+            )
+        conn.commit()
+        return jsonify({"message": "Funcionario desactivado"})
+    finally:
+        release_db_connection(conn)

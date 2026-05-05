@@ -423,6 +423,34 @@ def listar_geomapas_proyecto(current_user_id, pid):
         if conn: release_db_connection(conn)
 
 
+@documentos_bp.route("/geomapas/recientes", methods=["GET"])
+@session_required
+def listar_geomapas_recientes(current_user_id):
+    conn = None
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"message": "Error conexión BD"}), 500
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("""
+                SELECT g.geomapa_id, g.proyecto_id, g.nombre, g.descripcion, g.fecha_creacion, p.nombre as proyecto_nombre
+                FROM proyectos_geomapas g
+                LEFT JOIN proyectos p ON p.id = g.proyecto_id
+                ORDER BY g.fecha_creacion DESC
+                LIMIT 10
+            """)
+            geomapas = cur.fetchall()
+        return jsonify({"total": len(geomapas), "geomapas": geomapas})
+    except Exception as e:
+        if conn:
+            try: conn.rollback()
+            except: pass
+        logger.error(f"Error listando geomapas recientes: {e}")
+        return jsonify({"message": "Error interno"}), 500
+    finally:
+        if conn: release_db_connection(conn)
+
+
 @documentos_bp.route("/geomapas/<int:geomapa_id>", methods=["GET"])
 @session_required
 def get_geomapa_metadata(current_user_id, geomapa_id):

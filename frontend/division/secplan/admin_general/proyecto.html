@@ -855,27 +855,39 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="profesional_1">Profesional 1</label>
-                                <input type="text" id="profesional_1" name="profesional_1">
+                                <select id="profesional_1" name="profesional_1">
+                                    <option value="">— Sin asignar —</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="profesional_2">Profesional 2</label>
-                                <input type="text" id="profesional_2" name="profesional_2">
+                                <select id="profesional_2" name="profesional_2">
+                                    <option value="">— Sin asignar —</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="profesional_3">Profesional 3</label>
-                                <input type="text" id="profesional_3" name="profesional_3">
+                                <select id="profesional_3" name="profesional_3">
+                                    <option value="">— Sin asignar —</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="profesional_4">Profesional 4</label>
-                                <input type="text" id="profesional_4" name="profesional_4">
+                                <select id="profesional_4" name="profesional_4">
+                                    <option value="">— Sin asignar —</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="profesional_5">Profesional 5</label>
-                                <input type="text" id="profesional_5" name="profesional_5">
+                                <select id="profesional_5" name="profesional_5">
+                                    <option value="">— Sin asignar —</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="dupla_profesionales">Dupla Profesionales</label>
-                                <input type="text" id="dupla_profesionales" name="dupla_profesionales">
+                                <select id="dupla_profesionales" name="dupla_profesionales">
+                                    <option value="">— Sin asignar —</option>
+                                </select>
                             </div>
                         </div>
                     </fieldset>
@@ -1157,7 +1169,8 @@
             etapas_proyecto: [],
             estados_postulacion: [],
             sectores: [],
-            lineamientos_estrategicos: []
+            lineamientos_estrategicos: [],
+            funcionarios: []
         };
         let editingId = null;
         let columnsVisible = false;
@@ -1172,7 +1185,7 @@
                 const resources = [
                     'areas', 'financiamientos', 'estados_proyecto',
                     'etapas_proyecto', 'estados_postulacion', 'sectores',
-                    'lineamientos_estrategicos'
+                    'lineamientos_estrategicos', 'funcionarios'
                 ];
 
                 const results = await Promise.all(
@@ -1214,6 +1227,24 @@
 
                 if (currentVal) select.value = currentVal;
             };
+
+            // Selects de Profesionales (valor = apellido para compatibilidad con texto existente en BD)
+            const fillProfesionalSelect = (elementId) => {
+                const select = document.getElementById(elementId);
+                if (!select) return;
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">— Sin asignar —</option>';
+                catalogData.funcionarios.forEach(f => {
+                    const option = document.createElement('option');
+                    option.value = f.apellido;
+                    option.textContent = f.apellido + (f.email ? ` (${f.email})` : '');
+                    select.appendChild(option);
+                });
+                if (currentVal) select.value = currentVal;
+            };
+            ['profesional_1', 'profesional_2', 'profesional_3',
+             'profesional_4', 'profesional_5', 'dupla_profesionales']
+                .forEach(fillProfesionalSelect);
 
             fillSelect('area_id', catalogData.areas, 'Seleccione Área');
             

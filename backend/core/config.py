@@ -80,6 +80,7 @@ ALLOWED_TABLES_READ = frozenset({
     "lineamientos_estrategicos",
     "etapas_proyecto",
     "estados_proyecto",
+    "funcionarios",
 })
 
 # ─── Logging ───────────────────────────────────────────────────
