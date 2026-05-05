@@ -301,35 +301,65 @@ const helpContent = {
         ]
     },
     user: {
-        title: 'Gestión de Usuarios',
+        title: 'Gestión de Usuarios del Sistema',
         icon: 'fa-users-cog',
-        description: 'Administra los usuarios del sistema y sus permisos.',
+        description: 'Módulo de administración de cuentas y control de acceso del sistema. Permite crear, editar y gestionar todos los usuarios, asignar roles y permisos, auditar actividad y mantener la seguridad de acceso a las diferentes divisiones y módulos del sistema municipal.',
         features: [
-            'Ver listado de usuarios registrados',
-            'Crear nuevos usuarios con diferentes roles',
-            'Editar información de usuarios existentes',
-            'Activar o desactivar cuentas de usuario'
+            '👤 Listado completo de usuarios: visualiza todos los usuarios registrados con su nombre, división, rol, estado y última actividad',
+            '➕ Crear usuarios nuevos: registra nombre, RUT, correo, división asignada, nivel de acceso (rol) y estado inicial',
+            '✏️ Editar datos de usuario: actualiza información personal, cambia la división, ajusta el nivel de permisos o restablece contraseña',
+            '🔐 Gestión de roles: asigna niveles de acceso diferenciados (Administrador General, SECPLAN, Licitaciones, Seguridad, Transparencia, Director de Obras)',
+            '🔴 Activar / Desactivar cuentas: bloquea el acceso sin eliminar el historial del usuario en el sistema',
+            '📋 Historial de actividad: consulta los últimos accesos, acciones registradas y cambios realizados por cada usuario',
+            '🔔 Alertas de seguridad: detección de cuentas con contraseña vencida o intentos fallidos de inicio de sesión',
+            '🔎 Búsqueda y filtrado: localiza usuarios por nombre, RUT, división o rol para gestión rápida'
         ],
         tips: [
-            'Los roles determinan los permisos de cada usuario',
-            'Mantén actualizados los datos de contacto',
-            'Solo administradores pueden gestionar usuarios'
+            '💡 Solo usuarios con rol Administrador General (nivel 10) pueden crear o modificar otros usuarios',
+            '💡 Desactiva cuentas en lugar de eliminarlas para conservar el historial de auditoría',
+            '💡 Asigna siempre el rol más restrictivo que cumpla las necesidades del usuario (principio de mínimo privilegio)',
+            '💡 Verifica regularmente la lista de usuarios activos para detectar cuentas que ya no deberían tener acceso',
+            '💡 El campo correo electrónico es clave para la recuperación de contraseña y recepción de notificaciones'
         ]
     },
     analisis: {
-        title: 'Análisis de Datos',
-        icon: 'fa-analytics',
-        description: 'Herramientas avanzadas de análisis de la cartera de proyectos.',
+        title: 'Análisis Estadístico de Proyectos',
+        icon: 'fa-chart-bar',
+        description: 'Módulo de inteligencia de negocios para el análisis multidimensional de la cartera de proyectos. Genera visualizaciones estadísticas interactivas, comparativas por períodos y categorías, y resúmenes ejecutivos que apoyan la toma de decisiones estratégicas de la SECPLAN.',
         features: [
-            'Análisis estadístico de proyectos',
-            'Comparativas entre períodos',
-            'Indicadores de gestión',
-            'Tendencias y proyecciones'
+            '📊 Gráficos interactivos: barras, tortas, líneas de tendencia y diagramas de dispersión con datos en tiempo real',
+            '📅 Comparativas temporales: evolución de la cartera entre años, semestres o trimestres definidos por el usuario',
+            '🗂️ Análisis por categoría: desglose por área, estado, etapa, fuente de financiamiento, sector territorial y profesional responsable',
+            '💰 Análisis financiero: distribución de inversión, avance de ejecución presupuestaria, brechas entre presupuesto y gasto real',
+            '📈 Indicadores de gestión: tasa de proyectos activos, tiempo promedio por etapa, proyectos en riesgo de retraso',
+            '🔄 Actualización en tiempo real: los datos reflejan el estado actual de la base de proyectos al momento del análisis',
+            '📥 Exportación de resultados: descarga los gráficos como imágenes PNG y los datos en formato Excel o CSV',
+            '🔍 Filtros combinables: aplica múltiples criterios simultáneamente para análisis focalizados'
         ],
         tips: [
-            'Usa filtros para análisis más específicos',
-            'Los gráficos son interactivos',
-            'Exporta los resultados del análisis'
+            '💡 Combina el filtro de año de elaboración con fuente de financiamiento para detectar dependencia presupuestaria',
+            '💡 Los gráficos son interactivos: haz clic en las leyendas para mostrar u ocultar series de datos',
+            '💡 Exporta el análisis antes de reuniones de concejo o presentaciones a autoridades regionales',
+            '💡 El análisis de avance por profesional es útil para balancear la carga de trabajo del equipo',
+            '💡 Guarda capturas de los gráficos mensualmente para construir un histórico de evolución de la cartera'
+        ]
+    },
+    header: {
+        title: 'Navegación y Panel Principal',
+        icon: 'fa-compass',
+        description: 'Barra de navegación principal del sistema de gestión municipal. Proporciona acceso rápido a todos los módulos disponibles según el rol del usuario, muestra notificaciones activas y permite gestionar la sesión de trabajo.',
+        features: [
+            '🧭 Menú de navegación principal: accede a todos los módulos habilitados según tu nivel de permisos',
+            '🔔 Centro de notificaciones: visualiza alertas de hitos próximos, proyectos modificados y mensajes del sistema',
+            '👤 Perfil de usuario: consulta y actualiza tus datos personales, preferencias y contraseña',
+            '🏠 Acceso rápido al Dashboard: regresa al panel principal con un clic desde cualquier módulo',
+            '🔒 Gestión de sesión: cierre de sesión seguro con limpieza de credenciales',
+            '📱 Diseño responsive: el menú se adapta automáticamente a pantallas de escritorio, tablet y móvil'
+        ],
+        tips: [
+            '💡 Los módulos visibles en el menú dependen del rol asignado a tu cuenta',
+            '💡 El ícono de campana indica notificaciones pendientes, incluyendo hitos con fecha próxima',
+            '💡 Usa el acceso directo al Dashboard para obtener una visión global antes de entrar a módulos específicos'
         ]
     },
     chat: {
@@ -934,8 +964,16 @@ const helpContent = {
         title: 'Portal de Transparencia Activa',
         icon: 'fa-landmark',
         description: 'Entrada centralizada con la exposición principal e indicadores sintéticos de los presupuestos y remuneraciones.',
-        features: ['Pantalla general o landing page que resume la carga transparente activa', 'Búsqueda cruzada general', 'Acceso a tableros especializados de remuneraciones y personas'],
-        tips: ['Use los accesos de Atajos Funcionales para dirgirise a los menús concretos según la exploración que requiera hacer']
+        features: [
+            'Pantalla general que resume la carga transparente activa del municipio',
+            'Búsqueda cruzada general por organismo, período y tipo de gasto',
+            'Acceso a tableros especializados de remuneraciones y personas',
+            'Indicadores sintéticos de dotación y masa salarial total'
+        ],
+        tips: [
+            '💡 Use los accesos de Atajos Funcionales para dirigirse a los menús concretos según la exploración requerida',
+            '💡 Los datos se actualizan con cada carga de archivos de transparencia'
+        ]
     }
 };
 
