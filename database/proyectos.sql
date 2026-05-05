@@ -110,6 +110,8 @@ CREATE TABLE IF NOT EXISTS proyectos (
     perfil_tecnico_economico TEXT,
     documentos TEXT,
 
+    isTopografia boolean default false,
+
     avance_total_porcentaje NUMERIC(5,2),
     avance_total_decimal NUMERIC(10,4),
 
