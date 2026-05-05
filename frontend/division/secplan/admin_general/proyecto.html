@@ -904,8 +904,16 @@
                                 <input type="text" id="planimetrias" name="planimetrias">
                             </div>
                             <div class="form-group">
-                                <label for="topografia">Topografía (Estado)</label>
-                                <input type="text" id="topografia" name="topografia">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="isTopografia" name="isTopografia"
+                                        onchange="toggleTopografiaPanel(this)">
+                                    <label for="isTopografia" style="margin-bottom: 0;">¿Tiene Topografía?</label>
+                                </div>
+                                <div id="topografiaPanel" class="hidden" style="margin-top:8px;">
+                                    <label for="topografia" class="text-sm font-medium text-slate-600">Estado / Porcentaje</label>
+                                    <input type="text" id="topografia" name="topografia"
+                                        placeholder="Ej: 100%, En proceso...">
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="ingenieria">Ingeniería</label>
@@ -1175,9 +1183,9 @@
         let editingId = null;
         let columnsVisible = false;
 
-        const currentFilters = { area: [], lineamiento: [], fuente: [], anyo_financiamiento: [], anno_elaboracion: [], anno_ejecucion: [], estado: [], etapa: [], estado_postulacion: [], profesional: [] };
-        const mapFilters = { area: 'area_nombre', lineamiento: 'lineamiento_estrategico_nombre', fuente: 'financiamiento_fuente', anyo_financiamiento: 'financiamiento_anyo', anno_elaboracion: 'anno_elaboracion', anno_ejecucion: 'anno_ejecucion', estado: 'estado_nombre', etapa: 'etapa_nombre', estado_postulacion: 'estado_postulacion_nombre', profesional: 'profesional_1' };
-        const labelFilters = { area: 'Área', lineamiento: 'Línea', fuente: 'Financiamiento', anyo_financiamiento: 'Año Finan.', anno_elaboracion: 'Elab.', anno_ejecucion: 'Ejec.', estado: 'Estado', etapa: 'Etapa', estado_postulacion: 'Post.', profesional: 'Prof.' };
+        const currentFilters = { area: [], lineamiento: [], fuente: [], anyo_financiamiento: [], anno_elaboracion: [], anno_ejecucion: [], estado: [], etapa: [], estado_postulacion: [], profesional: [], has_topografia: [] };
+        const mapFilters = { area: 'area_nombre', lineamiento: 'lineamiento_estrategico_nombre', fuente: 'financiamiento_fuente', anyo_financiamiento: 'financiamiento_anyo', anno_elaboracion: 'anno_elaboracion', anno_ejecucion: 'anno_ejecucion', estado: 'estado_nombre', etapa: 'etapa_nombre', estado_postulacion: 'estado_postulacion_nombre', profesional: 'profesional_1', has_topografia: 'topografia_label' };
+        const labelFilters = { area: 'Área', lineamiento: 'Línea', fuente: 'Financiamiento', anyo_financiamiento: 'Año Finan.', anno_elaboracion: 'Elab.', anno_ejecucion: 'Ejec.', estado: 'Estado', etapa: 'Etapa', estado_postulacion: 'Post.', profesional: 'Prof.', has_topografia: 'Topografía' };
         let activeMenuKey = null;
 
         async function loadCatalogData() {
@@ -1390,6 +1398,10 @@
                 `;
 
                 proyectos = await api.get('/proyectos');
+                proyectos = proyectos.map(p => ({
+                    ...p,
+                    topografia_label: p.isTopografia ? 'Con Topografía' : 'Sin Topografía'
+                }));
 
                 proyectos.sort((a, b) => {
                     const dateA = new Date(a.fecha_actualizacion || a.fecha_postulacion || 0);
@@ -2288,6 +2300,10 @@
                     }
                 });
 
+                // Sincronizar visibilidad del panel de topografía
+                const isTopoCheck = document.getElementById('isTopografia');
+                if (isTopoCheck) toggleTopografiaPanel(isTopoCheck);
+
                 // Mostrar panel de enlaces rápidos y cargar datos asíncronos
                 const qab = document.getElementById('quickActionsBar');
                 if (qab) {
@@ -2315,6 +2331,8 @@
                 submitText.textContent = 'Guardar';
                 editingId = null;
                 form.reset();
+                const tp1 = document.getElementById('topografiaPanel');
+                if (tp1) tp1.classList.add('hidden');
 
                 // Ocultar sub-paneles
                 const qab = document.getElementById('quickActionsBar');
@@ -2336,11 +2354,23 @@
         function closeModal() {
             document.getElementById('proyectoModal').classList.remove('active');
             document.getElementById('proyectoForm').reset();
+            const tp = document.getElementById('topografiaPanel');
+            if (tp) tp.classList.add('hidden');
             editingId = null;
         }
 
         function closeViewModal() {
             document.getElementById('viewProjectModal').classList.remove('active');
+        }
+
+        function toggleTopografiaPanel(checkbox) {
+            const panel = document.getElementById('topografiaPanel');
+            if (!panel) return;
+            panel.classList.toggle('hidden', !checkbox.checked);
+            if (!checkbox.checked) {
+                const input = document.getElementById('topografia');
+                if (input) input.value = '';
+            }
         }
 
         async function handleSubmit(e) {
@@ -2350,6 +2380,9 @@
 
             // Checkbox: financiamiento_municipal es VARCHAR(50) en DB
             data.financiamiento_municipal = document.getElementById('financiamiento_municipal').checked ? 'SI' : 'NO';
+            // Checkbox: isTopografia es BOOLEAN en DB
+            data.isTopografia = document.getElementById('isTopografia').checked;
+            if (!data.isTopografia) delete data.topografia;
 
             // FK IDs: parsear como enteros, eliminar si vacíos
             const fkFields = ['area_id', 'estado_proyecto_id', 'etapa_proyecto_id', 'estado_postulacion_id', 'financiamiento_id', 'lineamiento_estrategico_id', 'sector_id'];

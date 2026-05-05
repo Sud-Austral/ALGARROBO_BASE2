@@ -368,7 +368,7 @@ def create_proyecto(current_user_id):
             'estado_postulacion_id', 'dupla_profesionales', 'profesional_1',
             'profesional_2', 'profesional_3', 'profesional_4', 'profesional_5',
             'fecha_postulacion', 'observaciones', 'unidad_vecinal', 'sector_id',
-            'aprobacion_dom', 'aprobacion_serviu'
+            'aprobacion_dom', 'aprobacion_serviu', 'isTopografia'
         }
         clean_data = {k: v for k, v in data.items() if k in ALLOWED_FIELDS and v != ""}
 
@@ -419,7 +419,7 @@ def update_proyecto(current_user_id, pid):
             'estado_postulacion_id', 'dupla_profesionales', 'profesional_1',
             'profesional_2', 'profesional_3', 'profesional_4', 'profesional_5',
             'fecha_postulacion', 'observaciones', 'unidad_vecival', 'sector_id',
-            'aprobacion_dom', 'aprobacion_serviu'
+            'aprobacion_dom', 'aprobacion_serviu', 'isTopografia'
         }
         clean_data = {k: v for k, v in data.items() if k in ALLOWED_FIELDS}
 
