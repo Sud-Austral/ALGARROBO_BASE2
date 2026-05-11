@@ -716,7 +716,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Área (Opcional)</label>
-                                <select id="reportArea"
+                                <select id="reportArea" onchange="updatePreview()"
                                     class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50">
                                     <option value="">Todas las áreas</option>
                                 </select>
@@ -734,7 +734,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Año de Filtro
                                     (Opcional)</label>
-                                <select id="reportYear"
+                                <select id="reportYear" onchange="updatePreview()"
                                     class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50">
                                     <option value="">Todos los años</option>
                                 </select>
@@ -822,130 +822,126 @@
         const API_URL = "/api/chat/completions";
         const MODEL_NAME = "GLM-4.5-Flash";
 
-        async function fetchAIExecutiveSummary(projects, title) {
-            // Calcular totales
-            const totalInversion = projects.reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0);
-            const estadoCounts = {};
-            const areaCounts = {};
-            const individualProfessionalCounts = {};
-            const duplaCounts = {};
+        // Agrupa y ordena un objeto {clave: count} devolviendo "top N" como string compacto
+        function topN(obj, n) {
+            return Object.entries(obj)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, n)
+                .map(([k, v]) => `${k}(${v})`)
+                .join(', ');
+        }
 
+        // Extrae JSON de la respuesta aunque el modelo incluya bloques markdown o texto extra
+        function extractJSON(raw) {
+            // Quitar bloque ```json ... ``` si existe
+            const block = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+            const text = block ? block[1] : raw;
+            const first = text.indexOf('{');
+            const last = text.lastIndexOf('}');
+            if (first === -1 || last === -1) throw new Error('JSON no encontrado');
+            return JSON.parse(text.substring(first, last + 1));
+        }
+
+        function buildPrompt(projects, title) {
+            const totalInversion = projects.reduce((s, p) => s + (parseFloat(p.monto) || 0), 0);
+            const avgAvance = projects.length
+                ? projects.reduce((s, p) => s + (parseFloat(p.avance_total_porcentaje) || 0), 0) / projects.length
+                : 0;
+            const prioritarios = projects.filter(p => p.es_prioridad === 'SI').length;
+
+            const estados = {}, areas = {}, sectores = {}, profs = {};
             projects.forEach(p => {
-                // Estados y Areas
-                const estado = p.estado_nombre || 'Sin estado';
-                const area = p.area_nombre || 'Sin area';
-                estadoCounts[estado] = (estadoCounts[estado] || 0) + 1;
-                areaCounts[area] = (areaCounts[area] || 0) + 1;
-
-                // Duplas
-                if (p.dupla_profesional) {
-                    const dupla = p.dupla_profesional.trim();
-                    duplaCounts[dupla] = (duplaCounts[dupla] || 0) + 1;
-                }
-
-                // Profesionales Individuales (1-5)
-                [p.profesional_1, p.profesional_2, p.profesional_3, p.profesional_4, p.profesional_5].forEach(prof => {
-                    if (prof && prof.trim()) {
-                        const name = prof.trim();
-                        individualProfessionalCounts[name] = (individualProfessionalCounts[name] || 0) + 1;
-                    }
+                const e = p.estado_nombre || 'Sin estado';
+                const a = p.area_nombre || 'Sin área';
+                const s = p.sector_nombre || 'Sin sector';
+                estados[e] = (estados[e] || 0) + 1;
+                areas[a]   = (areas[a]   || 0) + 1;
+                sectores[s]= (sectores[s]|| 0) + 1;
+                // Solo prof_1 y prof_2 para reducir tokens
+                [p.profesional_1, p.profesional_2].forEach(pr => {
+                    if (pr?.trim()) profs[pr.trim()] = (profs[pr.trim()] || 0) + 1;
                 });
             });
 
-            // Top Profesionales (ordenados)
-            const topProfesionales = Object.entries(individualProfessionalCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 8)
-                .map(([name, count]) => `${name} (${count})`)
-                .join(', ');
+            const fmt = n => new Intl.NumberFormat('es-CL').format(n);
+            const avancePct = (avgAvance > 1 ? avgAvance : avgAvance * 100).toFixed(1);
 
-            const topDuplas = Object.entries(duplaCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5)
-                .map(([name, count]) => `${name} (${count})`)
-                .join(', ');
+            // Prompt compacto: sin lista de proyectos individuales, solo estadísticas
+            return `Analiza estos datos de gestión municipal para el informe "${title}" y responde SOLO con JSON sin markdown:
 
-            // Muestra de proyectos para contexto
-            const summaryData = projects.slice(0, 15).map(p => ({
-                nombre: p.nombre,
-                monto: p.monto,
-                estado: p.estado_nombre,
-                area: p.area_nombre
-            }));
+DATOS (${projects.length} proyectos):
+inversión=$${fmt(totalInversion)} | avance_prom=${avancePct}% | prioritarios=${prioritarios}
+estados: ${topN(estados, 4)}
+áreas: ${topN(areas, 4)}
+sectores: ${topN(sectores, 3)}
+profesionales: ${topN(profs, 4)}
 
-            const prompt = `Eres un experto analista de gestión pública.
-Genera un análisis completo para el informe de proyectos municipales: "${title}".
+JSON esperado (sin texto adicional):
+{"resumen_ejecutivo":"...","analisis_metricas":"...","analisis_estados":"...","analisis_areas":"...","analisis_equipo":"...","analisis_detalle":"..."}
 
-DATOS GENERALES:
-- Cantidad Proyectos: ${projects.length}
-- Inversión Total: $${new Intl.NumberFormat('es-CL').format(totalInversion)}
-- Distribución por Estado: ${JSON.stringify(estadoCounts)}
-- Distribución por Área: ${JSON.stringify(areaCounts)}
-- Carga Laboral Profesionales (Top): ${topProfesionales}
-- Duplas Principales: ${topDuplas}
-- Muestra de proyectos: ${JSON.stringify(summaryData)}
+Reglas: resumen_ejecutivo=120 palabras formal; los demás campos=máx 30 palabras cada uno. Tono técnico municipal.`;
+        }
 
-INSTRUCCIONES:
-Analiza los datos y genera un objeto JSON (SIN MARKDOWN, SOLO JSON) con la siguiente estructura exacta:
-{
-  "resumen_ejecutivo": "Texto de aprox 250 palabras con introducción, análisis de recursos, hallazgos y conclusión.",
-  "analisis_metricas": "Breve explicación (máx 40 palabras) sobre el volumen de inversión y cantidad de proyectos.",
-  "analisis_estados": "Breve explicación (máx 40 palabras) sobre cómo se distribuyen los estados de los proyectos.",
-  "analisis_areas": "Breve explicación (máx 40 palabras) sobre las áreas con mayor enfoque o inversión.",
-  "analisis_equipo": "Breve explicación (máx 40 palabras) sobre la carga laboral del equipo y profesionales destacados.",
-  "analisis_detalle": "Breve introducción (máx 40 palabras) para la tabla detallada de proyectos que sigue a continuación."
-}
+        const FALLBACK = {
+            resumen_ejecutivo: "No se pudo generar el análisis automático. Los datos del informe son correctos.",
+            analisis_metricas: "Sin análisis disponible.",
+            analisis_estados:  "Sin análisis disponible.",
+            analisis_areas:    "Sin análisis disponible.",
+            analisis_equipo:   "Sin análisis disponible.",
+            analisis_detalle:  "Tabla detallada de proyectos según los filtros aplicados."
+        };
 
-Asegúrate de que el JSON sea válido. Usa un tono formal y técnico.`;
+        async function callAI(prompt) {
+            const response = await api.request(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    model: MODEL_NAME,
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.2,
+                    max_tokens: 700
+                })
+            }, 'raw');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
 
+        async function fetchAIExecutiveSummary(projects, title) {
+            const prompt = buildPrompt(projects, title);
+
+            // Intento 1
             try {
-                const response = await api.request(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        model: MODEL_NAME,
-                        messages: [
-                            { role: "system", content: "Eres un asistente de análisis de datos para SECPLAN. Respondes SIEMPRE en formato JSON válido." },
-                            { role: "user", content: prompt }
-                        ],
-                        temperature: 0.7
-                    })
-                }, 'raw');
-
-                if (!response.ok) throw new Error("Error en API IA");
-                const data = await response.json();
-
-                let content = data.choices[0].message.content;
-
-                // Intento robusto de extraer JSON
-                const firstBrace = content.indexOf('{');
-                const lastBrace = content.lastIndexOf('}');
-
-                if (firstBrace !== -1 && lastBrace !== -1) {
-                    content = content.substring(firstBrace, lastBrace + 1);
-                }
-
-                const parsed = JSON.parse(content);
-
-                // Asegurar que existan las claves para que no quede vacio
+                const raw = await callAI(prompt);
+                const parsed = extractJSON(raw);
                 return {
-                    resumen_ejecutivo: parsed.resumen_ejecutivo || "Resumen no disponible.",
-                    analisis_metricas: parsed.analisis_metricas || "Análisis de métricas no disponible.",
-                    analisis_estados: parsed.analisis_estados || "Análisis de estados no disponible.",
-                    analisis_areas: parsed.analisis_areas || "Análisis de áreas no disponible.",
-                    analisis_equipo: parsed.analisis_equipo || "Análisis de equipo no disponible.",
-                    analisis_detalle: parsed.analisis_detalle || "Análisis detallado no disponible."
+                    resumen_ejecutivo: parsed.resumen_ejecutivo || FALLBACK.resumen_ejecutivo,
+                    analisis_metricas: parsed.analisis_metricas || FALLBACK.analisis_metricas,
+                    analisis_estados:  parsed.analisis_estados  || FALLBACK.analisis_estados,
+                    analisis_areas:    parsed.analisis_areas    || FALLBACK.analisis_areas,
+                    analisis_equipo:   parsed.analisis_equipo   || FALLBACK.analisis_equipo,
+                    analisis_detalle:  parsed.analisis_detalle  || FALLBACK.analisis_detalle
                 };
+            } catch (e1) {
+                console.warn("IA intento 1 falló, reintentando con prompt simplificado:", e1);
+            }
 
-            } catch (e) {
-                console.error("Error generando resumen IA:", e);
+            // Intento 2: prompt mínimo de emergencia
+            try {
+                const minPrompt = `Datos: ${projects.length} proyectos municipales, tipo "${title}". Responde SOLO JSON:
+{"resumen_ejecutivo":"Análisis de ${projects.length} proyectos del informe ${title}.","analisis_metricas":"Ver tabla.","analisis_estados":"Distribución variada.","analisis_areas":"Múltiples áreas.","analisis_equipo":"Equipo técnico activo.","analisis_detalle":"Detalle en tabla adjunta."}`;
+                const raw2 = await callAI(minPrompt);
+                const parsed2 = extractJSON(raw2);
                 return {
-                    resumen_ejecutivo: "No se pudo generar el análisis inteligente. Revise la conexión a internet o la configuración de API Key.",
-                    analisis_metricas: "Sin análisis disponible.",
-                    analisis_estados: "Sin análisis disponible.",
-                    analisis_areas: "Sin análisis disponible.",
-                    analisis_equipo: "Sin análisis disponible.",
-                    analisis_detalle: "Sin análisis disponible."
+                    resumen_ejecutivo: parsed2.resumen_ejecutivo || FALLBACK.resumen_ejecutivo,
+                    analisis_metricas: parsed2.analisis_metricas || FALLBACK.analisis_metricas,
+                    analisis_estados:  parsed2.analisis_estados  || FALLBACK.analisis_estados,
+                    analisis_areas:    parsed2.analisis_areas    || FALLBACK.analisis_areas,
+                    analisis_equipo:   parsed2.analisis_equipo   || FALLBACK.analisis_equipo,
+                    analisis_detalle:  parsed2.analisis_detalle  || FALLBACK.analisis_detalle
                 };
+            } catch (e2) {
+                console.error("IA intento 2 falló:", e2);
+                return FALLBACK;
             }
         }
 
@@ -1437,41 +1433,122 @@ Asegúrate de que el JSON sea válido. Usa un tono formal y técnico.`;
                 comparison: 'Informe Comparativo Anual'
             };
 
-            doc.setFillColor(99, 102, 241);
+            // ── PORTADA: fondo blanco ──────────────────────────────────────
+            // Fondo blanco
+            doc.setFillColor(255, 255, 255);
             doc.rect(0, 0, 210, 297, 'F');
 
-            doc.setFillColor(255, 255, 255);
-            doc.circle(105, 80, 30, 'F');
-            doc.setTextColor(99, 102, 241);
-            doc.setFontSize(24);
-            doc.text('IMA', 105, 85, { align: 'center' });
+            // Franja superior indigo
+            doc.setFillColor(99, 102, 241);
+            doc.rect(0, 0, 210, 55, 'F');
 
+            // Texto de institución en franja
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(28);
-            doc.text('GEOPORTAL MUNICIPAL', 105, 130, { align: 'center' });
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text('ILUSTRE MUNICIPALIDAD DE ALGARROBO', 105, 22, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text('Sistema de Gestión de Proyectos · SECPLAN', 105, 33, { align: 'center' });
+            doc.setFontSize(8);
+            doc.text('Geoportal Municipal', 105, 43, { align: 'center' });
 
-            doc.setFontSize(12);
-            doc.text('Ilustre Municipalidad de Algarrobo', 105, 145, { align: 'center' });
-
-            doc.setDrawColor(255, 255, 255);
-            doc.setLineWidth(0.5);
-            doc.line(50, 160, 160, 160);
-
+            // Círculo logo indigo con letras blancas
+            doc.setFillColor(99, 102, 241);
+            doc.circle(105, 95, 28, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
             doc.setFontSize(22);
-            doc.text(reportTitles[type] || 'Informe', 105, 185, { align: 'center' });
+            doc.text('IMA', 105, 100, { align: 'center' });
 
-            doc.setFontSize(14);
-            doc.text(`Fecha de Generacion: ${new Date().toLocaleDateString('es-CL')}`, 105, 210, { align: 'center' });
+            // Título del tipo de informe
+            doc.setTextColor(30, 27, 75);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(20);
+            doc.text(reportTitles[type] || 'Informe', 105, 148, { align: 'center' });
 
+            // Línea divisora indigo
+            doc.setDrawColor(99, 102, 241);
+            doc.setLineWidth(0.8);
+            doc.line(45, 157, 165, 157);
+
+            // Fecha
+            doc.setTextColor(100, 100, 120);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')}`, 105, 168, { align: 'center' });
+
+            // Calcular métricas
             const totalInversion = filteredProjects.reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0);
             const avgProgress = filteredProjects.length > 0
                 ? filteredProjects.reduce((sum, p) => sum + (parseFloat(p.avance_total_porcentaje) || 0), 0) / filteredProjects.length
                 : 0;
 
-            doc.setFontSize(11);
-            doc.text(`Total de Proyectos: ${filteredProjects.length}`, 105, 240, { align: 'center' });
-            doc.text(`Inversion Total: ${formatCurrency(totalInversion)}`, 105, 250, { align: 'center' });
-            doc.text(`Avance Promedio: ${(avgProgress > 1 ? avgProgress : avgProgress * 100).toFixed(1)}%`, 105, 260, { align: 'center' });
+            // Tarjetas de métricas (3 recuadros)
+            const cards = [
+                { label: 'Proyectos', value: String(filteredProjects.length), x: 25 },
+                { label: 'Inversión Total', value: formatCurrencyShort(totalInversion), x: 85 },
+                { label: 'Avance Prom.', value: `${(avgProgress > 1 ? avgProgress : avgProgress * 100).toFixed(1)}%`, x: 145 }
+            ];
+            cards.forEach(c => {
+                doc.setFillColor(243, 244, 246);
+                doc.roundedRect(c.x, 185, 55, 30, 3, 3, 'F');
+                doc.setTextColor(99, 102, 241);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.text(c.value, c.x + 27.5, 198, { align: 'center' });
+                doc.setTextColor(100, 100, 120);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.text(c.label, c.x + 27.5, 208, { align: 'center' });
+            });
+
+            // Sección de filtros aplicados
+            const areaEl = document.getElementById('reportArea');
+            const yearEl = document.getElementById('reportYear');
+            const profEl = document.getElementById('reportProfessional');
+            const areaLabel  = areaEl.value  ? areaEl.options[areaEl.selectedIndex].text   : 'Todas las áreas';
+            const yearLabel  = yearEl.value  ? yearEl.value                                 : 'Todos los años';
+            const profLabel  = profEl.value  ? profEl.value                                 : 'Todos los profesionales';
+
+            const filtrosAplicados = [
+                { nombre: 'Área',         valor: areaLabel },
+                { nombre: 'Año',          valor: yearLabel },
+                { nombre: 'Profesional',  valor: profLabel }
+            ];
+            const hayFiltros = areaEl.value || yearEl.value || profEl.value;
+
+            let fy = 228;
+            doc.setFillColor(238, 242, 255);
+            doc.roundedRect(20, fy - 6, 170, hayFiltros ? 34 : 18, 3, 3, 'F');
+            doc.setDrawColor(199, 210, 254);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(20, fy - 6, 170, hayFiltros ? 34 : 18, 3, 3, 'D');
+
+            doc.setTextColor(79, 70, 229);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.text('FILTROS APLICADOS', 25, fy + 1);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(60, 60, 90);
+            doc.setFontSize(7);
+            const filtroTexto = filtrosAplicados.map(f => `${f.nombre}: ${f.valor}`).join('   ·   ');
+            doc.text(filtroTexto, 25, fy + 10, { maxWidth: 160 });
+
+            if (hayFiltros) {
+                doc.setTextColor(130, 130, 160);
+                doc.setFontSize(6.5);
+                doc.text(`Los datos de este informe reflejan únicamente los proyectos que cumplen los criterios de filtrado indicados.`, 25, fy + 22, { maxWidth: 160 });
+            }
+
+            // Franja inferior
+            doc.setFillColor(243, 244, 246);
+            doc.rect(0, 270, 210, 27, 'F');
+            doc.setTextColor(150, 150, 170);
+            doc.setFontSize(7);
+            doc.text('Documento generado por el Sistema de Gestión Municipal · Confidencial', 105, 281, { align: 'center' });
+            doc.text('Municipalidad de Algarrobo · www.munialgarrobo.cl', 105, 288, { align: 'center' });
 
             // PAGINA 2: RESUMEN EJECUTIVO (Página exclusiva)
             if (aiData.resumen_ejecutivo) {

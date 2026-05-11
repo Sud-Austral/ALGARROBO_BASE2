@@ -337,6 +337,15 @@ function renderSidebar(containerId = "sidebarContainer") {
         return;
     }
 
+    const mapa2HTML = [10, 11, 13].includes(nivelAcceso) ? `
+        <li>
+            <a href="${pages.mapa2}" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses('mapa2.html')}">
+                <i class="fas fa-map w-5 text-center"></i>
+                <span class="font-medium">Análisis Territorial</span>
+            </a>
+        </li>
+    ` : "";
+
     const modulosHTML = nivelAcceso === 10 ? `
         <li class="pt-6 mt-4 border-t border-gray-100">
             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-3">Módulos</p>
@@ -494,6 +503,7 @@ function renderSidebar(containerId = "sidebarContainer") {
                         <span class="font-medium">GeoMapas</span>
                     </a>
                 </li>
+                ${mapa2HTML}
                  <li>
                     <a href="${pages.dashboard}" class="flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${linkClasses('dashboard.html')}">
                         <i class="fas fa-gauge-high w-5 text-center"></i>
