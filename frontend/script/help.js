@@ -56,36 +56,26 @@ const helpContent = {
     informe: {
         title: 'Centro de Informes y Reportería',
         icon: 'fa-file-chart-line',
-        description: 'Plataforma integral de generación de reportes profesionales para análisis de la cartera de proyectos. Produce documentos ejecutivos con datos actualizados, gráficos estadísticos, tablas dinámicas y resúmenes inteligentes generados por IA, facilitando la presentación de información a autoridades y stakeholders.',
+        description: 'Plataforma integral de generación de reportes profesionales para análisis de la cartera de proyectos. Produce documentos ejecutivos con datos actualizados, gráficos estadísticos, tablas dinámicas y resúmenes inteligentes generados por IA.',
         features: [
-            '📊 10+ tipos de informes predefinidos: cartera completa, análisis por estado, distribución por área, análisis financiero, proyectos prioritarios, avance general, ejecución presupuestaria, cronograma de actividades, proyectos por profesional, situación territorial',
-            '🎨 Múltiples formatos de salida: PDF profesional con diseño institucional, Excel editable con tablas dinámicas, visualización HTML interactiva',
-            '🔧 Configuración de parámetros: selecciona área específica, filtro por profesional responsable, rango de años, estados a incluir, tipo de financiamiento',
-            '🤖 Resumen ejecutivo con IA: cada informe PDF incluye un resumen analítico generado automáticamente que destaca los puntos clave, tendencias y recomendaciones',
-            '📈 Gráficos automáticos integrados: tortas de distribución, barras de comparación, líneas de tendencia, mapas de calor, diagramas de Gantt',
-            '📋 Tablas detalladas con indicadores: monto total, avance físico y financiero, plazos, responsables, estados críticos',
-            '👁️ Vista previa interactiva: revisa el contenido del informe antes de generar el archivo final, con navegación por secciones',
-            '📅 Información de generación: cada reporte incluye fecha, hora, usuario generador y parámetros de filtrado aplicados',
-            '🔄 Actualización en tiempo real: los datos mostrados reflejan el estado actual de la cartera al momento de generar el informe',
-            '📧 Opciones de distribución: envío directo por correo, descarga local, almacenamiento en la nube',
-            '🎯 Informes personalizados: crea plantillas propias combinando diferentes secciones y métricas',
-            '📊 Dashboard de informes: historial de reportes generados con opción de regenerar con datos actualizados',
-            '🔍 Análisis comparativo: genera informes que comparan períodos, áreas o estados diferentes',
-            '💾 Guardado de configuraciones: guarda tus filtros favoritos para generar informes recurrentes rápidamente',
-            '🌐 Marca institucional: todos los informes incluyen logos, colores y formato oficial del municipio'
+            '📊 10 tipos de informes predefinidos: cartera completa, por estado, por área, financiero, prioritarios, avance, carga por profesional, territorial, cronograma y comparativo anual',
+            '🎨 Dos formatos de salida: PDF profesional con diseño institucional y Excel editable con tablas de datos',
+            '🔧 Filtros de Opciones de Generación: Tipo de informe, Área, Profesional y Año — todos actualizan la Vista Previa en tiempo real al cambiar',
+            '🤖 Resumen ejecutivo con IA (GLM-4.5-Flash): genera automáticamente 6 secciones de análisis (resumen ejecutivo, métricas, estados, áreas, equipo y detalle) con reintento automático si la primera respuesta falla',
+            '👁️ Vista Previa reactiva: muestra proyectos, inversión, avance promedio y áreas involucradas según los filtros activos antes de generar el documento',
+            '📄 Portada PDF con fondo blanco: diseño limpio con franja indigo institucional, logo circular, tarjetas de métricas (proyectos, inversión total, avance promedio) y franja inferior',
+            '🔖 Filtros aplicados en portada: la portada del PDF muestra el Área, Año y Profesional seleccionados al momento de generar, con nota aclaratoria si hay filtros activos',
+            '📋 Tablas detalladas con indicadores: monto total, avance físico y financiero, plazos, responsables y estados de cada proyecto',
+            '📈 Gráficos automáticos integrados: distribución por estado (donut) e inversión por área (barras) siempre visibles en la página'
         ],
         tips: [
-            '💡 Genera el "Informe de Cartera Completa" mensualmente para seguimiento de gestión y archivo histórico',
-            '💡 El resumen de IA analiza automáticamente los datos y puede identificar proyectos en riesgo o tendencias importantes',
-            '💡 Usa filtros específicos para crear informes focalizados (ejemplo: "Solo proyectos de Vialidad en Ejecución")',
-            '💡 Los informes Excel permiten análisis posterior con tablas dinámicas y fórmulas personalizadas',
-            '💡 La vista previa te ahorra tiempo: revisa primero antes de generar el documento final',
-            '💡 Combina el informe financiero con análisis de avance físico para detectar desfases presupuestarios',
-            '💡 Programa la generación automática de informes recurrentes para envío a autoridades cada fin de mes',
-            '💡 Incluye siempre el período de análisis en el nombre del archivo (ejemplo: "Informe_Cartera_Enero_2025.pdf")',
-            '💡 Los gráficos son editables en la versión Excel si necesitas personalizar presentaciones',
-            '💡 Archiva los informes generados para crear un historial de evolución de la cartera',
-            '💡 El informe por profesional es útil para evaluaciones de desempeño y distribución de carga laboral'
+            '💡 Cambia cualquier filtro (Área, Año, Profesional o Tipo) y la Vista Previa se actualiza al instante — revisa antes de generar',
+            '💡 Si la IA tarda o falla, el sistema reintenta automáticamente con un prompt simplificado; el PDF se genera de todas formas',
+            '💡 El PDF muestra en portada exactamente qué filtros aplicaste, útil para identificar el informe luego de descargarlo',
+            '💡 Usa el filtro de Profesional para generar un informe de carga individual y compartirlo en evaluaciones de desempeño',
+            '💡 Combina Área + Año para comparar la inversión de una unidad en distintos ejercicios presupuestarios',
+            '💡 El informe Excel es ideal para análisis posterior con tablas dinámicas propias',
+            '💡 Archiva los PDF generados mensualmente para construir un histórico evolutivo de la cartera'
         ]
     },
     calendario: {
@@ -823,19 +813,28 @@ const helpContent = {
         ]
     },
     mapa2: {
-        title: 'Mapa 2: Análisis Territorial',
+        title: 'Análisis Territorial — Doble Mapa',
         icon: 'fa-map-location-dot',
-        description: 'Visor geográfico avanzado para el análisis espacial y distribución de la inversión de proyectos por sector territorial.',
+        description: 'Visor geográfico con dos mapas independientes y sincronizados: el izquierdo muestra marcadores de proyectos por coordenadas, el derecho despliega las capas GeoJSON registradas en la tabla proyectos_geomapas. Ambos reaccionan a los mismos filtros.',
         features: [
-            'Distribución de marcadores interactivos georreferenciados en el territorio',
-            'Tabla resumen de cantidad y montos acumulados ordenados espacialmente (Sector)',
-            'Multi-filtros: Área, Línea Estratégica, Etapas, Años y Fuente de Financiamiento',
-            'Cruce de datos geo-espacial en tiempo real (mapa y tabla sincronizados)'
+            '🗺️ Mapa 1 — Proyectos por coordenadas: cada proyecto con lat/lng aparece como un marcador circular coloreado según su sector territorial',
+            '🌐 Mapa 2 — Capas GeoJSON: carga automáticamente los polígonos, líneas y puntos almacenados en proyectos_geomapas para los proyectos filtrados',
+            '🎨 Paleta de colores por sector: ambos mapas comparten la misma asignación de colores por nombre de sector, facilitando la lectura cruzada',
+            '⚡ Carga paralela de GeoJSON: consulta todos los proyectos filtrados en simultáneo y descarga sus capas en paralelo para mayor velocidad',
+            '🔍 9 filtros en cascada: Área, Lineamiento, Financiamiento, Año elaboración, Año ejecución, Estado, Etapa, Estado postulación y Profesional — al cambiar cualquiera ambos mapas se actualizan',
+            '📊 Estadísticas en tiempo real: chips en el header con total de proyectos, proyectos con coordenadas, capas GeoJSON activas y monto total filtrado',
+            '👁️ Panel de capas GeoJSON: lista cada capa con su color, nombre y proyecto asociado; permite ocultar/mostrar capas individuales y hacer zoom a cada una',
+            '📋 Tabla Resumen por Sector: muestra cantidad de proyectos y monto total agrupado; al hacer clic en un sector el Mapa 1 hace zoom hacia esa zona',
+            '🔄 Botón Recargar en Mapa 2: recarga las capas GeoJSON manualmente si cambiaste datos sin aplicar filtros'
         ],
         tips: [
-            'Al hacer clic en un sector dentro de la tabla resumen de la derecha, el mapa hará zoom automático hacia todos los proyectos de esa zona',
-            'Haga clic sobre cualquier marcador (circulo morado) para inspeccionar el resumen ejecutivo',
-            'Los filtros actúan en cascada: al seleccionar una etapa, las áreas disponibles se limitarán solo a las válidas'
+            '💡 Si un proyecto no aparece en el Mapa 1, verifica que tenga latitud y longitud registrados en el módulo de Proyectos',
+            '💡 Si el Mapa 2 no muestra capas, el proyecto existe pero aún no tiene GeoJSON cargado en el módulo Geomapas',
+            '💡 Los colores de los marcadores y polígonos son iguales entre ambos mapas: identifica un color y búscalo en los dos',
+            '💡 Haz clic en un sector de la tabla inferior izquierda para centrar el Mapa 1 en esa zona geográfica',
+            '💡 Usa el botón de ojo en el panel de capas para ocultar temporalmente una capa GeoJSON sin recargar',
+            '💡 El botón de crosshairs (⊕) en cada capa hace zoom directo a esa geometría en el Mapa 2',
+            '💡 Los filtros actúan en cascada: al seleccionar un área, los lineamientos disponibles se actualizan automáticamente'
         ]
     },
     informe_dinamico: {

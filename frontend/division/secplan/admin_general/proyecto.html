@@ -1163,7 +1163,7 @@
     </div>
 
     <script src="../../../script/layout.js?v=110526_1"></script>
-    <script src="../../../script/help.js"></script>
+    <script src="../../../script/help.js?v=110526_2"></script>
     <script src="../../../script/pdf.js"></script>
     <script>document.addEventListener('DOMContentLoaded', () => createHelpButton('proyecto'));</script>
 
@@ -1640,7 +1640,7 @@
         function updateKPIs(proyectosData) {
             document.getElementById('totalProjects').textContent = proyectosData.length;
 
-            const executionCount = proyectosData.filter(p => p.estado_nombre === 'Ejecución').length;
+            const executionCount = proyectosData.filter(p => p.estado_nombre === 'En ejecución').length;
             document.getElementById('executionProjects').textContent = executionCount;
             const totalAmount = proyectosData.reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0);
             document.getElementById('totalAmount').textContent = utils.formatCurrency(totalAmount);
