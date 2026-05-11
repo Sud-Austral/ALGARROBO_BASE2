@@ -67,8 +67,8 @@ for folder in [DOCS_ROOT, FOTOS_ROOT, REPORTS_ROOT]:
 # ═══════════════════════════════════════════════════════════════
 app = Flask(__name__)
 # SEGURIDAD [A2-3.5]: Límite de subida parametrizado por entorno.
-# Producción: 50 MB por defecto. Se puede aumentar vía MAX_UPLOAD_MB para migraciones puntuales.
-_max_upload_mb = int(os.getenv("MAX_UPLOAD_MB", "50" if _FLASK_ENV == "production" else "1000"))
+# Producción: 200 MB por defecto. Se puede ajustar vía MAX_UPLOAD_MB.
+_max_upload_mb = int(os.getenv("MAX_UPLOAD_MB", "200" if _FLASK_ENV == "production" else "200"))
 app.config['MAX_CONTENT_LENGTH'] = _max_upload_mb * 1024 * 1024
 
 # CORS dinámico

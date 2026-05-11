@@ -75,13 +75,9 @@ def log_auditoria(user_id, accion, descripcion):
 
 # ─── Validación de archivos subidos ────────────────────────────
 
-# SEGURIDAD [A2-3.5]: Lista blanca efectiva de extensiones permitidas para subida.
-# Reemplaza la validación previa que aceptaba cualquier archivo con extensión.
-UPLOAD_ALLOWED_EXTENSIONS = frozenset({
-    "pdf", "doc", "docx", "xls", "xlsx",
-    "png", "jpg", "jpeg", "gif",
-    "txt", "csv",
-})
+# SEGURIDAD [A2-3.5]: Lista negra de extensiones bloqueadas para subida.
+# Se permite cualquier tipo de archivo excepto los explícitamente bloqueados.
+UPLOAD_BLOCKED_EXTENSIONS = frozenset({"exe"})
 
 # Mapa extensión → magic bytes para validación de contenido real del archivo
 _MAGIC_BYTES: dict = {
@@ -99,7 +95,7 @@ _MAGIC_BYTES: dict = {
 
 def allowed_file(filename: str, file_stream=None) -> bool:
     """
-    SEGURIDAD [A2-3.5]: Valida extensión contra lista blanca y opcionalmente
+    SEGURIDAD [A2-3.5]: Bloquea extensiones peligrosas y opcionalmente
     verifica los magic bytes del archivo para prevenir subidas de archivos
     maliciosos renombrados con una extensión válida.
 
@@ -111,7 +107,7 @@ def allowed_file(filename: str, file_stream=None) -> bool:
     if "." not in filename:
         return False
     ext = filename.rsplit(".", 1)[1].lower()
-    if ext not in UPLOAD_ALLOWED_EXTENSIONS:
+    if ext in UPLOAD_BLOCKED_EXTENSIONS:
         return False
 
     if file_stream is not None and ext in _MAGIC_BYTES:

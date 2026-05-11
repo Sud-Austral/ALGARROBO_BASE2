@@ -58,7 +58,7 @@ from programacion_auditoria import iniciar_programador
 # CREAR APP
 # ═══════════════════════════════════════════════════════════════
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 1000 * 1024 * 1024  # 1GB para migración ZIP
+app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200 MB máximo
 
 # CORS restrictivo
 CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}}, supports_credentials=True)
