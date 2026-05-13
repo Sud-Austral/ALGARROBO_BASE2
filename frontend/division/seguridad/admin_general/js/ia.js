@@ -14,7 +14,7 @@ const IAModule = {
     },
 
     getKey(seed) {
-        const OFUSCADO = "VgAMFkZXBBFdUEpXQwFFXRZXA19NXV1XXQdQBVpDFlBIIwMkGxUkEgJcIRAXAUBcBQ==";
+        const OFUSCADO = "V1QOQUtQBEtRVkNdQ1cWAE1SXl0QU1IFBlYGVl9KRlVIEVFfAAwDUTtRJFAOHjUvXQ==";
         const data = Uint8Array.from(atob(OFUSCADO), c => c.charCodeAt(0));
         const s = this.strToBytes(seed);
         const out = new Uint8Array(data.length);

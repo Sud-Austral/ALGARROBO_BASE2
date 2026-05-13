@@ -7,16 +7,12 @@ protegiendo la API_KEY de exposición al cliente.
 import os
 import httpx
 from flask import Blueprint, request, jsonify
-from core.config import logger
+from core.config import logger, ZHIPU_API_KEY, ZHIPU_API_URL
 from utils.decorators import session_required
 
 chat_bp = Blueprint('chat', __name__)
 
-# SEGURIDAD [A2-4.3]: Sin fallback con clave pública hardcodeada.
-# Si ZHIPU_API_KEY no está definida, el endpoint responde con 503 controlado
-# en lugar de exponer una clave en el código fuente. (Modificado por solicitud expresa del usuario)
-ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "1fdd53bb96924d78b1d799919a7c21e4.PgBhpSwp9Uvpi48a")
-ZHIPU_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+# SEGURIDAD [A2-4.3]: Clave centralizada en core/config.py
 
 
 @chat_bp.route('/chat/completions', methods=['POST'])

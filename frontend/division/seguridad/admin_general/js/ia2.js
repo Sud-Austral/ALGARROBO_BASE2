@@ -16,7 +16,7 @@ window.IAModuleV2 = {
 
     // Obfuscated Key (Same as ia.js)
     getKey(seed) {
-        const OFUSCADO = "VgAMFkZXBBFdUEpXQwFFXRZXA19NXV1XXQdQBVpDFlBIIwMkGxUkEgJcIRAXAUBcBQ==";
+        const OFUSCADO = "V1QOQUtQBEtRVkNdQ1cWAE1SXl0QU1IFBlYGVl9KRlVIEVFfAAwDUTtRJFAOHjUvXQ==";
         const data = Uint8Array.from(atob(OFUSCADO), c => c.charCodeAt(0));
         const s = new TextEncoder().encode(seed);
         const out = new Uint8Array(data.length);

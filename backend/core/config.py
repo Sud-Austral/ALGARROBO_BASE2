@@ -25,6 +25,11 @@ APP_HOST = os.getenv("APP_HOST", "algarrobobase2-production-4ab9.up.railway.app"
 APP_PORT = int(os.getenv("PORT", 8000))
 DEBUG = os.getenv("FLASK_DEBUG", "False").lower() in ("1", "true", "yes")
 
+# ─── IA (ZhipuAI) ──────────────────────────────────────────────
+# SEGURIDAD: Se usa valor por defecto solicitado por el usuario.
+ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "02f384b8500842de9495d76cb0a07851.b59sit4I4P6ivAK9")
+ZHIPU_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+
 # ─── CORS ──────────────────────────────────────────────────────
 # SEGURIDAD: Se permite wildcard o lista hardcodeada por solicitud del usuario.
 allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "*")
